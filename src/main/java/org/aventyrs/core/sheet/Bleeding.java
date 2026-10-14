@@ -35,4 +35,10 @@ public class Bleeding extends TemporaryEffect {
     void applyRoundEffect(final CombatantSheet sheet) {
         sheet.applyDamage(valuePerRound);
     }
+
+    /** Sangramento — Dano Físico. */
+    @Override
+    public ContinuousNature getContinuousNature() {
+        return ContinuousNature.damaging(org.aventyrs.core.character.DamageType.FISICO);
+    }
 }

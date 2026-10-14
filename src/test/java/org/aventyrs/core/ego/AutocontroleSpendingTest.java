@@ -1,5 +1,6 @@
 package org.aventyrs.core.ego;
 
+import org.aventyrs.core.character.Resistance;
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.AttributeValue;
 import org.aventyrs.core.character.Character;
@@ -123,8 +124,8 @@ class AutocontroleSpendingTest {
     void aTemporaryPointBuysRaPlusTheChosenReduction() {
         service.grantProtection(sheet, Protection.RD, null);
 
-        assertEquals(DamageService.DEFAULT_DAMAGE_REDUCTION, sheet.getTemporaryBonus(ModifierType.ABSOLUTE_DAMAGE_REDUCTION));
-        assertEquals(DamageService.DEFAULT_DAMAGE_REDUCTION, sheet.getTemporaryBonus(ModifierType.DAMAGE_REDUCTION));
+        assertEquals(Resistance.RA.instance(), sheet.getTemporaryBonus(ModifierType.ABSOLUTE_DAMAGE_REDUCTION));
+        assertEquals(Resistance.RD.instance(), sheet.getTemporaryBonus(ModifierType.DAMAGE_REDUCTION));
     }
 
     @Test

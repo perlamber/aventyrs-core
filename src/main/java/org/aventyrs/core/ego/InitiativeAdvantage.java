@@ -1,5 +1,6 @@
 package org.aventyrs.core.ego;
 
+import org.aventyrs.core.character.Resistance;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.aventyrs.core.action.Manoeuvre;
@@ -110,8 +111,8 @@ public enum InitiativeAdvantage implements EgoAdvantage {
      * check, not {@link #POSICIONAMENTO_ESTRATEGICO}'s group-blessing mechanism — both of this
      * Vantagem's clauses are about the holder's own defense, never granted to allies):
      * {@link #resolveAbsoluteDamageReduction} grants RA ({@value
-     * org.aventyrs.core.character.services.DamageService#DEFAULT_DAMAGE_REDUCTION}, this rules
-     * text's own number isn't spelled out — see {@code DamageService.DEFAULT_DAMAGE_REDUCTION}'s
+     * org.aventyrs.core.character.Resistance#RA}, this rules
+     * text's own number isn't spelled out — see {@code Resistance#RA}'s
      * own javadoc for why RD's unspecified-bonus default is reused here) while {@link
      * SceneContext#isWithinFirstCombatRounds} is true, and {@link #resolveHalfDamage} halves
      * damage taken once {@link SceneContext#hasWonInitiative()} is also true — both summed by
@@ -125,7 +126,7 @@ public enum InitiativeAdvantage implements EgoAdvantage {
         @Override
         public int resolveAbsoluteDamageReduction(final SceneContext sceneContext) {
             if (sceneContext != null && sceneContext.isWithinFirstCombatRounds(FIRST_ROUNDS_COUNT)) {
-                return DamageService.DEFAULT_DAMAGE_REDUCTION;
+                return Resistance.RA.instance();
             }
             return 0;
         }

@@ -1,5 +1,6 @@
 package org.aventyrs.core.title.giganteenfurecido;
 
+import org.aventyrs.core.character.Resistance;
 import org.aventyrs.core.character.DamageDescriptor;
 import org.aventyrs.core.character.DamageType;
 import org.aventyrs.core.character.EgoDomain;
@@ -196,10 +197,10 @@ class TitaEnlouquecidoInteractionsTest {
 
         assertEquals(before - 1, sheet.getTemporaryEgoPoints(EgoDomain.AUTOCONTROLE));
         var damage = new DamageServiceImpl();
-        assertEquals(8, damage.calculateFinalDamage(sheet, null,
-                new DamageDescriptor(DamageType.ELEMENTAL, ElementalType.FOGO), null, 10, false));
+        assertEquals(10 - Resistance.RE.instance(), damage.calculateFinalDamage(sheet, null,
+                new DamageDescriptor(DamageType.MAGICO, ElementalType.FOGO), null, 10, false));
         assertEquals(10, damage.calculateFinalDamage(sheet, null,
-                new DamageDescriptor(DamageType.ELEMENTAL, ElementalType.VENTO), null, 10, false));
+                new DamageDescriptor(DamageType.MAGICO, ElementalType.VENTO), null, 10, false));
     }
 
     @Test
@@ -213,7 +214,7 @@ class TitaEnlouquecidoInteractionsTest {
         assertTrue(hits.stream().filter(hit -> hit.target() == adjacentFoe).allMatch(hit -> hit.amount() == 2));
         assertTrue(hits.stream().filter(hit -> hit.target() == nearAlly).allMatch(hit -> hit.amount() == 1));
         assertTrue(hits.stream().noneMatch(hit -> hit.target() == farFoe || hit.target() == farAlly));
-        assertTrue(hits.stream().allMatch(hit -> hit.descriptor().damageType() == DamageType.ELEMENTAL));
+        assertTrue(hits.stream().allMatch(hit -> hit.descriptor().damageType() == DamageType.MAGICO));
         assertSame(sheet, hits.get(0).source());
     }
 

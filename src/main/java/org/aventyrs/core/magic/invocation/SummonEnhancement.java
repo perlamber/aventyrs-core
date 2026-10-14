@@ -132,7 +132,7 @@ public record SummonEnhancement(int lifeMultiplierBonus, AttributeDomain boosted
      */
     public Optional<ElementalDischarge> comet() {
         return cometDamageBonus == null ? Optional.empty() : Optional.of(new ElementalDischarge(1, cometDamageBonus, 0,
-                new DamageDescriptor(DamageType.ELEMENTAL, ElementalType.GELO), 0, 0, 0));
+                new DamageDescriptor(DamageType.MAGICO, ElementalType.GELO), 0, 0, 0));
     }
 
     /**
@@ -152,6 +152,6 @@ public record SummonEnhancement(int lifeMultiplierBonus, AttributeDomain boosted
      */
     public Optional<ElementalDischarge> arrivalBurst() {
         return lightning ? Optional.of(new ElementalDischarge(1, 0, 0,
-                new DamageDescriptor(DamageType.ELEMENTAL, ElementalType.ELETRICIDADE), 0, 0, 0)) : Optional.empty();
+                new DamageDescriptor(DamageType.MAGICO, ElementalType.ELETRICIDADE), 0, 0, 0)) : Optional.empty();
     }
 }

@@ -31,7 +31,7 @@ public enum PunhoInigualavelAbility implements AventyrTitleAbility {
     // 2 + other Punho Inigualável Habilidades/Supremas held, in attacks
     // (CombatantSheet#grantEnhancedAttacksForCombat — "cancelada ao final da Cena mesmo se ainda
     // houver quantidade de ataques disponíveis"). While charges remain, each Arma Natural attack
-    // gets Vantagem (SenhorDaBriga#resolveAttackRollBonus) and is typed Dano Físico Elemental of the
+    // gets Vantagem (SenhorDaBriga#resolveAttackRollBonus) and is typed Dano Elemental of the
     // element (SenhorDaBriga#resolveAttackModifiers); the caller spends one per attack through
     // TitleAttackModifiers#consumeCharges. Grande Mestre das Brigas: rolled against DM (a
     // DefenseType.MAGIC the caller rolls against) and typed Dano Mágico of the element.

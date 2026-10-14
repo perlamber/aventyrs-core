@@ -22,4 +22,10 @@ public class DeterminationDrain extends TemporaryEffect {
     void applyRoundEffect(final CombatantSheet sheet) {
         sheet.spendDeterminationPoints(valuePerRound);
     }
+
+    /** A harmful drain of no stated nature — only RA reaches it. */
+    @Override
+    public ContinuousNature getContinuousNature() {
+        return ContinuousNature.UNTYPED;
+    }
 }

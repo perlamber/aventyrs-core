@@ -216,6 +216,11 @@ public class MonsterBlueprint {
         return new AbilityContext(getCategory(), selection.choices(), owns);
     }
 
+    /** Whether a held Habilidade grants the Anatomia de Morto-Vivo — see {@link UndeadAnatomy}. */
+    public boolean hasUndeadAnatomy() {
+        return abilities.stream().anyMatch(selection -> selection.ability().grantsUndeadAnatomy());
+    }
+
     /** Each held Habilidade, resolved at this blueprint's Categoria. */
     public List<MonstrousAbilityGrant> resolveGrants() {
         MonsterCategory category = getCategory();

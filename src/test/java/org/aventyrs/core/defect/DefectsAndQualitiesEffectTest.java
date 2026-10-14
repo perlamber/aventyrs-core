@@ -347,9 +347,9 @@ class DefectsAndQualitiesEffectTest {
         CharacterSheet resistant = sheet(withQuality(Quality.RESISTENCIA_ATIPICA, QualityClass.MENOR,
                 EnergyKind.ELEMENTAL, ElementalType.FOGO));
 
-        assertTrue(resistant.halvesDamage(DamageType.ELEMENTAL, new DamageDescriptor(DamageType.ELEMENTAL, ElementalType.FOGO)));
-        assertFalse(resistant.halvesDamage(DamageType.ELEMENTAL, new DamageDescriptor(DamageType.ELEMENTAL, ElementalType.GELO)));
-        assertFalse(resistant.isImmuneToDamage(DamageType.ELEMENTAL, new DamageDescriptor(DamageType.ELEMENTAL, ElementalType.FOGO)));
+        assertTrue(resistant.halvesDamage(DamageType.MAGICO, new DamageDescriptor(DamageType.MAGICO, ElementalType.FOGO)));
+        assertFalse(resistant.halvesDamage(DamageType.MAGICO, new DamageDescriptor(DamageType.MAGICO, ElementalType.GELO)));
+        assertFalse(resistant.isImmuneToDamage(DamageType.MAGICO, new DamageDescriptor(DamageType.MAGICO, ElementalType.FOGO)));
     }
 
     @Test
@@ -357,8 +357,8 @@ class DefectsAndQualitiesEffectTest {
         CharacterSheet immune = sheet(withQuality(Quality.RESISTENCIA_ATIPICA, QualityClass.MAIOR,
                 EnergyKind.ELEMENTAL, ElementalType.FOGO));
 
-        assertTrue(immune.isImmuneToDamage(DamageType.ELEMENTAL, new DamageDescriptor(DamageType.ELEMENTAL, ElementalType.FOGO)));
-        assertFalse(immune.isImmuneToDamage(DamageType.ELEMENTAL, new DamageDescriptor(DamageType.ELEMENTAL, ElementalType.GELO)));
+        assertTrue(immune.isImmuneToDamage(DamageType.MAGICO, new DamageDescriptor(DamageType.MAGICO, ElementalType.FOGO)));
+        assertFalse(immune.isImmuneToDamage(DamageType.MAGICO, new DamageDescriptor(DamageType.MAGICO, ElementalType.GELO)));
     }
 
     @Test
@@ -366,7 +366,7 @@ class DefectsAndQualitiesEffectTest {
         CharacterSheet profana = sheet(withQuality(Quality.RESISTENCIA_ATIPICA, QualityClass.MENOR, EnergyKind.PROFANA));
         for (ElementalType element : ElementalType.values()) {
             if (element != ElementalType.TODOS) {
-                assertFalse(profana.halvesDamage(DamageType.ELEMENTAL, new DamageDescriptor(DamageType.ELEMENTAL, element)));
+                assertFalse(profana.halvesDamage(DamageType.MAGICO, new DamageDescriptor(DamageType.MAGICO, element)));
             }
         }
     }

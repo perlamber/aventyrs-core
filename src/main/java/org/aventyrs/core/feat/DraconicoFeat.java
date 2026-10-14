@@ -163,7 +163,7 @@ public enum DraconicoFeat implements Feat {
 
     /**
      * "Após usar seu Sopro de Dragão você emana uma aura de energia que te acompanha por 2
-     * Rodadas… personagens adjacentes sofrem 2 pontos de Dano Físico Elemental."
+     * Rodadas… personagens adjacentes sofrem 2 pontos de Dano Elemental."
      */
     // TODO: triggered by "usar seu Sopro de Dragão" — SOPRO_DE_DRAGAO grants the Arma de Sopro
     //  now, but nothing models the act of attacking with it as an event this can fire from.
@@ -175,7 +175,7 @@ public enum DraconicoFeat implements Feat {
             "Após usar seu Sopro de Dragão você emana uma aura de energia que te acompanhada por "
                     + "2 Rodadas. Durante a ativação da aura e no início de cada um dos seus "
                     + "Turnos subsequentes, enquanto a aura estiver ativa, personagens adjacentes "
-                    + "sofrem 2 pontos de Dano Físico Elemental. O dano da aura aumenta em +1 e o "
+                    + "sofrem 2 pontos de Dano Elemental. O dano da aura aumenta em +1 e o "
                     + "alcance em +1UD para cada Título Aventyr Desperto.",
             FeatRequirements.builder()
                     .attributeDomain(AttributeDomain.INSTINCT)

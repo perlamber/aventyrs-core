@@ -1,5 +1,6 @@
 package org.aventyrs.core.feat;
 
+import org.aventyrs.core.character.Resistance;
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.CharacterAttributes;
@@ -83,7 +84,7 @@ class SobrevivenciaFeatTest {
         holder.applyDamage(hitPointsService.getCurrentHitPoints(character, holder)
                 - hitPointsService.getLifeMultiplier(character, holder));
 
-        assertEquals(before + DamageService.DEFAULT_DAMAGE_REDUCTION, rd(holder));
+        assertEquals(before + Resistance.RD.instance(), rd(holder));
     }
 
     @Test

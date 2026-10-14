@@ -45,4 +45,11 @@ public class VampiricVenom extends TemporaryEffect {
         }
         return landed;
     }
+
+    /** "Dano Mágico Profano". */
+    @Override
+    public ContinuousNature getContinuousNature() {
+        return ContinuousNature.damaging(new org.aventyrs.core.character.DamageDescriptor(
+                org.aventyrs.core.character.DamageType.MAGICO, null, org.aventyrs.core.character.DamageSanctity.PROFANO));
+    }
 }

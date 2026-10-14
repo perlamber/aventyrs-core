@@ -58,6 +58,9 @@ public class SpellHealingEffect extends AbstractEffect implements HealingEffect 
     private final CombatantSheet caster;
     private final int healingBonus;
 
+    /** The caller's dice, for an undead target whose Anatomia turns this heal into Dano Sagrado; may be {@code null}. */
+    private org.aventyrs.core.util.DiceRoller diceRoller;
+
     public SpellHealingEffect(final Spell spell, final SpellHealing healing) {
         this(spell, healing, false, new RestServiceImpl());
     }
@@ -98,6 +101,12 @@ public class SpellHealingEffect extends AbstractEffect implements HealingEffect 
         this.caster = caster;
     }
 
+    /** This effect rolling with roller where its target needs dice (core 0.1.6.23). */
+    public SpellHealingEffect withDiceRoller(final org.aventyrs.core.util.DiceRoller roller) {
+        this.diceRoller = roller;
+        return this;
+    }
+
     /** The mark Aliviar a Dor leaves on a target it healed, until their Descanso Longo. */
     public static final String ONCE_PER_LONG_REST_PREFIX = "spell-heal:";
 
@@ -130,7 +139,7 @@ public class SpellHealingEffect extends AbstractEffect implements HealingEffect 
                     .build();
         }
         int damageBefore = target.getDamageTaken();
-        target.heal(resolveAmount(target, damageBefore), HealingSource.spell(spell, caster));
+        target.heal(resolveAmount(target, damageBefore), HealingSource.spell(spell, caster).withDice(diceRoller));
         int recovered = damageBefore - target.getDamageTaken();
         if (healing.restoresAllPools()) {
             RestType rest = restFor();

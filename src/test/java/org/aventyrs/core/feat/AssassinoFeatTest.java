@@ -355,14 +355,15 @@ class AssassinoFeatTest {
     }
 
     @Test
-    void escudoDeSombrasGrantsThreeRdsWhileEscondido() throws IllegalOperationException {
+    void escudoDeSombrasGrantsOneRdsInstanceWhileEscondido() throws IllegalOperationException {
         DamageService damageService = new DamageServiceImpl();
         CharacterSheet sheet = shadowAssassin();
         int before = damageService.getTotalDamageTakenReduction(sheet, null);
 
         sheet.applyCondition(new Condition(ConditionType.ESCONDIDO, null));
 
-        assertEquals(before + 3, damageService.getTotalDamageTakenReduction(sheet, null));
+        // "+3 em suas Defesas e RDS" — the +3 is the Defesas'; RDS is one instance (table ruling, 2026-10-13).
+        assertEquals(before + org.aventyrs.core.character.Resistance.RDS.instance(), damageService.getTotalDamageTakenReduction(sheet, null));
     }
 
     /** Out in the open it grants nothing — and neither does a Character-only caller with no sheet. */

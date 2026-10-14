@@ -1,5 +1,6 @@
 package org.aventyrs.core.feat;
 
+import org.aventyrs.core.character.Resistance;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.fixture.CharacterFixture;
 import org.aventyrs.core.character.services.FeatService;
@@ -100,7 +101,7 @@ class CriticalResistanceTest {
         assertTrue(MonstruosoFeat.ANATOMIA_INCOMUM.isEligible(defender, sheet));
         defender.grantFeat(MonstruosoFeat.ANATOMIA_INCOMUM);
 
-        assertEquals(CombatantSheet.CRITICAL_RESISTANCE_INSTANCE, sheet.getTotalCriticalResistance(null));
+        assertEquals(Resistance.RC.instance(), sheet.getTotalCriticalResistance(null));
         assertEquals(CriticalResult.NONE, attack(precisAttacker(), sheet));
     }
 
@@ -109,7 +110,7 @@ class CriticalResistanceTest {
     void trollAnatomiaVegetalNarrowsAnAttackersCriticalMargin() {
         CharacterSheet defender = sheetOf(character().race(new Troll()).build());
 
-        assertEquals(CombatantSheet.CRITICAL_RESISTANCE_INSTANCE, defender.getTotalCriticalResistance(null));
+        assertEquals(Resistance.RC.instance(), defender.getTotalCriticalResistance(null));
         assertEquals(CriticalResult.NONE, attack(precisAttacker(), defender));
     }
 
@@ -124,9 +125,9 @@ class CriticalResistanceTest {
         defender.grantFeat(MonstruosoFeat.ANATOMIA_INCOMUM);
         CharacterSheet sheet = sheetOf(defender);
         sheet.grantTemporaryBonus(ModifierType.CRITICAL_RESISTANCE,
-                CombatantSheet.CRITICAL_RESISTANCE_INSTANCE, 3);
+                Resistance.RC.instance(), 3);
 
-        assertEquals(3 * CombatantSheet.CRITICAL_RESISTANCE_INSTANCE, sheet.getTotalCriticalResistance(null));
+        assertEquals(3 * Resistance.RC.instance(), sheet.getTotalCriticalResistance(null));
     }
 
     /**
@@ -142,7 +143,7 @@ class CriticalResistanceTest {
         defender.grantFeat(SobrevivenciaFeat.PROTETOR_TERRITORIALISTA);
         CharacterSheet sheet = sheetOf(defender);
 
-        assertEquals(CombatantSheet.CRITICAL_RESISTANCE_INSTANCE,
+        assertEquals(Resistance.RC.instance(),
                 sheet.getTotalCriticalResistance(inTerrain(TerrainType.FOREST)));
         assertEquals(0, sheet.getTotalCriticalResistance(inTerrain(TerrainType.DESERT)));
         // No Scene at all reads as "condition not met", the convention every Feat hook follows.
@@ -156,9 +157,9 @@ class CriticalResistanceTest {
     void theOtherStandingGrantsAreOneInstanceEach() {
         Character holder = character().build();
 
-        assertEquals(CombatantSheet.CRITICAL_RESISTANCE_INSTANCE,
+        assertEquals(Resistance.RC.instance(),
                 DuelistaFeat.CORACAO_DE_FERRO.resolveCriticalResistance(holder, null));
-        assertEquals(CombatantSheet.CRITICAL_RESISTANCE_INSTANCE,
+        assertEquals(Resistance.RC.instance(),
                 ElementalFeat.TRANSFORMACAO_ELEMENTAL.resolveCriticalResistance(holder, null));
     }
 

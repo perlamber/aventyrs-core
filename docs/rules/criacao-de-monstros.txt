@@ -13,20 +13,20 @@ As características do Monstro são determinadas pelo seu Modelo, um único mons
 Os Modelos indicam as principais características do Monstro, as Habilidades que eles vão receber em sua progressão e determinados elementos de sua aparência. Escolha o modelo pensando exatamente no como o monstro deve ser e no que ele poderá vir a fazer.
 Monstros também possuem Atributos, valores de Egos, Bônus Bases, Pontos de Ação e Defesas.
 Um monstro recebe, em sua Criação 10 pontos de Atributos Base, iniciados em Base 1 e limitados à Base 5. Diferentemente dos jogadores, monstros não são limitados aos Atributos Base 5, podendo ter valores maiores conforme sua Categoria.
-Na criação dos monstros devemos considerar que eles sejam treinados em qualquer número de Perícias, de acordo com o que for coerente para seu tipo. Superá-los inicialmente possui GD Muito Fácil, você pode então escolher uma quantidade de Perícias diferentes igual a Gnose do Monstro para elevar o Grau de Dificuldade em +1 Nível. 
-Monstros adicional apenas metade dos seus valores de Atributo como Modificadores nos GD de suas Perícias, algumas Habilidades Monstruosas podem conceder Modificadores adicionais, nas formas de Bônus ou Redutores.
+Na criação dos monstros devemos considerar que eles sejam treinados em qualquer número de Perícias, de acordo com o que for coerente para seu tipo. Superá-los inicialmente possui GD Muito Fácil, você pode então escolher uma quantidade de Perícias diferentes igual a Gnose do Monstro para elevar o Grau de Dificuldade em +1 Nível.
+Monstros adicionam apenas metade dos seus valores de Atributo como Modificadores nos GD de suas Perícias, algumas Habilidades Monstruosas podem conceder Modificadores adicionais, nas formas de Bônus ou Redutores.
 As Defesas dos Monstros são baseadas no GD de Esquiva e Aparar, somado aos Modificadores cedidos por Equipamentos e Habilidades (Monstruosas ou Aventyr) que ele possuir.
-Após as Perícias podemos calcular os valores de Ação e Ego. 
+Após as Perícias podemos calcular os valores de Ação e Ego.
 Por padrão os Monstros possuem 3 Pontos de Ação, este valor aumenta em +1 em Predadores, em +2 em Apexes e +3 em Abominações.
 Os Pontos de Egos dos Monstros possuem Base 2. Monstros Deviantes recebem +1 ponto adicional para alocar em um dos Egos, então +2 pontos (para um total de +3) se forem Predadores, +3 (para um total de +6) quando se tornam Apex, por fim em +5 (para um total de +11) quando se tornam Abominações. Pontos de Ego dos Monstros são limitados conforme sua Categoria.
-Sobre os Bônus Bases, possuem inicialmente uma quantidade de Pontos de Vida (PV) iguais à 20+(Vigor *5), uma quantidade de Pontos de Determinação (PD) iguais à Metade dos PV+ (Instinto *3) e Pontos de Magia (PM) iguais à metade dos de PV+ (Foco *2). 
+Sobre os Bônus Bases, possuem inicialmente uma quantidade de Pontos de Vida (PV) iguais à 20+(Vigor *5), uma quantidade de Pontos de Determinação (PD) iguais à Metade dos PV+ (Instinto *3) e Pontos de Magia (PM) iguais à metade dos de PV+ (Foco *2).
 Cada Monstro é criado com 1 Habilidade de cada Modelo que ele possua, sempre que adquirir um novo Modelo adquire também um Habilidade do tipo Presa daquele Modelo. Para cada Habilidade Monstruosa que possuir ele recebe Bônus de +2PV.
 Monstros não recebem Vantagens de Ego, Habilidades de Atributo, Especializações e Habilidades de Competência de suas Perícias.
 
 Aumentando o Grau de Poder
 O Grau de Poder (GP) do Monstro é uma referência a quantidade de Pontos de Experiência (EXP) que um grupo de jogadores precisa ter para enfrentar tal ameaça. Um monstro com GP6 é uma ameaça para um grupo de 4 jogadores com média de 6EXP.
 Como parte de sua progressão, cada Monstro recebe:
-  • Para cada 3 pontos em seu Grau de Poder (GP+3) um novo Aprimoramento Monstruoso.
+  • Para cada 3 pontos em seu Grau de Poder (GP+3) uma nova Habilidade Monstruosa.
   • Para cada 4 pontos em seu Grau de Poder (GP+4) uma Perícia é aprimorada em GD +1 nível.
   • Para cada 5 pontos em seu Grau de Poder (GP+5) um novo Talento Geral ou Monstruoso.
   • Para cada 10 pontos em seu Grau de Poder (GP+10) um novo ponto de Ego.
@@ -35,27 +35,27 @@ Tipos de Monstros e seus níveis de poder
 Os Monstros são separados em cinco categorias: Presas, Deviantes, Predadores, Apex e Abominações. Cada categoria possui um diferente nível de poder e desafiam os jogadores de forma única.
 
   • Presas
-Presas são Monstros comumente pacíficos ou que vivem longe de regiões urbanas, de poderes muitas vezes inferiores à média dos Aventyrs Despertos, que raramente atacam outros seres e comumente são caçados por monstros maiores, animais selvagens e aventureiros que visam fazer usos de seus recursos naturais (como peles, ossos, carne e núcleo). 
+Presas são Monstros comumente pacíficos ou que vivem longe de regiões urbanas, de poderes muitas vezes inferiores à média dos Aventyrs Despertos, que raramente atacam outros seres e comumente são caçados por monstros maiores, animais selvagens e aventureiros que visam fazer usos de seus recursos naturais (como peles, ossos, carne e núcleo).
 Monstros deste tipo podem ser filhotes de monstros maiores ou simplesmente criaturas de comportamento simples, frequentemente vivem em bandos ou apresentam comportamentos solitários, permanecendo ocultos, então se juntando apenas em épocas de acasalamento.
 Exemplos: Goblins Selvagens, Lobos Gigantes, filhotes de Trolls etc.
 
   • Deviantes
-Monstros similares as Presas, mas que apresentam comportamentos incomuns ou maior nível de poder, as vezes agem como líderes de bando ou como criaturas solitárias com comportamentos únicos, atacando monstros menores, personagens isolados ou que invadam seu território. 
+Monstros similares as Presas, mas que apresentam comportamentos incomuns ou maior nível de poder, as vezes agem como líderes de bando ou como criaturas solitárias com comportamentos únicos, atacando monstros menores, personagens isolados ou que invadam seu território.
 Alguns Deviantes são capazes de Conjurar Magias e Ativar Habilidades de Aventyrs, mesmo Aventyrs experientes podem ter problemas enfrentando essas criaturas.
 Exemplos: Xamãs Kobold, Ogri-Magis, Vormes do Gelo etc.
 
   • Predadores
-Como o nome sugere, Predadores vivem da caça e conquista de territórios, frequentemente atacam animais, humanoides e outros monstros. 
+Como o nome sugere, Predadores vivem da caça e conquista de territórios, frequentemente atacam animais, humanoides e outros monstros.
 Quando se pensa em monstros, por definição da palavra, normalmente são dos predadores que estamos falando. Fortes e implacáveis, muitas vezes inteligentes e de grande poder, desafiando até mesmo grupos de GranAventyrs.
 Exemplos: Centopeias Gigantes, Leões de Aço, Dragões jovens, Sombras etc.
 
   • Apex
-O topo da cadeia monstruosas, criaturas com nível de poder e influência que são vistos como ameaças a reinos inteiros, exércitos são necessários para pará-los, mesmo os maiores heróis do mundo costumam ter dificuldades para lidar com eles. 
+O topo da cadeia monstruosas, criaturas com nível de poder e influência que são vistos como ameaças a reinos inteiros, exércitos são necessários para pará-los, mesmo os maiores heróis do mundo costumam ter dificuldades para lidar com eles.
 Normalmente são criaturas antigas, que acumularam grande poder ao longo dos séculos, ou muito inteligentes ardilosos e com ambições próprias, por vezes atuando como regentes de seus domínios e acumulam grandes recursos.
 Exemplos: Hidras, Colossos do Deserto e Dragões Adultos.
 
   • Abominação
-Por últimos as Abominações, criaturas de poder imensurável, podendo ser Apex que ascenderam a níveis extraordinários, seres superiores de outros planos ou poderosos visitantes de diferentes realidades. 
+Por últimos as Abominações, criaturas de poder imensurável, podendo ser Apex que ascenderam a níveis extraordinários, seres superiores de outros planos ou poderosos visitantes de diferentes realidades.
 Criaturas com este nível de Poder são ameaças mundiais, as vezes mais do que isso, alguns sendo tratados e declarados como calamidades naturais ou pequenas divindades.
 Em escala de poder as Abominações se encontram apenas abaixo das criaturas Primordiais, como os primeiros Dragões, Generais Elementais, Arcanjos, Arquidemônios e Divindades Menores.
 Exemplos: Criaturas do Vazio, Dragões Anciões, Generais Umbrais, Lordes Elementais, Lichs etc.
@@ -81,7 +81,7 @@ Exemplares são mais poderosos que os monstros comuns, chamados Regulares, pois 
 A Base de suas Perícias é Fácil - ao invés de Muito Fácil, como ocorre com os Regulares -, iniciam o jogo com 2 Talentos adicionais, despertam Títulos Aventyrs quando se tornam Deviantes e Apex.
 Para cada GP+6 recebem um novo Talento, adicional ao padrão, mas ao Despertarem como Aventyr devem escolher entre Talentos adicionais ou Habilidades do Título Desperto. Se uma Habilidade Monstruosa também conceder Títulos, um Monstro Exemplar poderá positivamente superar o limite de duas Centelhas Aventyrs.
 Monstros Exemplares podem receber Vantagens de Ego, Habilidades de Atributo, Especializações e Habilidades de Competência de suas Perícias.
-Os Exemplares são criaturas de grande raridade, ideais para serem utilizados como PdN de presença recorrente ou fixa, como os vilões principais ou finais de seus arcos de história ou campanhas. 
+Os Exemplares são criaturas de grande raridade, ideais para serem utilizados como PdN de presença recorrente ou fixa, como os vilões principais ou finais de seus arcos de história ou campanhas.
 Todos os monstros exemplares são inteligentes e nomeados, possuindo também valores de Fama Positiva e Negativa.
 
 Aprimoramentos
@@ -134,7 +134,7 @@ Aprimoramentos das Abominações
 
 Habilidade - Ofuscar [Predador]
 Efeito Passivo: A Resistência à Correntes de Efeitos dos inimigos deste Monstro são reduzidas em -2. Resfriamento 1.
-Efeito Ativo – Ofuscar [+1PA, 2PD]: Neste Turno as Perícias de Ataques recebem a Corrente de Efeitos Monstruosa – Ofuscar. 
+Efeito Ativo – Ofuscar [+1PA, 2PD]: Neste Turno as Perícias de Ataques recebem a Corrente de Efeitos Monstruosa – Ofuscar.
 “Ofuscar – Alvo sofre Redutor de -1PA por 1 Rodada, este Monstro recebe Bônus de +1PA por 1 Rodada.”
 Aprimoramentos dos Apex
   • Ofuscar – Duração muda para 1 Rodada e adicionalmente afeta as Defesas contra os ataques Corpo-a-Corpo.
@@ -142,7 +142,7 @@ Aprimoramentos das Abominações
   • Ofuscar – Se torna um efeito Passivo, sempre ativo.
 
 Habilidade - Aura do Paradoxo [Apex]
-Efeito Ativo [2PA, 3PD]: Enquanto houver pelo menos 1 personagem em Distância Curta que não possua Aura do Paradoxo, este monstro recebe Bônus de +2PA. Todos os outros personagens no Alcance recebem Redutor de -2PA. 
+Efeito Ativo [2PA, 3PD]: Enquanto houver pelo menos 1 personagem em Distância Curta que não possua Aura do Paradoxo, este monstro recebe Bônus de +2PA. Todos os outros personagens no Alcance recebem Redutor de -2PA.
 Pontos de Ação reduzidos pela Aura do Paradoxo são recuperados no início da Rodada seguinte, mas apenas após os personagens deixarem a Área de Efeito.
 A Duração da Aura do Paradoxo é de Concentração + 2 Rodadas, o efeito é encerrado automaticamente (mesmo com a Concentração mantida) se não houver outros personagens em sua Área de Efeito por 2 Rodadas
 Aprimoramentos das Abominações
@@ -274,7 +274,7 @@ Aprimoramento dos Apex
 
 Habilidade – Mímico [Deviante]
 Efeito Passivo: O GD das Perícias Furtividade e Persuasão aumentam em +1 nível.
-Efeito Ativo – Mímico [2PA, 4PD]: Mimetiza os efeitos de uma Habilidade ativada ou Magia conjurada na última Rodada. Supremas e Magias Florescente não podem ser mimetizadas desta forma. 
+Efeito Ativo – Mímico [2PA, 4PD]: Mimetiza os efeitos de uma Habilidade ativada ou Magia conjurada na última Rodada. Supremas e Magias Florescente não podem ser mimetizadas desta forma.
 Aprimoramento dos Predadores
   • Mímico – Permite mimetizar efeitos das últimas 3 Rodadas.
 Aprimoramento dos Apex
@@ -290,17 +290,16 @@ Aprimoramento dos Apex
   • Possessão – Duração dobrada contra alvos com Autocontrole zero.
 Aprimoramento das Abominações
   • Possessão – Apenas 1 vez por Cena, ao ser destruído (PV reduzido à zero ou menos), pode efetuar Possessão contra o Alvo com o menor Autocontrole em Distância Curta. Este Efeito ignora o Tempo de Resfriamento.
-
 Habilidade - Tanatose [Apex]
-Efeito Passivo: Ao sofrer dano fatal, ao invés disso entra em um estado de torpor ou – quando possível – abandona o corpo em estado de possessão, evitando a morte derradeira. 
+Efeito Passivo: Ao sofrer dano fatal, ao invés disso entra em um estado de torpor ou – quando possível – abandona o corpo em estado de possessão, evitando a morte derradeira.
 Efeito Ativo – Mimetizar Ressurreição: Encerra o estado de Torpor ou possui um novo alvo vulnerável em seu alcance. Este efeito só pode ser ativado após 2d6 dias. Após ativer este Efeito, o Monstro perde esta Habilidade por 2d6 meses.
-Aprimoramento das Abominação 
+Aprimoramento das Abominação
   • Após ativar Mimetizar Ressurreição o monstro retorna mais forte e tomado por desejo de vingança. Suas perícias têm o GD aumentado em +2 níveis contra aqueles que o derrotaram no passado.
 
 Habilidade - Forma Verdadeira [Apex]
 Efeito Passivo: A Verdadeira Forma deste monstro não é Humanoide, sendo esta forma apenas uma casca conveniente. Ao alternar de Forma, temporariamente, este Monstro adquire um novo Modelo, então recebe uma Habilidade Presa e Deviante dele.
 Efeito Ativo – Forma Verdadeira: Ao abandonar sua forma Humanoide, este Monstro recebe Bônus Racial de +2 em todos os Atributos, rolagens de Conjuração e Resistência à Correntes de Efeitos, também recebem RD, RM e Resistência à Críticos. Os Ataques do Monstro enquanto em sua Forma Verdadeira tem a Margem Crítica Menor aumenta em +2 números, reduzem a Resistência à Correntes de Efeitos de seus alvos em -2, então recebem a Corrente de Efeitos Monstruosa – Terror da Forma Verdadeira.
-“Terror da Forma Verdadeira – Alvos deste Ataque recebem a Condição Abalado por 2 Rodadas, novas aplicações desta Corrente de Efeitos aumenta a Duração em +1 Rodada e podem progredir a Condição para Assustado e Apavorado.”
+“Terror da Forma Verdadeira – Alvos deste Ataque recebem a Condição Abalado por 2 Rodadas, novas aplicações desta Corrente de Efeitos aumenta a Duração em +1 Rodada e podem progredir a Condição para Amedrontado e Apavorado.”
 Aprimoramento das Abominação
   • Forma Verdadeira - GD das Rolagens de Perícias de Ataque e Defesas aumentadas em +1 nível.
 
@@ -405,12 +404,12 @@ Aprimoramentos dos Predadores
   • Investida Aérea – Margem Crítica Menor +4, Efeito Crítico adicional Guilhotina.
 Aprimoramentos dos Apex
   • Investida Aérea – Dano +1d6, Tempo de Resfriamento reduzido para 1 Rodada.
- 
+
 Domínio dos Céus [Deviante]
 Efeito Passivo: Perícias Físicas recebe Bônus de +2 enquanto voando.
-Efeito Ativo – Domínio dos Céus [Ação Livre, 3PD]: Recebe Bônus de +2PA neste Turno. Resfriamento 3. 
+Efeito Ativo – Domínio dos Céus [Ação Livre, 3PD]: Recebe Bônus de +2PA neste Turno. Resfriamento 3.
 Aprimoramentos dos Predadores
-  • Domínio dos Céus – Resfriamento muda para 2 Rodadas 
+  • Domínio dos Céus – Resfriamento muda para 2 Rodadas
 Aprimoramentos dos Apex
   • Domínio dos Céus – Se torna um Efeito Passivo, Sempre ativo.
 
@@ -447,7 +446,7 @@ Aprimoramento das Abominações
 Invocar de Tempestades [Apex]
 Efeito Passivo: Uma aura de Ventos Caóticos cerca este Monstro. A Área Circular Curta ao redor é sempre terreno difícil, o efeito aumento para Área Circular Média enquanto o monstro estiver voando. Este monstro é imune a Ataques à Distância físicos.
 Efeito Ativo - Invocar Tempestade [2PA 3PD]: No ato da Ativação e no início de cada Rodada, Personagens afetados pela aura de Ventos Caóticos são cegados e empurrados 2UD para trás a cada Rodada. Duração 3 Rodadas e Resfriamento 2.
-Aprimoramento das Abominações 
+Aprimoramento das Abominações
   • Invocar Tempestade – Antes de serem empurrados, os personagens afetados pela aura de Ventos Caóticos sofrem 2d6 pontos de Dano Elemental: Vento. No fim de cada Rodada cada personagem na área sofre 2d6 pontos de Dano Elemental: Eletricidade. Danos causados por Invocar Tempestade são reduzidos em -1 para cada UD entre o personagem e o Monstro.
 
 Modelo - Brotos de Mapinguari
@@ -486,7 +485,7 @@ Habilidade - Outonal [Deviante]
 Efeito Passivo: Categoria de Tamanho aumenta em +1, também recebe Bônus Racial de +3 em Defesas e RDS.
 Efeito Ativo – Murchar [3PA, 1PD]: Personagens que ataquem o Outonal sofrem redutor de -2 em Força (mínimo 1) e tem efeitos de cura reduzidos à zero (efeitos de Doença). Pontos de Vigor reduzidos por Murchar são recuperados cada sempre que o alvo passar por qualquer efeito de Descanso. Estes efeitos não são cumulativos, personagens afetados por Murchar se tornam imunes a novas instancias deste efeito até passarem por algum efeito de Descanso. Duração de 1 Rodada e Resfriamento 1.
 Aprimoramento dos Predadores
-  • Murchar – Personagens em Distância Muito Curta são obrigados a desferir seu primeiro ataque no Monstro Outonal, este é um efeito de Encantamento e não afeta personagens Feéricos e outros Outonais. 
+  • Murchar – Personagens em Distância Muito Curta são obrigados a desferir seu primeiro ataque no Monstro Outonal, este é um efeito de Encantamento e não afeta personagens Feéricos e outros Outonais.
 Aprimoramento dos Apex
   • Murchar – Personagens sofrem redutor adicional de -2 em Foco e Instinto.
 
@@ -524,6 +523,233 @@ Aprimoramento das Abominações
   • Aliados do Monstro que morram ou entrem em coma enquanto afetados pela Dádiva de Gaea se tornam Totens do Ciclo Natural. Ao morrer, um Dádiva de Gaea pode transferir sua essência vital para um Totem do Ciclo Natural – Área de Efeito Ao Alcance dos Olhos -, então ressuscitar a partir dele em 3d6 dias (efeito de Possessão).
 “Totem do Ciclo Natural – Efeito de Encantamento, corpos transformados em Totens do Ciclo Natural tem seus PV alterados para 1 após 4 Rodadas. Os Totens recuperam PV de qualquer personagem próximo a cada Rodada como se passassem por um Descanso Mínimo. Estes efeitos são aplicados apenas se o Monstro com a Dádiva de Gaea estiver vivo.”
 
+Caminhante Umbral
+Anatomia Umbral (RM e RE:Tds + Imunidades crit)
+> Infiltrador Umbral: Dex +2 + GD +1 Furtividade e Atenção
+> Arauto da Verdade: Car +2 + GD +1 Persuasão e Empatia Selvagem
+>> Soldado Sombrio: Perícias de Ataque GD +1 + Corrente - Corromper (encantamento)
+>> Anunciador do Véu: Mimetiza Magias Umbrais + Conjuração GD +1
+>>> Possessão Umbral: CritMenor +4 + Ataques crits recebem corrente possessão
+>>> Caminhante Umbral: Teleporta por sombras + cria portais + conjura servos umbrais
+
+Cria de Neméia
+Vigor +2, PV +50%
+> Solidez: Meio-Dano Físico
+> Sangue de Fada: Meio-Dano Mágico
+>> Inquebrável: Multiplicador de PV +2
+>> Vitalidade de Geridão: Regen Metade Vigor
+>>> Encouraçado de Neméia: Imunidade Danos Físicos
+>>> Escárnio de Neméia: Imunidade Efeitos Mágicos
+
+Diminuto
+: Categoria de Tamanho reduzida em -1, pode ocupar espaços ocupados por personagens de categorias maiores
+> Pequeno e Veloz: Destreza +1, Movimento Base +2
+> Minúsculo: Categoria de Tamanho reduzida em -1; Defesas +2
+>> Pequeno Certeiro: Perícia de Ataque +2, Margem Crítica +2
+>> Diminuto: Categoria de Tamanho -1, Furtividade GD+1
+>>> Escudo Vivo: Meio-Dano; enquanto no espaço ocupado por outro personagem 50% de chance de quando for alvo primário, alvo mudar para o outro personagem
+>>> Imperceptível: Categoria de Tamanho -3, Furtividade GD+2, Defesas GD+2
+
+Dracônico
+: RE, For +2, Foc +2, vulnerabilidade + escamas def +2 e meio-dano elemental
+> armamento draconico: armas naturais + margem crit +2 e reduz res corrente
+> Magia Draconica: mimetismo magia elemental + divina/profana
+>> sopro elemental: vigor +2 e arma de sopro e corrente aplica crit cataclismo
+>> domínio arcano: foco +2, feitiçaria dracônica
+>>> representa de deus: Car +4 e sempre considerado neutro para efeitos
+>>> vontade de deus: palavra de poder
+
+Modelo - Escolhido de Macária
+“Anatomia de Morto-Vivo – Este Monstro está morto, mas se recusa a descansar ou seu descanso eterno lhe foi negado. Sua nova fisiologia garante imunidade a Efeitos Críticos (apenas Atordoante, Dilacerar, Empalar, Ferida Profunda, Oferenda Maldita e Sangramento) e Resistência a Correntes de Efeitos +2, Efeitos diversos de sangramento, doenças, maldições e venenos. Efeitos Profanos adicionalmente curam os mortos em 1d6+ Metade do Vigor, além de não infligir nenhum dano. Efeitos Sagrados ou curativos, feitos para os vivos, não recuperam PV, não ressuscitam ou regeneram partes perdidas, ao invés disso infligem 2d6+ Metade do Vigor pontos de Dano Sagrado. Habilidades monstruosas de Monstros de outros modelos, podem curar um Morto-Vivo, desde que eles também sejam Mortos-Vivos. Os Mortos não precisam dormir, respirar (imune a danos de Asfixia) e se alimentam da força vital ou sangue dos vivos.”
+
+Habilidade – Renascido [Presa]
+Efeito Passivo: Anatomia de Morto-vivo. Você é um morto-vivo senciente, consciente de sua condição e sua Centelha ainda brilha. Recebe Bônus Racial de +2 em Força e Instinto e RDS.
+Efeito Ativo – Sanguenomancia Inata [3PA, 3PD]: Este é um Ataque Mágico desferido Corpo-a-Corpo utilizado para roubar a vitalidade dos vivos e se alimentar. Este ataque não inflige danos, mas o alvo sofre Redutor Temporário de -1 em Vigor e o Monstro recebe Bônus Temporário de +1 em Vigor (Efeito de Doença, não cumulativo), então recebe Roubo de Vida 2 por 3 Rodadas. Pontos de Vigor perdidos desta forma são recuperados após 1 Descanso Verdadeiro. Resfriamento 3.
+Aprimoramento dos Deviantes
+  • Desperta um Título Aventyr e uma Especialização
+Aprimoramento dos Predadores
+  • Desperta 3 Habilidades de Título
+Aprimoramento dos Apex
+  • Desperta uma Especialização, 1 Habilidade de Título e 1 Suprema
+
+Habilidade – Carrasco Morimbundo [Presa]
+Efeito Passivo: Esqueletos, Zumbis, Carniçais e outras formas de mortos sem vontade própria são tipos de Carrascos Morimbundos, são resistentes e vorazes, recebem Bônus Racial de +2 em Vigor, Autocontrole 0 (não sofrem efeitos negativos por autocontrole zero) e recebem Roubo de Vida 1.
+Efeito Ativo – Instinto Predatório Mortis [1PA e 2PD]: Bônus de +2 em Iniciativa e Pontos de Ação por 2 Rodadas. Esta Habilidade é utilizada apenas para atacar e devorar inimigos vivos, enquanto ativa o Carrasco Morimbundo ignora alvos que possuam Anatomia de Morto-Vivo e Anatomia de Objeto.
+Aprimoramento dos Deviantes
+  • Roubo de Vida aumenta para 3.
+Aprimoramento dos Predadores
+  • Instinto Predatório – Duração aumenta em +1 Rodada para cada personagem vivo em Distância Longa no ato da ativação.
+Aprimoramento dos Apex
+  • Roubo de Vida aumenta para 4 enquanto houver ao menos um personagem ferido em Distância Curta.
+  • Instinto Predatório – Enquanto ativo a Margem Crítica Menor aumenta em +3 e recebe Oferenda Maldita como Efeito Crítico adicional.
+
+Habilidade – Senhor dos Mortos [Deviante]
+Efeito Passivo: Pode se comunicar, comandar e criar mortos-vivos que não esteja sobre o comando de outro Senhor dos Mortos ou de um Necromante (Título Aventyr). Este é um efeito de Aura e afeta quaisquer mortos-vivos em Área de Efeito Circular Curta. Apenas Mortos-Vivos que sejam de categoria inferior ao do Senhor dos Mortos e que não sejam Renascidos são afetados por este efeito (Efeito de Encantamento). A quantidade de mortos-vivos controlados ou invocados pelo Senhor dos Mortos não pode superar seu Valor de Carisma.
+Efeito Ativo – Procissão dos Desencarnados [3PA, 4PD]: Invoca um Carrasco Moribundo Presa para auxiliar por Concentração + 5 Rodadas. Refrigeração 1.
+Aprimoramento dos Predadores
+  • Carisma +2
+  • Procissão dos Desencarnados - invoca Carrascos Moribundos Deviantes.
+Aprimoramento dos Apex
+  • Aura do Senhor dos Mortos permite controlar quaisquer Mortos-Vivos de categoria inferior.
+  • Procissão dos Desencarnados – invoca 2 Carrascos Moribundos Deviantes ou 1 Carrasco Moribundo Predador.
+
+Habilidade – Espectral [Deviante]
+Efeito Passivo: Incorpóreo, seus ataques são mágicos e tem a Margem Crítica Menor aumentada em +1 número.
+“Incorpóreo – Este monstro não possui um corpo, estando preso a plano material por uma forte força de vontade ou magias profanas. A ausência de um corpo torna imune a danos, exceto quando causados por Armas de Prata, fontes Primordiais, Elementais e Mágicas. Pode ignorar barreiras e terrenos difíceis em seus movimentos.”
+Efeito Ativo – Garras Espectrais [2PA, 4PD]: Dano aumentado em +1d6, recebem Sangramento como Efeito Crítico adicional e recebe a Corrente de Efeitos Monstruosa – Sangria Profana. Este efeito tem Duração de 2 Rodadas e Resfriamento 2.
+“Sangria Profana – Alvo perde 2PV e 1PD a cada Turno por Vigor Rodadas, este é um efeito de Sangramento. Espectrais recebem Roubo de Determinação 2 contra alvos afetados pela Sangria Profana.”
+Aprimoramento dos Predadores
+  • Recebe Movimento Base de Voo e pode trespassar espaços ocupados por outros personagens
+Aprimoramento dos Apex
+  • Garras Espectrais – Custo de Ativação aumentado para 5PD, Duração aumentada para 4 Rodadas.
+
+Habilidade – Filactéria [Predador]
+“Filactéria - A alma deste Monstro está selada em um objeto e destruir seu corpo ou essência apenas o coloca em Torpor por 1d6 Rodadas. Este morto-vivo é destruído definitivamente apenas quando a Filactéria é destruída. Os PV deste monstro são reduzidos à metade, a outra metade se torna a Dureza da Filactéria.”
+Efeito Passivo: Caso a Filactéria sofra danos o Monstro entra em um estado de fúria incontrolável, recebendo Bônus Variável de +6 em Força e Instinto (não cumulativo), este Bônus decai em 1 unidade a cada Rodada e priorizando atacar aqueles que infligiram danos ou que interagiram com a Filactéria.
+Efeito Ativo – Proteger a Filactéria [4PA, 5PD]: Esta Habilidade só pode ser ativada enquanto houver inimigos em Distância Curta da Filactéria e apenas se a Filactéria estiver danificada. O GD das Perícias de Ataque, Atenção e Domínio do Mana aumentam em +1 nível. Este efeito dura por toda a Cena
+Aprimoramento dos Apex
+  • O Monstro e a Filactéria recebem RA e recuperam Metade do Vigor PV a cada Rodada
+Aprimoramento das Abominações
+  • O Monstro e a Filactéria reduzem danos à metade, exceto danos causados por fontes Sagradas, Primordiais e Elemental: Fogo.
+
+Habilidade – Anunciador da Escuridão [Predador]
+Efeito Passivo: Recebe RA, RD e RM, propaga a aura Presença do Ceifeiro.
+“Presença do Ceifeiro – Inimigos vivos em Distância Curta sofrem 1d6 pontos de Dano Mágico Profano, o Monstro recupera uma quantidade de PV igual ao dano causado (efeito de Roubo de Vida).”
+Efeito Ativo – Marca da Escuridão [2PA, 4PD]: Ataques tem o GD aumentado em + 1 nível e recebem a Corrente de Efeitos Monstruosa – Marca da Escuridão.
+“Marca da Escuridão - Alvo é Amaldiçoado e sofre 3d6 pontos de Dano Mágico Profano no início da próxima Rodada, se este ataque reduzir o PV do alvo à zero ou menos ele morrerá imediatamente, o Monstro recebe Roubo de Vida adicional igual ao Vigor do alvo por 2 Rodadas. Efeito não cumulativo.”
+Aprimoramento dos Apex
+  • Marca da Escuridão - Alvos mortos pela Marca da Escuridão se levantam como Renascidos ao controle do Monstro após 2 Rodadas. Efeito de Possessão com Duração de 2 Rodadas.
+Aprimoramento das Abominações
+  • Marca da Escuridão – Duração indeterminada. Efeitos que removem Maldições ou Possessão removem a marca da Escuridão.
+
+Habilidade - Cuspidor de Pragas [Apex]
+Efeito Passivo: Enquanto em combate, a Cada Rodada Ímpar dois Carrascos Moribundos do tipo Deviante são invocados para auxiliar o Monstro. Quando a Cena de Combate termina ou o Cuspidor de Pragas é destruído os mortos invocados são destruídos.
+Efeito Ativo – Praga Zumbi [3PA, 3PD]: Um Alvo Único Distante – Distância Muito Curta é afetado pela Praga Zumbi.
+“Praga Zumbi – Alvo recebe o Estado Doente e sofre Redutor de 1 ponto de Vigor a cada Rodada, esta Doença pode ser Propagar. Personagens que tenham o PV reduzido à zero ou menos morrem imediatamente, 2 Rodadas depois levantam-se como Carrascos Moribundos do tipo Deviante sob o controle do Cuspidor de Pragas. Duração 3 Rodadas e Resfriamento 2.”
+Aprimoramento das Abominações
+  • Praga Zumbi – Alvos recebem a Condição Silêncio.
+
+Habilidade – Mestre das Marionetes
+Efeito Passivo- Emite a Aura de Mestre das Marionetes.
+“Mestre das Marionetes – Emite uma Aura com Área de Efeito - Circular Curta. Personagem vivos em seu interior perdem 1 ponto Temporário de Autocontrole a cada 2 Rodadas. Personagens que tenham Autocontrole zero no interior da Aura são Possuídos.
+Efeito Ativo – Títere [4PA, 4PD]: O Monstro se torna imune a danos e um Alvo Único Distante – Distância Muito Curta é Possuído por 1 Rodada. Resfriamento 3.
+Aprimoramento das Abominações
+  • Mestre das Marionetes – Área de Efeito aumenta para Distância Média.
+  • Títere – Alcance aumenta para Distância Curta.
+
+Fera Marítima
+Movimento Base de Natação, Vigor +2
+> Anfíbio: Pode respirar na água e fora, Movimento Base de Natação +1
+> Camuflagem Marinha: Enquanto submerso, Perícias +2 e Furtividade +1GD
+>> Benção das Irmãs: Cria água
+>> Forma da Água: Recebe Alcance e reposiciona ao sofrer danos - 1x Rodada
+>>> Maremoto: Invoca ondas Gigantes, Vigor Rodadas. 2d6 pontos de dano, dobro contra construções e veículos. Empurra alvos 3UD para trás, impossível se mover na direção. - 1x Cena
+>>> Canto da Sereia: Surdez (maldição), alvo não escuta nada, exceto pelos sons do monstro. Corrente de Efeitos alvos atacam o personagem mais próximo, priorizando aliados.
+
+Força Natural
+: Arma Natural + Defesa Natural
+> Arma Natural adicional + Ataque e Dano +1
+> Defesas +2, aura venenosa progressiva
+>> Ataque GD+1 e aplica Corrente de Efeitos - Envenenar: Multiplicador de PV -1
+>> Defesas GD+1 e aplica Corrente de Efeitos - Veneno de Contato
+>>> Sangue venenoso
+>>> Espasmos da Morte
+
+Grandalhão
+ - Categoria de Tamanho +1 e RDS
+> Categoria de Tamanho +1
+> Ataque +2 e Dano +1 vs Menores
+>> Defesas +2 e Meio-Dano vs Menores
+>> Margem Crítica +2 e Corrente de Efeitos - Explosão vs Menores
+>>> Categoria de Tamanho +Metade do Vigor
+>>> Imunidade a Críticos Menores e Correntes vs Menores
+
+Herculano
+Força +2, Margem Crítica +1
+> Brutamontes: Força +1, atk empurra alvo 1UD para trás
+> Impacto Sismico: Dano em Área, +50% vs objetos
+>> Letalidade Monstruosa: Margem Crítica +2, Dano Crit +1d6
+>> Marrada Violenta: investidas causam +2d6 de danos, crit atordoamento, corrente de efeitos aplica derrubar
+>>> Precisão Hercúlea: Ataque sempre acerta (1x Rodada)
+>>> Motivação Furiosa: Após sofrer danos, Força +1 (cumulativo, não ultrapassa o dobro). Bônus reduzido em 1 por Rodada.
+
+Horda
+: Vigor +2, 1 integrante pra cada 5 PV, fisiologia de horda
+> Convocar: A Horda ganha 1 novo integrante em cada Rodada Par, limitado ao PV máximo
+> Ataques da Horda recebem Bônus de +1 para 2 Membros e Corrente de Efeitos - Agarrar e Devorar: alvo não pode se mover por 1 Rodada e sofre 1d6 de dano primordial para cada 10/7/4 PV da Horda
+>> Crescimento Contínuo: A Horda ganha 1 novo integrante em cada Rodada, indivíduos adicionais formam +1 horda
+>> Mestre da Horda: no centro da Horda existe um personagem adicional 10PV. Enquanto a Horda tiver ao mentos 1 integrante danos causados à ele são reduzidos à 1. Sempre que a Horda sofrer um Dano Crítico Menor há 50% de chances do dano ser causado ao Mestre da Horda, se for um Crítico Maior o dano sempre será causado a ele. Mestre da Horda não desfere Ataques, mas concede RD, RM, Roubo de Vida e Margem Crítica Menor +2 à horda.
+>>> Proliferar: A Horda ganha Metade do Vigor novos integrante em cada Rodada, membros divididos entre a hora principal e adicionais
+>>> Ilimitado: Vigor +3, 1 integrante por PV
+
+Intelecto Superior
+Perícias Baseadas em Gnose e Foco GD+1
+> Inteligência Marcial: Crit +2, Dano +1d6, Furtividade +2, Investida Furtiva +1d6
+> Ardiloso Gnose +2 e Foco +2
+>> Antecipação: Iniciativa +3, PA+2 enqto primeiro, GD+1 vs alvos conhecidos (fama), GD +1 Terreno conhecido
+>> Mimetismo Magias Primordiais e Temporais, RM e Meio-Dano vs Magias
+>>> domínio do todo: GD +2 Gnose Perícias
+>>> Efeito Akira: leitura de mentes (reação e iniciativa +3) + corrente de efeitos - controle de mente (possessão)
+
+Praga
+: corrente de efeitos - aplica doença física
+> ao morrer propaga doença
+> perícias +2 na presença de doentes, roubo de vida vs doentes
+>> doença pd/pm = doença mágica
+>> doença autocontrole/sorte/iniciativa
+>>> aura doença
+>>> semente da praga: maldição - doença "permanente", alvo vira praga
+
+Presença Real
+Carisma e Autocontrole +2, convoca aliados e subordinados
+> Assustar / Desmotivar: Aplica Medo, Perícias +2 vs amedrontados
+> Aturdir: Atordoa o alvo, ataque remove autocontrole de alvo atordoado
+>> Grito Destrutivo: área progressiva 2d6+Car - corrente aplica pavor
+>> prole dos ventos: GD perícias de Carisma +1, corrente remove autocontrole
+>>> sussurro de sylph: encanto controle (maldição)
+>>> Presença: Perícias GD+2 vs alvos com autocontrole inferior
+
+Sauróide
+Força +2, Instinto +2, armas naturais
+> Terópode: mãos livres, corrente de efeitos agarrar + crit corrente de efeitos devorar
+> Adaptação milagrosa: meio-dano e imunidades a crit
+>> Peso Pesado: Categoria de Tamanho +1
+>> Impulso de Lacerto: Força +2, imunidade a medo
+>>> Rugido Primitivo: Redução de Autocontrole em Área, corrente de efeitos - aplica medo
+>>> Vigor Ancestral: Defesas +2GD, corrente de efeitos - aplica medo
+
+Selvagem
+Furtividade, Conhecimentos: Natureza, Danos +1d6
+> Arma Natural Aprimorada: Dano Base +1
+> Defesa Natural: Defesas +2
+>> Ataque Destruidor: Margem Crítica +2 - corrente de efeitos, aplica crit 2x
+>> Postura Impenetrável: Margem Crítica +1, Resistência Críticos e Correntes +2
+>>> Ataque Explosivo: Área de Efeito + corrente de efeitos: defensivos sofrem Força pts de dano
+>>> Retribuição Selvagem: Atacantes sofrem danos + corrente de efeitos: armas sofrem danos
+
+Vida Artificial
+: Anatomia de Construto + Vantagem em Perícia para aliados
+> Guardião: Defesas +2, metade para aliados em dist curta
+> Armamento autômato: Ataques +2, Danos +1d6, Crit +2
+>> Protetor de Território: Tamanho +1, GD +1 dentro do território
+>> Maquina de Cerco: Tamanho +1, Ataques GD +1, PA +2, Margem Crit +2 + Corrente aplica crit 2x
+>>> Fortaleza Móvel: Defesas GD+2 + Imunidade a Crit e Correntes + Tamanho +2
+>>> Artefato Bélico: Ataques GD+2 + Aura de Dano Elemental + Ataque Explosão + Corrente Empurra e Derruba
+
+Extra-planar
+: Anatomia extra-planar (Arma Natural + RCrit + ResCorrEfct + Imunidades crit)
+> negação do aether: anti magia por nível + alcance
+> adaptação: Multiplic BB +1
+>> manipulação do aether: dano primordial 2d6 área ou dobro alvo único
+>> assimilação:  arma natural ataques reduzem multiplicador de BB aleatório, corrente roubo de BB. Multiplicadores 0 = morte
+>>> negação de centelha: anti habilidade aventyrs
+>>> telecinesia titulo
+
+Modelo – Abissal
+Modelo – Celestial
+Modelo – Arauto da Casualidade (sorte)
+Modelo – Caminhante Onírico (Morpheus)
+Modelo – Coração Vazio
 Quando Monstros usam Egos
 Monstros possuem valores de Egos, recebem suas Vantagens e alguns podem ativar seus Efeitos.
 Monstros comuns podem utilizar no máximo dois Efeitos de Ego por Cena (por exemplo usando Sorte em uma Cena de Combate para fazer um Personagem Jogador rolar novamente um ataque que não seja um Sucesso Crítico Maior, tentando evitar seu Dano e seus Efeitos). Monstros exemplares não possuem esta limitação, e podem consumir seus Egos conforme sua necessidade.

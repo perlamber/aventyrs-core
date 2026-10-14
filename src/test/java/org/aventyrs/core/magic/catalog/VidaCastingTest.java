@@ -198,4 +198,16 @@ class VidaCastingTest {
     void sobrecuraIsNotOnTheWardedVersions() {
         assertTrue(service.resolveEffectChain(VidaSpell.CORPO_FECHADO, caster, DiceRoller.fixed(1)).isEmpty());
     }
+
+    /** Conjurar Defensivamente (core 0.1.6.20): +1PA, one GD level harder, Desvantagem on its Cura. */
+    @Test
+    void aDefensiveCastIsDearerHarderAndWeaker() {
+        SpellCastingResult plain = service.castSpell(request(VidaSpell.TOQUE_CURATIVO, ally)
+                .opposedBranchLevel(BranchLevel.SEMENTE).build());
+        SpellCastingResult defensive = service.castSpell(request(VidaSpell.TOQUE_CURATIVO, ally)
+                .opposedBranchLevel(BranchLevel.SEMENTE).defensive(true).build());
+
+        assertEquals(DifficultyLevel.MEDIUM, defensive.getCastingDifficultyLevel());
+        assertEquals(plain.getActivationTime().actionPoints() + 1, defensive.getActivationTime().actionPoints());
+    }
 }

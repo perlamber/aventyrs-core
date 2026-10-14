@@ -1,5 +1,11 @@
 package org.aventyrs.core.character.services;
 
+import org.aventyrs.core.action.ReactionCheckpoint;
+import org.aventyrs.core.scene.grid.BoardPosition;
+import org.aventyrs.core.scene.grid.HexGrid;
+import java.util.Map;
+import java.util.TreeMap;
+
 import lombok.NonNull;
 import org.aventyrs.core.ability.AttributeAbility;
 import org.aventyrs.core.action.Manoeuvre;
@@ -17,6 +23,7 @@ import java.util.List;
 public class MovementReactionServiceImpl implements MovementReactionService {
 
     private final AttackRangeService attackRangeService;
+    private final CharacterSizeService sizeService = new CharacterSizeServiceImpl();
 
     public MovementReactionServiceImpl() {
         this(new AttackRangeServiceImpl());
@@ -45,6 +52,63 @@ public class MovementReactionServiceImpl implements MovementReactionService {
         return List.copyOf(reactors);
     }
 
+    @Override
+    public List<ReactionCheckpoint> getRouteCheckpoints(@NonNull final CombatantSheet mover,
+                                                        @NonNull final List<BoardPosition> route,
+                                                        final Manoeuvre manoeuvre, final SceneContext moverContext,
+                                                        @NonNull final Map<CombatantSheet, BoardPosition> positions,
+                                                        final CombatantSheet chargeTarget) {
+        return getRouteCheckpoints(mover, route, manoeuvre, moverContext, positions, chargeTarget, Map.of());
+    }
+
+    @Override
+    public java.util.OptionalInt getMeleeReachUd(@NonNull final CombatantSheet sheet) {
+        Character character = sheet.getCharacter();
+        List<Weapon> inHand = new ArrayList<>(character.getDrawnWeapons());
+        inHand.addAll(sheet.getNaturalWeapons());
+        return inHand.stream()
+                .filter(weapon -> weapon.getAttackSkillType() == SkillType.ATAQUE_CORPO_A_CORPO)
+                .mapToInt(weapon -> attackRangeService.getEffectiveRangeInUnidadesDeDistancia(character, weapon))
+                .max();
+    }
+
+    @Override
+    public List<ReactionCheckpoint> getRouteCheckpoints(@NonNull final CombatantSheet mover,
+                                                        @NonNull final List<BoardPosition> route,
+                                                        final Manoeuvre manoeuvre, final SceneContext moverContext,
+                                                        @NonNull final Map<CombatantSheet, BoardPosition> positions,
+                                                        final CombatantSheet chargeTarget,
+                                                        @NonNull final Map<CombatantSheet, Integer> knownReachUd) {
+        if (moverContext == null || route.isEmpty() || isExempt(mover.getCharacter(), manoeuvre, moverContext)) {
+            return List.of();
+        }
+        int moverRadius = sizeService.getEffectiveSizeCategory(mover).getBodyRadius();
+        Map<Integer, List<CombatantSheet>> byIndex = new TreeMap<>();
+        for (CombatantSheet enemy : moverContext.getEnemies()) {
+            BoardPosition at = positions.get(enemy);
+            if (at == null || manoeuvre == Manoeuvre.INVESTIDA && enemy == chargeTarget
+                    && !mayDefendPerimeterAsTarget(enemy)) {
+                continue;
+            }
+            int enemyRadius = sizeService.getEffectiveSizeCategory(enemy).getBodyRadius();
+            for (int i = 0; i < route.size(); i++) {
+                int gap = Math.max(1, HexGrid.distance3d(route.get(i), at) - moverRadius - enemyRadius);
+                // Correr: "terá sua Área de Ataque Corpo-a-Corpo reduzida para adjacente".
+                if (manoeuvre == Manoeuvre.CORRER && gap > 1) {
+                    continue;
+                }
+                Integer known = knownReachUd.get(enemy);
+                if (known != null ? gap <= known : threatens(enemy, Range.fromUnidadesDeDistancia(gap))) {
+                    byIndex.computeIfAbsent(i, index -> new ArrayList<>()).add(enemy);
+                    break;
+                }
+            }
+        }
+        List<ReactionCheckpoint> checkpoints = new ArrayList<>();
+        byIndex.forEach((index, reactors) -> checkpoints.add(new ReactionCheckpoint(index, route.get(index), reactors)));
+        return List.copyOf(checkpoints);
+    }
+
     /** Whether a held Talento lets the charge's own target Defender o Perímetro (Mestre Escudeiro). */
     private static boolean mayDefendPerimeterAsTarget(final CombatantSheet target) {
         return target.getCharacter().getFeats().stream()
@@ -65,7 +129,7 @@ public class MovementReactionServiceImpl implements MovementReactionService {
      */
     private boolean isExempt(final Character mover, final Manoeuvre manoeuvre, final SceneContext sceneContext) {
         // A Reposicionar never provokes: the manoeuvre's own rule, held by nobody.
-        if (manoeuvre == Manoeuvre.REPOSICIONAR) {
+        if (manoeuvre == Manoeuvre.REPOSICIONAR || manoeuvre == Manoeuvre.RECUO_DEFENSIVO) {
             return true;
         }
         return mover.getAttributeAbilities().stream()

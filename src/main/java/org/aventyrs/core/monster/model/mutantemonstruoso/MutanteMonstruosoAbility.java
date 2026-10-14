@@ -1,5 +1,6 @@
 package org.aventyrs.core.monster.model.mutantemonstruoso;
 
+import org.aventyrs.core.character.Resistance;
 import lombok.Getter;
 import org.aventyrs.core.ability.ActiveAbility;
 import org.aventyrs.core.character.AttributeDomain;
@@ -56,12 +57,12 @@ public enum MutanteMonstruosoAbility implements MonstrousAbility {
                     + "• Fisiologia Estranha – Imunidade à Críticos Menores e Correntes de Efeitos.") {
         @Override
         public int resolveModifier(final ModifierType type, final AbilityContext context) {
-            return type == ModifierType.DAMAGE_TAKEN_REDUCTION ? MonstrousTraits.RDS_INSTANCE : 0;
+            return type == ModifierType.DAMAGE_TAKEN_REDUCTION ? Resistance.RDS.instance() : 0;
         }
 
         @Override
         public int resolveCriticalResistance(final AbilityContext context) {
-            return MonstrousTraits.CRITICAL_RESISTANCE_INSTANCE;
+            return Resistance.RC.instance();
         }
 
         /** Apex: "Imunidade à Críticos Menores" — applied as standing, see the note. */
@@ -186,7 +187,7 @@ public enum MutanteMonstruosoAbility implements MonstrousAbility {
                     .determinationPointCost(3)
                     .durationInRounds(duration)
                     .cooldownRounds(context.isAtLeast(PREDADOR) ? 2 : 3)
-                    .effect(bonus(ModifierType.DAMAGE_TAKEN_REDUCTION, MonstrousTraits.RDS_INSTANCE, duration, "Adaptabilidade"))
+                    .effect(bonus(ModifierType.DAMAGE_TAKEN_REDUCTION, Resistance.RDS.instance(), duration, "Adaptabilidade"))
                     .effect(bonus(ModifierType.LIFE_MULTIPLIER, lifeMultiplier, duration, "Adaptabilidade"))
                     .build());
         }
@@ -335,7 +336,7 @@ public enum MutanteMonstruosoAbility implements MonstrousAbility {
                     + "• Adaptação Milagrosa – recebe RA, Resistência à Críticos e Resistência à Corrente de Efeitos +2 enquanto ativo.") {
         @Override
         public int resolveModifier(final ModifierType type, final AbilityContext context) {
-            return type == ModifierType.DAMAGE_TAKEN_REDUCTION ? MonstrousTraits.RDS_INSTANCE : 0;
+            return type == ModifierType.DAMAGE_TAKEN_REDUCTION ? Resistance.RDS.instance() : 0;
         }
 
         @Override
@@ -356,9 +357,9 @@ public enum MutanteMonstruosoAbility implements MonstrousAbility {
                     .dice(Dice.of(3))
                     .onRolled((sheet, total) -> sheet.heal(total));
             if (context.isAtLeast(ABOMINACAO)) {
-                active.effect(bonus(ModifierType.ABSOLUTE_DAMAGE_REDUCTION, MonstrousTraits.REDUCTION_INSTANCE,
+                active.effect(bonus(ModifierType.ABSOLUTE_DAMAGE_REDUCTION, Resistance.RA.instance(),
                                 ADAPTACAO_DURATION, "Adaptação Milagrosa"))
-                        .effect(bonus(ModifierType.CRITICAL_RESISTANCE, MonstrousTraits.CRITICAL_RESISTANCE_INSTANCE,
+                        .effect(bonus(ModifierType.CRITICAL_RESISTANCE, Resistance.RC.instance(),
                                 ADAPTACAO_DURATION, "Adaptação Milagrosa"));
             }
             return List.of(active.build());

@@ -114,18 +114,18 @@ public enum FeralFeat implements Feat {
 
     /**
      * "Você recebe Bônus Racial de +1 em Força, o Tipo de Dano base de suas Armas Naturais mudam
-     * para Físico Elemental: Natural… e recebem a Corrente de Efeitos – Ferida Infecciosa."
+     * para Elemental: Natural… e recebem a Corrente de Efeitos – Ferida Infecciosa."
      */
     /**
      * The Força +1 is <b>real</b>, through {@link Feat#resolveAttributeBonus}.
      */
     // The retyping is real: an attack with a Weapon the holder treats as an Arma Natural deals
-    // Físico Elemental: Natural (Feat#resolveDamageRetype, reported on the attack roll).
+    // Elemental: Natural (Feat#resolveDamageRetype, reported on the attack roll).
     // The Corrente is real (0.0.85): every attack with a Weapon the holder treats as an Arma Natural
     // carries effect.FeridaInfecciosa (Feat#resolveEffectChains).
     DESPREZO_NATURAL(
             "Você recebe Bônus Racial de +1 em Força, o Tipo de Dano base de suas Armas Naturais "
-                    + "mudam para Físico Elemental: Natural em substituição aos seus tipos e "
+                    + "mudam para Elemental: Natural em substituição aos seus tipos e "
                     + "recebem a Corrente de Efeitos – Ferida Infecciosa.",
             FeatRequirements.builder()
                     .requiredRace(HomemFera.class)
@@ -136,7 +136,7 @@ public enum FeralFeat implements Feat {
         public DamageDescriptor resolveDamageRetype(final Character attacker, final SkillType attackSkill,
                                                     final AttackSource attackSource) {
             return attackSource instanceof Weapon weapon && attacker.treatsAsNaturalWeapon(weapon)
-                    ? new DamageDescriptor(DamageType.FISICO_ELEMENTAL, ElementalType.NATURAL)
+                    ? new DamageDescriptor(DamageType.ELEMENTAL, ElementalType.NATURAL)
                     : null;
         }
 

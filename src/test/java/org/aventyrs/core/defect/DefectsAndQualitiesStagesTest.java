@@ -275,7 +275,7 @@ class DefectsAndQualitiesStagesTest {
 
     // ---- Vulnerabilidade -------------------------------------------------------------------------
 
-    private static final DamageDescriptor MAGICAL = new DamageDescriptor(DamageType.MAGICO);
+    private static final DamageDescriptor MAGICAL = new DamageDescriptor(DamageType.MAGICO, null, org.aventyrs.core.character.DamageSanctity.UMBRAL);
     private static final DamageDescriptor PHYSICAL = new DamageDescriptor(DamageType.FISICO);
 
     @Test
@@ -301,8 +301,8 @@ class DefectsAndQualitiesStagesTest {
         CharacterSheet vulnerable = sheet(withDefect(Defect.VULNERABILIDADE, DefectSeverity.MODERADO,
                 VulnerabilityKind.ELEMENTAL, ElementalType.FOGO, ElementalType.GELO));
         DamageServiceImpl damage = new DamageServiceImpl();
-        DamageDescriptor fire = new DamageDescriptor(DamageType.ELEMENTAL, ElementalType.FOGO);
-        DamageDescriptor lightning = new DamageDescriptor(DamageType.ELEMENTAL, ElementalType.ELETRICIDADE);
+        DamageDescriptor fire = new DamageDescriptor(DamageType.MAGICO, ElementalType.FOGO);
+        DamageDescriptor lightning = new DamageDescriptor(DamageType.MAGICO, ElementalType.ELETRICIDADE);
 
         assertEquals(damage.calculateFinalDamage(sheet(base()), null, fire, null, 10, false) + 3,
                 damage.calculateFinalDamage(vulnerable, null, fire, null, 10, false));

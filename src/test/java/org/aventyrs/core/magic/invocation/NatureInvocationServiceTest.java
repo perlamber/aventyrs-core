@@ -58,7 +58,12 @@ class NatureInvocationServiceTest {
     }
 
     private static CharacterSheet caster(final int mana, final int knowledge, final boolean natureza) {
+        // Foco 8: room for every pack below under the "número máximo de invocações" (core 0.1.6.24).
         Character.CharacterBuilder builder = CharacterFixture.blank(CharacterFixture.BLANK)
+                .attributes(org.aventyrs.core.character.CharacterAttributes.builder()
+                        .focus(org.aventyrs.core.character.AttributeValue.builder()
+                                .domain(org.aventyrs.core.character.AttributeDomain.FOCUS).base(8).build())
+                        .build())
                 .skill(SkillType.DOMINIO_DO_MANA, skill(SkillType.DOMINIO_DO_MANA, mana, List.of()));
         if (knowledge > 0) {
             builder.skill(SkillType.CONHECIMENTOS, skill(SkillType.CONHECIMENTOS, knowledge,

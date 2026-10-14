@@ -434,4 +434,15 @@ class AttackReceiverTest {
             return super.applyTo(target, sceneContext, skillRoll, defenseType, damageDescriptor);
         }
     }
+
+    /** Sacrifício (core 0.1.6.17): the intercepted attack lands with no roll, a Menor and its Correntes. */
+    @Test
+    void anInterceptedAttackLandsWithoutADefence() {
+        IncomingAttackResult result = attackReceiver.resolve(attackOn(defender(3, 3)).intercepted(true).build());
+
+        assertFalse(result.getDefended());
+        assertEquals(org.aventyrs.core.skill.CriticalResult.FALHA_CRITICA_MENOR, result.getCriticalResult());
+        assertTrue(result.getCriticalEffectTriggered());
+        assertTrue(result.getEffectChainTriggered());
+    }
 }

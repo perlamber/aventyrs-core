@@ -56,7 +56,7 @@ public enum GoblinFeat implements Feat {
                     + "Profissão em -2 Níveis (ao invés de -1 Nível), se o fizer a Dureza do "
                     + "Equipamento é reduzida para 5PV (ou 1/3, o que for menor). Itens "
                     + "tecnológicos criados desta forma explodem quando sua Dureza chega à zero, "
-                    + "causando 1d6 Pontos de Dano Físico Elemental: Fogo para cada Título "
+                    + "causando 1d6 Pontos de Dano Elemental: Fogo para cada Título "
                     + "Aventyr que você possuir, Área de Efeito – Explosão.",
             FeatRequirements.builder()
                     .requiredFeat(ENGENHEIRO_DE_IMPROVISOS)

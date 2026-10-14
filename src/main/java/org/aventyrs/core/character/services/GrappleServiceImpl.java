@@ -98,11 +98,13 @@ public class GrappleServiceImpl implements GrappleService {
         });
         ActionCost cost = GRAB_COST.plusSurcharge(captor.getActionPointSurcharge(sceneContext));
         Rolled rolled = roll(captor, SkillType.ATAQUE_CORPO_A_CORPO, roll, Manoeuvre.AGARRAR, cost, sceneContext, target);
-        boolean took = rolled.reaches(required);
+        // "A rolagem recebe Bônus ou Redutor igual a Categoria de Tamanho" — the captor's own (core 0.1.6.19).
+        int size = sizeService.getEffectiveSizeCategory(captor).getCategory();
+        boolean took = rolled.reaches(required - size);
         if (took) {
             hold(captor, target);
         }
-        return new GrappleResult(cost, rolled.total(), required, took, rolled.result());
+        return new GrappleResult(cost, rolled.total() + size, required, took, rolled.result());
     }
 
     @Override
@@ -116,7 +118,9 @@ public class GrappleServiceImpl implements GrappleService {
                                     final int captorAttackGd, final SceneContext sceneContext,
                                     @NonNull final SkillRoll roll) {
         // A foe's grab is Favorecido against a Caído/Cego/… defender, as any attack of its is.
-        int required = captorAttackGd + defender.getAttackerAttackRollBonus(sceneContext);
+        int required = captorAttackGd + defender.getAttackerAttackRollBonus(sceneContext)
+                // The captor's Categoria de Tamanho rides its grab (core 0.1.6.19).
+                + sizeService.getEffectiveSizeCategory(captor).getCategory();
         // Named Agarrar so a Vantagem "para resistir a ataques de agarrar" can see what it resists.
         Rolled rolled = roll(defender, SkillType.ESQUIVA_E_APARAR, roll, Manoeuvre.AGARRAR, null, sceneContext, null);
         int total = rolled.total()

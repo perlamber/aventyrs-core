@@ -45,4 +45,20 @@ public interface ReactionOptionsService {
      *         no {@code SceneContext} to measure against
      */
     List<ReactionOption> getAvailableReactions(ReactionContext context);
+
+    /**
+     * The Reações every character has (core 0.1.6.17, "Manobras de Combate - Reações") that context's reactor may take
+     * in answer to its trigger, affordable or not:
+     * <ul>
+     *   <li>Defender o Perímetro — an enemy moving within reach, or a provoking manoeuvre — while a melee weapon
+     *       (drawn, or an Arma Natural) is in hand; whether the reach covers the mover is the route's question
+     *       ({@code MovementReactionService#getRouteCheckpoints}).</li>
+     *   <li>Impedir Conjuração — the caster ({@code getAttacker()}) within the reactor's melee reach.</li>
+     *   <li>Sacrifício — the threatened ally adjacent, and not yet taken this combat.</li>
+     *   <li>Conjuração Reativa — one option per castable Magia whose Tempo de Conjuração is a Reação.</li>
+     *   <li>Preparação — the held one, on any trigger, affordable with its own Reação.</li>
+     * </ul>
+     * Ativação Reativa is {@link #getAvailableReactions}. Empty with no {@code SceneContext}.
+     */
+    List<org.aventyrs.core.action.GenericReactionOption> getGenericReactions(ReactionContext context);
 }

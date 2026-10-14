@@ -1,5 +1,6 @@
 package org.aventyrs.core.feat;
 
+import org.aventyrs.core.character.Resistance;
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.DamageBonus;
@@ -319,7 +320,7 @@ public enum DestinoFeat implements Feat {
 
         @Override
         public int resolveDamageTakenReduction(final Character character, final CombatantSheet holder) {
-            return delayedAwakeningFigure(character, holder);
+            return Resistance.RDS.instances(delayedAwakeningFigure(character, holder));
         }
 
         @Override

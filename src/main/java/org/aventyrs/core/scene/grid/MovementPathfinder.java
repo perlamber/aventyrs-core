@@ -88,7 +88,7 @@ public final class MovementPathfinder {
                 continue;
             }
             for (GridPosition next : HexGrid.neighbours(node.hex(), columns, rows)) {
-                if (!rules.canPass(next) && !rules.canStop(next)) {
+                if (!rules.canPass(next) && !rules.canStop(next) || !rules.canStep(node.hex(), next)) {
                     continue;
                 }
                 int cost = node.cost() + Math.max(1, rules.enterCost(next));

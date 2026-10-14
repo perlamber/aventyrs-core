@@ -193,6 +193,16 @@
  * That's a compile-time guarantee, not a runtime check — see {@code
  * org.aventyrs.core.sheet.CombatantSheet}.
  *
+ * <h2>Falls and asphyxia, during play</h2>
+ *
+ * Both are caller-driven: the caller measures the height and decides when breathing stops, and hands over the dice.
+ * {@link org.aventyrs.core.character.services.FallService#fall} applies a whole fall (Dano Primordial, Feridas
+ * Dolorosas, death, Caído). Asfixia is a state on the sheet: call
+ * {@link org.aventyrs.core.character.services.AsphyxiaService#stopBreathing} once, then
+ * {@link org.aventyrs.core.character.services.AsphyxiaService#tick} once per Rodada (at the start of the combatant's
+ * Turn, or on the Narrador's "+1 Rodada" outside combat), and
+ * {@link org.aventyrs.core.character.services.AsphyxiaService#breathe} when it gets air again.
+ *
  * <h2>Keeping this current</h2>
  *
  * Both lists above are living inventories — the player one of every creation-time choice in

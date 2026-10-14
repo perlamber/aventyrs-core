@@ -1,5 +1,6 @@
 package org.aventyrs.core.feat;
 
+import org.aventyrs.core.character.Resistance;
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
 import java.util.List;
@@ -47,7 +48,7 @@ public enum SobrevivenciaFeat implements Feat {
     // The RD half is real too, through the sheet-aware resolveDamageReduction: current PV at or
     // below the holder's Multiplicador de PV (both from HitPointsService, sheet-aware, so a Forma
     // or Envenenado moves the threshold). ⚠️ "Você recebe RD" states no figure, so it grants
-    // DamageService#DEFAULT_DAMAGE_REDUCTION, the same reading AnaoFeat#VIGOR_DO_INVERNO takes.
+    // Resistance#RD, the same reading AnaoFeat#VIGOR_DO_INVERNO takes.
     VITALIDADE(
             "Você é mais resistente que o normal, seu Multiplicador de Pontos de Vida aumenta em "
                     + "+1. Enquanto sua quantidade de PV atuais for igual ou inferior ao seu valor "
@@ -69,7 +70,7 @@ public enum SobrevivenciaFeat implements Feat {
             HitPointsService hitPointsService = new HitPointsServiceImpl();
             return hitPointsService.getCurrentHitPoints(character, holder)
                     <= hitPointsService.getLifeMultiplier(character, holder)
-                    ? DamageService.DEFAULT_DAMAGE_REDUCTION : 0;
+                    ? Resistance.RD.instance() : 0;
         }
     },
 
@@ -239,7 +240,7 @@ public enum SobrevivenciaFeat implements Feat {
      * estiver em seu Terreno Predileto."
      */
     // The Resistência à Críticos half is real: one instance while in the chosen terrain (the
-    // clause states no figure — see CombatantSheet#CRITICAL_RESISTANCE_INSTANCE). Terreno is a
+    // clause states no figure — see Resistance#RC). Terreno is a
     // Scene-wide fact, which is why this clause can be read off the *attacker's* SceneContext at
     // all — see Feat#resolveCriticalResistance for that caveat.
     // TODO: the "+1 em Vigor" half stays blocked — a round-scoped Attribute bonus reaches only a
@@ -257,7 +258,7 @@ public enum SobrevivenciaFeat implements Feat {
         @Override
         public int resolveCriticalResistance(final Character character, final SceneContext sceneContext) {
             return inChosenTerrain(character, sceneContext)
-                    ? CombatantSheet.CRITICAL_RESISTANCE_INSTANCE : 0;
+                    ? Resistance.RC.instance() : 0;
         }
     },
 

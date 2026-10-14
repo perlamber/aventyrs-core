@@ -1,5 +1,6 @@
 package org.aventyrs.core.skill.artes;
 
+import org.aventyrs.core.character.Resistance;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NonNull;
@@ -28,7 +29,7 @@ public class ArtesAprimorarComArteAbility implements SkillCompetencyAbility {
 
     /**
      * The rules text spells out "+1" for every branch, so this is real data — not
-     * {@code DamageService.DEFAULT_DAMAGE_REDUCTION}.
+     * {@code Resistance#RD}.
      */
     public static final int BENEFIT_BONUS = 1;
 
@@ -57,7 +58,7 @@ public class ArtesAprimorarComArteAbility implements SkillCompetencyAbility {
      */
     @Modifier(ModifierType.DAMAGE_TAKEN_REDUCTION)
     int damageReduction() {
-        return chosenSkill == SkillType.ESQUIVA_E_APARAR ? BENEFIT_BONUS : 0;
+        return chosenSkill == SkillType.ESQUIVA_E_APARAR ? Resistance.RDS.instances(BENEFIT_BONUS) : 0;
     }
 
     /**

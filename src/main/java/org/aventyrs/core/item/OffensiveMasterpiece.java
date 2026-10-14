@@ -1,5 +1,6 @@
 package org.aventyrs.core.item;
 
+import org.aventyrs.core.character.Resistance;
 import java.util.List;
 
 import org.aventyrs.core.character.AttributeDomain;
@@ -114,7 +115,7 @@ public enum OffensiveMasterpiece implements Masterpiece {
     GELO_VERDADEIRO("Material Especial - Gelo Verdadeiro", ItemRarity.RARE, 0, 0, 1, 0, 0,
             requirements(AttributeDomain.STRENGTH, 3),
             "Corrente de Efeitos – Gelo Verdadeiro: Dano +3.",
-            "Dano causado é Físico Elemental: Gelo."),
+            "Dano causado é Elemental: Gelo."),
     // Both halves are real now: the Favor's "Danos Críticos +3" through resolveCriticalDamage, the
     // Característica Adicional's "Margem Crítica Menor +1" through resolveCriticalMarginIncrease.
     MITRAL("Material Especial - Mitral", ItemRarity.EPIC, 0, 0, 1, 0, 0,
@@ -126,7 +127,7 @@ public enum OffensiveMasterpiece implements Masterpiece {
     DENTE_DE_DRAGAO("Material Especial - Dente de Dragão", ItemRarity.MYTHIC, 0, 0, 1, 1, 1,
             requirements(AttributeDomain.DEXTERITY, 3),
             "Corrente de Efeitos – Fúria Dracônica: Área de Efeito – Explosão.",
-            "Dano causado é Físico Elemental."),
+            "Dano causado é Elemental."),
     // The Característica Adicional's "Dano Base +1" is real and unconditional (an Adicional, not a
     // Favor, so no Requisitos gate it) — the one constant here whose scale-up isn't Favor-gated.
     // TODO: the Favor's Corrente de Efeitos is not — no EffectChain exists.
@@ -247,8 +248,9 @@ public enum OffensiveMasterpiece implements Masterpiece {
         if (!requirements.isMetBy(character)) {
             return 0;
         }
-        if (this == DEFENSORA && modifierType == ModifierType.DAMAGE_REDUCTION) {
-            return 1;
+        // "Dano sofrido reduzido em -1" — an unnamed item reduction is RDS (table ruling, 2026-10-13).
+        if (this == DEFENSORA && modifierType == ModifierType.DAMAGE_TAKEN_REDUCTION) {
+            return Resistance.RDS.instances(1);
         }
         return 0;
     }

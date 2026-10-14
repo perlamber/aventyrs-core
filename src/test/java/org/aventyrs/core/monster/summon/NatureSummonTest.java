@@ -238,7 +238,7 @@ class NatureSummonTest {
         assertTrue(NatureSummon.of(NatureSummonKind.EXPERIMENTO_DE_LACERTO).breath(sheet.getCharacter()).isEmpty());
     }
 
-    /** Aura Elemental: Experimento "2 de Dano Físico Elemental"; Orgulho "1d6 de Dano Mágico Elemental". */
+    /** Aura Elemental: Experimento "2 de Dano Elemental"; Orgulho "1d6 de Dano Mágico Elemental". */
     @Test
     void anAuraIsAFixedOrRolledNaturalDischarge() {
         ElementalDischarge experimento = NatureSummon.builder().kind(NatureSummonKind.EXPERIMENTO_DE_LACERTO)
@@ -247,9 +247,9 @@ class NatureSummonTest {
                 .powers(List.of(LacertoPower.AURA_ELEMENTAL)).build().aura().orElseThrow();
 
         assertEquals(2, experimento.damageAt(0, 1));
-        assertEquals(org.aventyrs.core.character.DamageType.FISICO_ELEMENTAL, experimento.descriptor().damageType());
+        assertEquals(org.aventyrs.core.character.DamageType.ELEMENTAL, experimento.descriptor().damageType());
         assertEquals(1, orgulho.diceCount());
-        assertEquals(org.aventyrs.core.character.DamageType.ELEMENTAL, orgulho.descriptor().damageType());
+        assertEquals(org.aventyrs.core.character.DamageType.MAGICO, orgulho.descriptor().damageType());
     }
 
     /** Benção da Regeneração: "1d6+5 (Metade do Vigor)" — Vigor 10. */

@@ -85,6 +85,14 @@ public class SpellCastingServiceImpl implements SpellCastingService {
                 spell, empowerment), casterCompetencies.stream()
                 .mapToInt(ability -> ability.resolveSpellDurationIncrease(spell, request.getCaster().getCharacter()))
                 .sum());
+        // Benção Elduriana: a hostile Encantamento or Maldição lasts 1 Rodada less on its wearer (core 0.1.6.11).
+        // ⚠️ Floored at 0 — a reading: a 1-Rodada one then does not last at all.
+        int hostileReduction = isHostileTarget(request) && durationInRounds.isPresent()
+                ? org.aventyrs.core.item.DefensiveEnhancements.hostileDurationReduction(
+                        request.getCombatantTarget().getCharacter(), spell) : 0;
+        if (hostileReduction > 0) {
+            durationInRounds = OptionalInt.of(Math.max(0, durationInRounds.getAsInt() - hostileReduction));
+        }
         // Serra-Pernas: "+2 rodadas para cada PM gasto" — paid in resolveManaCost.
         int extraManaRounds = extraMana(spell, request) * spell.getRoundsPerExtraMana();
         if (extraManaRounds > 0 && durationInRounds.isPresent()) {
@@ -96,8 +104,13 @@ public class SpellCastingServiceImpl implements SpellCastingService {
                 ? spell.getCastingDifficultyLevel()
                 : spell.getCastingDifficultyAgainst(request.getOpposedBranchLevel())
                         .orElse(spell.getCastingDifficultyLevel());
-        ActivationTime activationTime = surcharged(resolveActivationTime(spell, request.getCaster(),
-                request.getScene().getCurrentRound(), request.getActivatedFeats()), empowerment);
+        // Conjurar Defensivamente (core 0.1.6.20): one GD level harder.
+        if (request.isDefensive() && authoredDifficulty != null) {
+            authoredDifficulty = authoredDifficulty.harder(DEFENSIVE_DIFFICULTY_STEPS);
+        }
+        ActivationTime activationTime = defensivelySurcharged(surcharged(resolveActivationTime(spell,
+                request.getCaster(), request.getScene().getCurrentRound(), request.getActivatedFeats()), empowerment),
+                request.isDefensive());
         Character casterCharacter = request.getCaster().getCharacter();
         int castingRollBonus = casterCharacter.getFeats().stream()
                 .mapToInt(feat -> feat.resolveCastingRollBonus(spell, casterCharacter, request.getActivatedFeats()))
@@ -105,7 +118,11 @@ public class SpellCastingServiceImpl implements SpellCastingService {
                 // A drawn Artefato de Conjuração's "Vantagem nas Rolagens … para Conjuração" (core 0.1.6.8).
                 + org.aventyrs.core.item.CastingArtifacts.castingRollBonus(casterCharacter)
                 // A drawn weapon's Conjuração columns and Benção Elemental's "+1 em Conjuração … de Magia Elemental".
-                + org.aventyrs.core.item.WeaponEnhancements.castingRollBonus(casterCharacter, spell);
+                + org.aventyrs.core.item.WeaponEnhancements.castingRollBonus(casterCharacter, spell)
+                // A worn Armadura's or Escudo's Conjuração columns, on every Magia (core 0.1.6.11).
+                + org.aventyrs.core.item.DefensiveEnhancements.castingRollBonus(casterCharacter)
+                // Impedir Conjuração's Redutor — -2 per 5 points the Reações took off the caster (core 0.1.6.17).
+                + SpellCastingService.disruptionPenalty(request.getDisruptionDamage());
         if (castingRollBonus != 0 && dominioDoManaResult.getSkillRollBonus() != null) {
             dominioDoManaResult = dominioDoManaResult.toBuilder()
                     .skillRollBonus(dominioDoManaResult.getSkillRollBonus() + castingRollBonus)
@@ -118,7 +135,9 @@ public class SpellCastingServiceImpl implements SpellCastingService {
                 // A drawn artefact's "danos e curas mágicas +N" (Cajado de Guerra, an artefact's Esfera de AEther) and
                 // the Adaga de Cerimônias' timed Dano Base, read as a flat +N here (core 0.1.6.8).
                 + org.aventyrs.core.item.CastingArtifacts.spellEffectBonus(casterCharacter)
-                + request.getCaster().getTemporaryBonus(org.aventyrs.core.modifier.ModifierType.DAMAGE_BASE_INCREASE);
+                + request.getCaster().getTemporaryBonus(org.aventyrs.core.modifier.ModifierType.DAMAGE_BASE_INCREASE)
+                // Conjurar Defensivamente: "Desvantagem na rolagem de efeitos de Dano Mágico e Cura Mágica".
+                + (request.isDefensive() ? org.aventyrs.core.skill.Skill.DISADVANTAGE_MALUS : 0);
         int spellDamageBonus = casterCharacter.getFeats().stream()
                 .mapToInt(feat -> feat.resolveSpellDamageBonus(spell, casterCharacter, request.getActivatedFeats()))
                 .sum()
@@ -316,6 +335,17 @@ public class SpellCastingServiceImpl implements SpellCastingService {
     }
 
     /** The cast's Tempo de Ativação plus Frenesi Arcano's "+3PA", when this cast spends it. */
+    /** Conjurar Defensivamente's "+1PA", on a cast priced in Pontos de Ação, never past the five a cast may take. */
+    private static ActivationTime defensivelySurcharged(final ActivationTime time, final boolean defensive) {
+        if (!defensive || time == null || time.type() != ActivationType.PONTOS_DE_ACAO) {
+            return time;
+        }
+        return ActivationTime.pa(Math.min(MAXIMUM_ACTION_POINTS, time.actionPoints() + DEFENSIVE_ACTION_POINT_SURCHARGE));
+    }
+
+    /** The most Pontos de Ação a cast is priced at — "Pontos de Ação, 1 through 5". */
+    private static final int MAXIMUM_ACTION_POINTS = 5;
+
     private static ActivationTime surcharged(final ActivationTime time, final SpellEmpowerment empowerment) {
         if (empowerment == null || time == null || time.type() != ActivationType.PONTOS_DE_ACAO) {
             return time;

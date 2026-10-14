@@ -502,9 +502,10 @@ Three layers of mitigation, in a fixed order:
    `TemporaryBonus` — and skipped by the same `ignoreDamageReduction` flag (an inference; the
    rules name only RA as un-ignorable).
 1c. **Each reduction reaches only its own types (0.0.64)**: RD plain `FISICO` (or untyped), RDS
-   (`DAMAGE_TAKEN_REDUCTION`, `DamageService#getTotalDamageTakenReduction`) everything but
-   `PRIMORDIAL`, RM `MAGICO`, RE the resisted element, RA everything. A numberless "recebe RDS" is
-   `DAMAGE_TAKEN_REDUCTION_INSTANCE` (1). **Never author an "RDS" clause as RD** — they reach
+   (`DAMAGE_TAKEN_REDUCTION`, `DamageService#getTotalDamageTakenReduction`) everything but a
+   Primordial hit or a Profano/Sagrado/Umbral one, RM `MAGICO`, RE the resisted element, RA
+   everything but a Primordial hit (Queda/Asfixia are Primordial and take nothing — 0.1.6.13).
+   **Never author an "RDS" clause as RD** — they reach
    different hits and differ in size. Immunity, scoped Meio-Dano and RE have Talento hooks
    (`Feat#isImmuneToDamage`/`#halvesDamage`/`#resolveElementalResistanceInstances`), and a
    Talento can retype an attack (`Feat#resolveDamageRetype` → `InteractionResult#getRetypedDamage()`).
@@ -517,9 +518,14 @@ It takes **no** separate `Character` — applying damage always needs a concrete
 mutate, so `getCharacter()` always suffices (unlike `RestService.applyRest`, which genuinely
 needs both — see the `attribute-graduation-progression` skill).
 
-An ability granting RD *or* RA without a number in its rules text uses
-`DamageService.DEFAULT_DAMAGE_REDUCTION` (+2), and RDS `DAMAGE_TAKEN_REDUCTION_INSTANCE` (+1); only
-deviate when the text states one (e.g. `APRIMORAR_COM_ARTE`'s "+1 RDS"). A *round-scoped* RD grant (a `Blessing`/`TemporaryBonus` of
+**Every resistance figure is `character.Resistance`** (0.1.6.13, table ruling 2026-10-13): RD 2, RM 2,
+RE 3, RA 2, RDS 1, RC 2 (Maior 1) per instance, and the Corrente base 5. Write
+`Resistance.X.instances(n)` with n read off the rules text — "RD" or "RD 1" is one instance, "RDS 5" or
+"RDS igual a 1 + …" that many — never a raw number; `ResistanceTest` fails the build on a literal
+beside a resistance `ModifierType`. "+3 em suas Defesas e RDS" is +3 Defesas and **one** RDS. An item
+Favor saying only "Dano … sofrido é reduzido em -N" is N RDS instances (`DAMAGE_TAKEN_REDUCTION`); a
+non-item unnamed "-N" keeps the scope its text names, sized as `Resistance.RDS.instances(N)`. A
+*round-scoped* RD grant (a `Blessing`/`TemporaryBonus` of
 `ModifierType.DAMAGE_REDUCTION` — `AnaoFeat#VIGOR_DO_INVERNO`'s combat-start grant) is summed
 only on the `CombatantSheet` overloads of `getTotalDamageReduction`, not the `Character`-only
 one, which has no sheet to read `getTemporaryBonus` from.
@@ -536,8 +542,8 @@ On the receiving side, `IncomingAttack#areaOfEffect` lets Evasão's Defesa apply
 Menor. `AbstractSkillInteraction` subtracts the attack target's
 `getTotalCriticalResistance(sceneContext)` from the summed `criticalMarginIncrease` before
 `SkillRoll#getCriticalResult` (so it reaches `AttackDelivery`, not the `AttackReceiver` mirror —
-the attacker rolls nothing there). One instance = `CombatantSheet.CRITICAL_RESISTANCE_INSTANCE`
-(2) per `docs/rules/defesas-e-resistencias.txt`, and a clause stating no figure grants one.
+the attacker rolls nothing there). One instance = `Resistance.RC.instance()` (2) per
+`docs/rules/defesas-e-resistencias.txt`, and a clause stating no figure grants one.
 
 **Two kinds of source, summed by the sheet.** A *standing* grant comes from the holder's Raça
 (`Race#getCriticalResistance()` — `Troll`'s Anatomia Vegetal) or a held Talento

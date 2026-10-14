@@ -1,5 +1,6 @@
 package org.aventyrs.core.character.services;
 
+import org.aventyrs.core.character.Resistance;
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.AttributeValue;
 import org.aventyrs.core.character.Character;
@@ -29,7 +30,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * RM — Resistência à Magias, the magic-damage twin of RD. Each instance is worth {@code
- * DamageService#DEFAULT_DAMAGE_REDUCTION}, and it reaches a hit only when the caller classified
+ * Resistance#RD}, and it reaches a hit only when the caller classified
  * that hit as {@code DamageType#MAGICO}.
  *
  * <p>Note RD is still type-blind, so a MAGICO hit is reduced by RD <em>and</em> RM — every
@@ -94,9 +95,9 @@ class MagicReductionTest {
 
         featService.grantFeat(gorgona, sheet, GorgonaFeat.PROTECAO_DA_RAINHA_DAS_FADAS);
 
-        assertEquals(DamageService.DEFAULT_DAMAGE_REDUCTION, damageService.getTotalMagicReduction(sheet));
+        assertEquals(Resistance.RM.instance(), damageService.getTotalMagicReduction(sheet));
         // "RDS e RM": one RDS instance (-1), and no RD at all.
-        assertEquals(DamageService.DAMAGE_TAKEN_REDUCTION_INSTANCE, damageService.getTotalDamageTakenReduction(gorgona));
+        assertEquals(Resistance.RDS.instance(), damageService.getTotalDamageTakenReduction(gorgona));
         assertEquals(0, damageService.getTotalDamageReduction(gorgona));
     }
 
@@ -122,9 +123,9 @@ class MagicReductionTest {
                 .build();
 
         assertEquals(0, damageService.getTotalMagicReduction(CharacterSheet.of(unqualified, new Player())));
-        assertEquals(DamageService.DEFAULT_DAMAGE_REDUCTION,
+        assertEquals(Resistance.RM.instance(),
                 damageService.getTotalMagicReduction(CharacterSheet.of(qualified, new Player())));
-        assertEquals(DamageService.DEFAULT_DAMAGE_REDUCTION,
+        assertEquals(Resistance.RM.instance(),
                 damageService.getTotalMagicReduction(CharacterSheet.of(mitral, new Player())));
     }
 
@@ -135,9 +136,9 @@ class MagicReductionTest {
         CharacterSheet sheet = fundedSheet(gorgona);
         featService.grantFeat(gorgona, sheet, GorgonaFeat.PROTECAO_DA_RAINHA_DAS_FADAS);
 
-        sheet.grantTemporaryBonus(ModifierType.MAGIC_REDUCTION, DamageService.DEFAULT_DAMAGE_REDUCTION, 2);
+        sheet.grantTemporaryBonus(ModifierType.MAGIC_REDUCTION, Resistance.RM.instance(), 2);
 
-        assertEquals(2 * DamageService.DEFAULT_DAMAGE_REDUCTION, damageService.getTotalMagicReduction(sheet));
+        assertEquals(2 * Resistance.RM.instance(), damageService.getTotalMagicReduction(sheet));
     }
 
     /**
@@ -150,14 +151,14 @@ class MagicReductionTest {
         Character gorgona = gorgonaWithCharisma();
         CharacterSheet sheet = fundedSheet(gorgona);
         featService.grantFeat(gorgona, sheet, GorgonaFeat.PROTECAO_DA_RAINHA_DAS_FADAS);
-        int rds = DamageService.DAMAGE_TAKEN_REDUCTION_INSTANCE;
+        int rds = Resistance.RDS.instance();
 
         // RDS reaches every non-Primordial hit; RM joins it only on a magic one.
         assertEquals(10 - rds,
                 damageService.calculateFinalDamage(sheet, null, DamageType.FISICO, null, 10, false));
         assertEquals(10 - rds,
                 damageService.calculateFinalDamage(sheet, null, (DamageType) null, null, 10, false));
-        assertEquals(10 - rds - DamageService.DEFAULT_DAMAGE_REDUCTION,
+        assertEquals(10 - rds - Resistance.RD.instance(),
                 damageService.calculateFinalDamage(sheet, null, DamageType.MAGICO, null, 10, false));
         assertEquals(10,
                 damageService.calculateFinalDamage(sheet, null, DamageType.PRIMORDIAL, null, 10, false));

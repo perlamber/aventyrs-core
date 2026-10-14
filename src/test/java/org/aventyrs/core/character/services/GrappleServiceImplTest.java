@@ -159,7 +159,8 @@ class GrappleServiceImplTest {
     void aSuccessfulDefenceKeepsThePlayerFree() {
         CharacterSheet hero = hero();
 
-        assertTrue(service.defendGrab(hero, brute(), null, HIGH).succeeded());
+        // The Brutamontes' Categoria rides its grab (core 0.1.6.19), so it takes the best roll to stay free.
+        assertTrue(service.defendGrab(hero, brute(), null, new SkillRoll(List.of(6, 6, 6))).succeeded());
 
         assertFalse(hero.hasCondition(ConditionType.AGARRADO, null));
     }

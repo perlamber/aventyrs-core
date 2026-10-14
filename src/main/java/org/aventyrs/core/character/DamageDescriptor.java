@@ -8,13 +8,14 @@ import lombok.NonNull;
 import static org.aventyrs.core.util.TranslatableMessages.INVALID_DAMAGE_TYPE_ELEMENT_PAIRING;
 
 /**
- * The complete type of one incoming damage instance. {@link DamageType} identifies the broad
- * category; an elemental category also names the exact {@link ElementalType} so a resistance can
- * distinguish Fogo from Gelo.
+ * The complete type of one incoming damage instance: its {@link DamageType} nature plus the qualifier the 2026-10-12
+ * taxonomy names it by — an {@link ElementalType} so a resistance can distinguish Fogo from Gelo, or a {@link
+ * DamageSanctity}.
  *
- * <p>{@code elementalType} is required exactly for {@link DamageType#ELEMENTAL} and {@link
- * DamageType#FISICO_ELEMENTAL}, and prohibited for every other damage type. This is validated at
- * construction because an incoming attack's classification is input from outside this core.
+ * <p>Validated at construction, because an incoming attack's classification is input from outside this core:
+ * {@code elementalType} is required for {@link DamageType#ELEMENTAL}, allowed for {@link DamageType#MAGICO} (Mágico
+ * Elemental) and prohibited otherwise; a {@link DamageType#MAGICO} hit must carry an element or a sanctity — there is
+ * no plain Dano Mágico (table ruling).
  */
 public record DamageDescriptor(@NonNull DamageType damageType, ElementalType elementalType, DamageSanctity sanctity) {
 
@@ -33,9 +34,10 @@ public record DamageDescriptor(@NonNull DamageType damageType, ElementalType ele
     }
 
     public DamageDescriptor {
-        boolean elementalDamage = damageType == DamageType.ELEMENTAL
-                || damageType == DamageType.FISICO_ELEMENTAL;
-        if (elementalDamage == (elementalType == null) || elementalType == ElementalType.TODOS) {
+        if (elementalType == ElementalType.TODOS
+                || (damageType.requiresElement() && elementalType == null)
+                || (!damageType.admitsElement() && elementalType != null)
+                || (damageType == DamageType.MAGICO && elementalType == null && sanctity == null)) {
             throw new IllegalOperationException(INVALID_DAMAGE_TYPE_ELEMENT_PAIRING);
         }
     }

@@ -175,7 +175,7 @@ class GolpesSobrenaturalECataclismicoTest {
         return CharacterSheet.of(character, new Player());
     }
 
-    /** "o Dano Base da Arma escolhida aumenta em +2 e o tipo de dano causado muda para Físico Elemental por 2 Rodadas". */
+    /** "o Dano Base da Arma escolhida aumenta em +2 e o tipo de dano causado muda para Elemental por 2 Rodadas". */
     @Test
     void ganaElementalEnchantsTheWeaponForTwoRodadas() {
         CharacterSheet invernal = elemental(false);
@@ -188,7 +188,7 @@ class GolpesSobrenaturalECataclismicoTest {
         assertEquals(2, invernal.getDeterminationSpent());
         var retype = SkillType.ATAQUE_CORPO_A_CORPO.newInteraction()
                 .applyTo(invernal, null, new SkillRoll(List.of(3, 3, 3)), null, SWORD).getRetypedDamage();
-        assertEquals(DamageType.FISICO_ELEMENTAL, retype.damageType());
+        assertEquals(DamageType.ELEMENTAL, retype.damageType());
         assertEquals(ElementalType.GELO, retype.elementalType());
 
         invernal.tickTemporaryEffects();
@@ -212,14 +212,14 @@ class GolpesSobrenaturalECataclismicoTest {
         DeliveredAttackResult first = attackDelivery.resolve(plain);
 
         assertEquals(capanga.getDefense(DefenseType.MAGIC), first.getRequiredTotal());
-        assertEquals(DamageType.ELEMENTAL, first.getAttackResult().getRetypedDamage().damageType());
+        assertEquals(DamageType.MAGICO, first.getAttackResult().getRetypedDamage().damageType());
         assertTrue(stages(first).stream().anyMatch(ExplosaoCataclismica.class::isInstance));
 
         invernal.recordAction(new CombatantAction(SkillType.ATAQUE_CORPO_A_CORPO, AttributeDomain.STRENGTH, SWORD,
                 null, 1, null, capanga.getId(), Set.of()));
         DeliveredAttackResult second = attackDelivery.resolve(plain);
         assertEquals(capanga.getDefense(DefenseType.PHYSICAL), second.getRequiredTotal());
-        assertEquals(DamageType.FISICO_ELEMENTAL, second.getAttackResult().getRetypedDamage().damageType());
+        assertEquals(DamageType.ELEMENTAL, second.getAttackResult().getRetypedDamage().damageType());
         assertFalse(stages(second).stream().anyMatch(ExplosaoCataclismica.class::isInstance));
     }
 }

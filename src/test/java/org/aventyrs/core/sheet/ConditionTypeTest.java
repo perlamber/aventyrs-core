@@ -27,14 +27,17 @@ class ConditionTypeTest {
     void everyConditionIsAMaleficioExceptEscondidoAndPetrificado() {
         assertFalse(ConditionType.ESCONDIDO.isMaleficio());
         assertFalse(ConditionType.PETRIFICADO.isMaleficio());
+        // Rendido (core 0.1.6.19) is a voluntary surrender — nothing imposes it.
+        assertFalse(ConditionType.RENDIDO.isMaleficio());
         Arrays.stream(ConditionType.values())
-                .filter(type -> type != ConditionType.ESCONDIDO && type != ConditionType.PETRIFICADO)
+                .filter(type -> type != ConditionType.ESCONDIDO && type != ConditionType.PETRIFICADO
+                        && type != ConditionType.RENDIDO)
                 .forEach(type -> assertTrue(type.isMaleficio(), type + " should be a Malefício"));
     }
 
     @Test
     void maleficiosIsEveryConstantButEscondidoAndPetrificado() {
-        assertEquals(ConditionType.values().length - 2, ConditionType.maleficios().size());
+        assertEquals(ConditionType.values().length - 3, ConditionType.maleficios().size());
         assertFalse(ConditionType.maleficios().contains(ConditionType.ESCONDIDO));
         assertFalse(ConditionType.maleficios().contains(ConditionType.PETRIFICADO));
         assertTrue(ConditionType.maleficios().contains(ConditionType.POSSESSAO));

@@ -295,6 +295,13 @@ public class InteractionResult {
     Integer groundedRounds;
 
     /**
+     * The Arma or Escudo this stage knocked out of its target's hands — {@code effect.Desarmar}'s "o equipamento é
+     * derrubado ao chão". Still owned (table ruling, 2026-10-12): a weapon stays equipped but sheathed, a shield moves
+     * to the inventory. {@code null} for everything that disarms nobody.
+     */
+    org.aventyrs.core.item.Item droppedItem;
+
+    /**
      * The highest Cego 1d6 face that fails this roll ({@code CombatantSheet#getBlindCheckThreshold})
      * — {@code null} when its roller throws none. Reported whether or not the die came with the roll,
      * so a caller knows to throw it.

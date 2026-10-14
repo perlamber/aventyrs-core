@@ -50,7 +50,16 @@ public interface AmmunitionService {
      * the inventory), from the magazine for a Besta — and, during a combat, notes them for recovery. Validates as
      * {@link #requireFirable} first, so nothing is spent on a refused call.
      */
-    void consume(CombatantSheet holder, Weapon weapon, ProjectileItem projectile, int shots);
+    default void consume(CombatantSheet holder, Weapon weapon, ProjectileItem projectile, int shots) {
+        consume(holder, weapon, projectile, shots, 0);
+    }
+
+    /**
+     * Same as the four-argument form, for a shot whose destroyed projectiles never come back — a Rigidez Refletora
+     * ({@code DeliveredAttackResult#getProjectilesDestroyed()}, core 0.1.6.11). Every shot is still spent; only
+     * {@code shots - destroyed} join the recovery ledger.
+     */
+    void consume(CombatantSheet holder, Weapon weapon, ProjectileItem projectile, int shots, int destroyed);
 
     /**
      * What reloading weapon costs holder right now: {@link ActionCost#NONE} outside a combat, otherwise its "Tempo de

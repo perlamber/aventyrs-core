@@ -336,6 +336,13 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
     /** Reposicionar declared since this Rodada began — see {@link #consumeRepositionThisRound()}. */
     private int repositionsTakenThisRound = 0;
 
+    /** Recuos Defensivos taken since this combatant's Turn began — "Limitado a apenas uma vez por Rodada". */
+    private int retreatsTakenThisRound = 0;
+
+    /** See {@link CombatantSheet#getAsphyxia()}; {@code null} while breathing. */
+    @Getter(AccessLevel.NONE)
+    private Asphyxia asphyxia;
+
     /** Attacks landed on this combatant since this Rodada began — see {@link #recordAttackSuffered()}. */
     private int attacksSufferedThisRound = 0;
 
@@ -668,7 +675,7 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
         // A heal that damages instead (the Zumbi's "sofrem Danos de Magias Divinas que recuperam PV", core 0.0.91):
         // what it would have healed — the healer's bonus included — lands as raw damage, and no heal happens.
         if (!lifeSteal && invertsHealing(source)) {
-            int harm = Math.max(0, amount + healerHealingBonus(source));
+            int harm = Math.max(0, invertedHealingHarm(amount + healerHealingBonus(source), source));
             applyDamage(harm);
             observeStatus();
             return getDamageTaken();
@@ -889,6 +896,71 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
         }
     }
 
+    /** See {@link CombatantSheet#getTimesRaised()}. */
+    private int timesRaised;
+
+    /** See {@link CombatantSheet#isCorpse()}. */
+    private boolean corpse;
+
+    /** See {@link CombatantSheet#hasUndeadAnatomy()} — held on any sheet since 0.1.6.27, so a summon's travels. */
+    private boolean undeadAnatomy;
+
+    /** See {@link CombatantSheet#isDamageShortensDuration()}. */
+    private boolean damageShortensDuration;
+
+    /** Damage a stat block shrugs off — see {@link CombatantSheet#addDamageImmunities}. */
+    private final Set<org.aventyrs.core.character.DamageScope> grantedDamageImmunities = new HashSet<>();
+
+    @Override
+    public boolean hasUndeadAnatomy() {
+        return undeadAnatomy;
+    }
+
+    @Override
+    public void grantUndeadAnatomy() {
+        undeadAnatomy = true;
+    }
+
+    @Override
+    public boolean isDamageShortensDuration() {
+        return damageShortensDuration;
+    }
+
+    @Override
+    public void markDamageShortensDuration() {
+        damageShortensDuration = true;
+    }
+
+    @Override
+    public void addDamageImmunities(final Set<org.aventyrs.core.character.DamageScope> scopes) {
+        grantedDamageImmunities.addAll(scopes);
+    }
+
+    @Override
+    public boolean isImmuneToSpellDamage(final org.aventyrs.core.magic.Spell spell) {
+        return undeadAnatomy && org.aventyrs.core.monster.UndeadAnatomy.isImmuneToSpellDamage(spell);
+    }
+
+    @Override
+    public int getTimesRaised() {
+        return timesRaised;
+    }
+
+    @Override
+    public void setTimesRaised(final int timesRaised) {
+        this.timesRaised = Math.max(0, timesRaised);
+    }
+
+    @Override
+    public boolean isCorpse() {
+        return corpse;
+    }
+
+    @Override
+    public void markCorpse() {
+        corpse = true;
+    }
+
     @Override
     public void releaseVitalityLock() {
         lockedDamage = 0;
@@ -904,12 +976,40 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
                 || racialTraitsLive() && getCharacter().getRace().isImmuneToSpell(spell);
     }
 
+    @Override
+    public int resolveInvertedHealing(final org.aventyrs.core.magic.Spell spell,
+                                      final org.aventyrs.core.character.DamageDescriptor descriptor,
+                                      final org.aventyrs.core.util.DiceRoller roller) {
+        // The Anatomia de Morto-Vivo's Profano effects: 1d6+ Metade do Vigor (core 0.1.6.23).
+        if (undeadAnatomy && roller != null && (org.aventyrs.core.monster.UndeadAnatomy.isProfane(spell)
+                || descriptor != null && descriptor.sanctity() == org.aventyrs.core.character.DamageSanctity.PROFANO)) {
+            return org.aventyrs.core.monster.UndeadAnatomy.profaneHealing(this, roller);
+        }
+        if (spell == null || !racialTraitsLive()) {
+            return 0;
+        }
+        return getCharacter().getRace().resolveInvertedSpellHealing(spell, getCharacter(), roller);
+    }
+
     /**
      * Whether a heal from source damages this combatant instead — false for a sheet; a {@code MonsterSheet} reads its
-     * stat block ({@code MonsterTemplate#invertsHealing}, core 0.0.91).
+     * stat block ({@code MonsterTemplate#invertsHealing}, core 0.0.91) and its Anatomia de Morto-Vivo.
      */
     protected boolean invertsHealing(final HealingSource source) {
-        return false;
+        return undeadAnatomy && org.aventyrs.core.monster.UndeadAnatomy.invertsHealing(source);
+    }
+
+    /**
+     * What an inverted heal deals: offered, the PV it would have healed — unless an override rolls its own figure
+     * (the Anatomia de Morto-Vivo's 2d6+ Metade do Vigor, core 0.1.6.23).
+     */
+    protected int invertedHealingHarm(final int offered, final HealingSource source) {
+        // The Anatomia's "2d6+ Metade do Vigor pontos de Dano Sagrado", when the heal carries dice.
+        if (undeadAnatomy && source != null && source.dice() != null
+                && org.aventyrs.core.monster.UndeadAnatomy.invertsHealing(source)) {
+            return org.aventyrs.core.monster.UndeadAnatomy.sacredDamage(this, source.dice());
+        }
+        return offered;
     }
 
     /** Whether this combatant's Raça's own traits are in force — not while a Forma suppresses innate ones. */
@@ -1422,6 +1522,18 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
                 || effect instanceof Bleeding && holdsLive(StanchedWound.class)) {
             return;
         }
+        // RD/RM/RE/RA: "Reduz a Duração de Efeitos … contínuos em -1 Unidade" (core 0.1.6.15) — once, as it lands.
+        if (effect.getRemainingRounds() != null && effect.getContinuousNature() != null) {
+            int reduction = new org.aventyrs.core.character.services.ResistanceDurationServiceImpl()
+                    .getDurationReduction(this, effect.getContinuousNature(), null);
+            if (reduction > 0) {
+                int shortened = effect.getRemainingRounds() - reduction;
+                if (shortened <= 0) {
+                    return;
+                }
+                effect.shortenTo(shortened);
+            }
+        }
         int ceiling = effect.maximumSimultaneous();
         if (ceiling < TemporaryEffect.UNLIMITED_SIMULTANEOUS) {
             // Drop the oldest of the same grant until this one fits under the ceiling. "The same
@@ -1641,6 +1753,9 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
         // traits, so they survive a suppression the Raça's own do not.
         Set<CriticalEffectType> fromAbilities = new HashSet<>();
         getCharacter().getAttributeAbilities().forEach(ability -> fromAbilities.addAll(ability.resolveCriticalEffectImmunities()));
+        if (undeadAnatomy) {
+            fromAbilities.addAll(org.aventyrs.core.monster.UndeadAnatomy.CRITICAL_EFFECT_IMMUNITIES);
+        }
         if (getRacialTraitSuppression().suppressesPhysicalTraits()) {
             return Set.copyOf(fromAbilities);
         }
@@ -1849,6 +1964,7 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
     public void startTurn(final int turnNumber) {
         movementsTakenThisRound = 0;
         repositionsTakenThisRound = 0;
+        retreatsTakenThisRound = 0;
         actionCountAtTurnStart = actionsThisRound.size();
         actionsOfLatestOwnTurn.clear();
         inOwnTurn = true;
@@ -2257,6 +2373,14 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
     }
 
     @Override
+    public void discardFiredProjectiles(final org.aventyrs.core.item.ProjectileItem projectile, final int units) {
+        if (units > 0) {
+            firedProjectilesThisCombat.computeIfPresent(projectile,
+                    (kind, recorded) -> recorded > units ? recorded - units : null);
+        }
+    }
+
+    @Override
     public void recordFiredProjectiles(final org.aventyrs.core.item.ProjectileItem projectile, final int units) {
         if (units > 0 && projectile.getHead().isRecoverable()) {
             firedProjectilesThisCombat.merge(projectile, units, Integer::sum);
@@ -2431,6 +2555,10 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
      */
     @Override
     public void recordAction(final CombatantAction action) {
+        // Rendido ends when its holder acts — a defence answers someone else's action and is not one (core 0.1.6.19).
+        if (action.skill() != org.aventyrs.core.skill.SkillType.ESQUIVA_E_APARAR) {
+            removeCondition(ConditionType.RENDIDO);
+        }
         actionsThisRound.add(action);
         actionsThisCena.add(action);
         if (inOwnTurn) {
@@ -3213,6 +3341,26 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
     }
 
     @Override
+    public int getRetreatsTakenThisRound() {
+        return retreatsTakenThisRound;
+    }
+
+    @Override
+    public int consumeRetreatThisRound() {
+        return retreatsTakenThisRound++;
+    }
+
+    @Override
+    public Optional<Asphyxia> getAsphyxia() {
+        return Optional.ofNullable(asphyxia);
+    }
+
+    @Override
+    public void setAsphyxia(final Asphyxia asphyxia) {
+        this.asphyxia = asphyxia;
+    }
+
+    @Override
     public Optional<Devoured> getDevoured() {
         return temporaryEffects.stream()
                 .filter(Devoured.class::isInstance)
@@ -3359,7 +3507,10 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
                         && scoped.covers(DamageScopeEffect.Kind.IMMUNE, damageType, descriptor))
                 // The Raça's own (Vampiro's Natural, core 0.0.90).
                 || racialTraitsLive() && getCharacter().getRace().getDamageImmunities().stream()
-                        .anyMatch(scope -> scope.matches(damageType, descriptor));
+                        .anyMatch(scope -> scope.matches(damageType, descriptor))
+                // A stat block's own, and the Anatomia de Morto-Vivo's Profano and Asfixia (core 0.1.6.27).
+                || grantedDamageImmunities.stream().anyMatch(scope -> scope.matches(damageType, descriptor))
+                || undeadAnatomy && org.aventyrs.core.monster.UndeadAnatomy.isImmuneToDamage(damageType, descriptor);
     }
 
     @Override
@@ -3372,6 +3523,7 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
     @Override
     public boolean isImmuneToCondition(final ConditionType conditionType) {
         return isCenaImmune(conditionType)
+                || undeadAnatomy && org.aventyrs.core.monster.UndeadAnatomy.CONDITION_IMMUNITIES.contains(conditionType)
                 || getCharacter().getAttributeAbilities().stream().anyMatch(ability -> ability.isImmuneToCondition(conditionType));
     }
 

@@ -161,4 +161,23 @@ public class ChargeServiceImpl implements ChargeService {
         }
         return null;
     }
+
+    @Override
+    public int getMinimumDistance(@NonNull final CombatantSheet sheet) {
+        return new CharacterSizeServiceImpl().getEffectiveSizeCategory(sheet).getMovementPerActionPoint();
+    }
+
+    @Override
+    public java.util.Optional<String> refusalForLine(@NonNull final CombatantSheet sheet,
+                                                     @NonNull final org.aventyrs.core.scene.grid.GridPosition from,
+                                                     @NonNull final org.aventyrs.core.scene.grid.GridPosition landing,
+                                                     @NonNull final org.aventyrs.core.scene.grid.MovementMap map) {
+        if (org.aventyrs.core.scene.grid.HexGrid.distance(from, landing) < getMinimumDistance(sheet)) {
+            return java.util.Optional.of(org.aventyrs.core.util.TranslatableMessages.CHARGE_TOO_SHORT);
+        }
+        if (!map.isLineClear(from, landing, sheet)) {
+            return java.util.Optional.of(org.aventyrs.core.util.TranslatableMessages.CHARGE_LINE_BLOCKED);
+        }
+        return java.util.Optional.empty();
+    }
 }

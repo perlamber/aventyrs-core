@@ -1,5 +1,6 @@
 package org.aventyrs.core.item;
 
+import org.aventyrs.core.character.Resistance;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -139,8 +140,8 @@ class DefensiveImprovementTest {
         AbstractItem blessedItem = defensiveItem(ItemCategory.ARMOR,
                 ItemImprovement.bencaoElemental(ElementalType.GELO));
         CharacterSheet sheet = CharacterSheet.of(characterWith(blessedItem), new Player());
-        DamageDescriptor iceDamage = new DamageDescriptor(DamageType.FISICO_ELEMENTAL, ElementalType.GELO);
-        DamageDescriptor fireDamage = new DamageDescriptor(DamageType.FISICO_ELEMENTAL, ElementalType.FOGO);
+        DamageDescriptor iceDamage = new DamageDescriptor(DamageType.ELEMENTAL, ElementalType.GELO);
+        DamageDescriptor fireDamage = new DamageDescriptor(DamageType.ELEMENTAL, ElementalType.FOGO);
 
         assertEquals(2, defenseService.getTotalDefense(sheet, DefenseType.PHYSICAL, null, iceDamage));
         assertEquals(2, defenseService.getTotalDefense(sheet, DefenseType.MAGIC, null, iceDamage));
@@ -148,17 +149,17 @@ class DefensiveImprovementTest {
     }
 
     @Test
-    void bencaoElementalGrantsTwoDamageReductionOnlyAgainstMatchingElementalDamage() {
+    void bencaoElementalGrantsOneReInstanceOnlyAgainstItsElement() {
         AbstractItem blessedItem = defensiveItem(ItemCategory.ARMOR,
                 ItemImprovement.bencaoElemental(ElementalType.GELO));
         CharacterSheet sheet = CharacterSheet.of(characterWith(blessedItem), new Player());
 
-        assertEquals(8, damageService.calculateFinalDamage(sheet, null,
+        assertEquals(10 - Resistance.RE.instance(), damageService.calculateFinalDamage(sheet, null,
+                new DamageDescriptor(DamageType.MAGICO, ElementalType.GELO), null, 10, false));
+        assertEquals(10 - Resistance.RE.instance(), damageService.calculateFinalDamage(sheet, null,
                 new DamageDescriptor(DamageType.ELEMENTAL, ElementalType.GELO), null, 10, false));
-        assertEquals(8, damageService.calculateFinalDamage(sheet, null,
-                new DamageDescriptor(DamageType.FISICO_ELEMENTAL, ElementalType.GELO), null, 10, false));
         assertEquals(10, damageService.calculateFinalDamage(sheet, null,
-                new DamageDescriptor(DamageType.ELEMENTAL, ElementalType.FOGO), null, 10, false));
+                new DamageDescriptor(DamageType.MAGICO, ElementalType.FOGO), null, 10, false));
     }
 
     @Test

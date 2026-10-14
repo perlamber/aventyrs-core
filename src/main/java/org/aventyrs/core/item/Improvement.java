@@ -142,6 +142,16 @@ public interface Improvement {
     }
 
     /**
+     * Same as the three-argument form, aware of the Scene the roll is made in — a bonus scoped to a terrain
+     * ({@link DefensiveImprovement#CAMUFLADA}'s chosen environment, core 0.1.6.11). Defaults to the shorter form; a
+     * {@code null} context is "not in a Scene".
+     */
+    default int resolveBonus(final ModifierType modifierType, final SkillType skillType, final Character character,
+                             final org.aventyrs.core.scene.SceneContext sceneContext) {
+        return resolveBonus(modifierType, skillType, character);
+    }
+
+    /**
      * Whether this enhancement stops its weapon being knocked out of its wielder's hands —
      * the "Não pode ser desarmado" Característica Adicional of {@link
      * OffensiveImprovement#MANOPLA_DE_SEGURANCA}, the one constant that states it. False by

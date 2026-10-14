@@ -21,6 +21,16 @@ public final class SceneSummon {
     /** The N of "Concentração + N", until the caster's focus breaks; {@code null} once it has, or without one. */
     private Integer trailingRounds;
     private boolean replaced;
+    /**
+     * Whether it was raised from a corpse (Reanimar, Criar Carniçal — core 0.1.6.24): when it leaves, the body stays
+     * behind as a corpse instead ({@link Scene#dismissSummon}).
+     */
+    private boolean raisedFromCorpse;
+    /**
+     * Whether it obeys nobody (core 0.1.6.25: Festim dos Mortos past the caster's Foco, Horda Faminta) — hostile to
+     * everyone, always attacking the nearest living character, and not counted against its caster's limit.
+     */
+    private boolean uncontrolled;
 
     SceneSummon(final CombatantSheet summon, final CombatantSheet summoner, final String exclusivityGroup,
                 final Integer remainingRounds, final Integer trailingRounds) {
@@ -57,5 +67,26 @@ public final class SceneSummon {
 
     void markReplaced() {
         replaced = true;
+    }
+
+    void markRaisedFromCorpse() {
+        raisedFromCorpse = true;
+    }
+
+    void markUncontrolled() {
+        uncontrolled = true;
+    }
+
+    /** One Rodada off a running Duração — an Abantesma struck; whether it is now spent. */
+    boolean shorten() {
+        if (remainingRounds == null) {
+            if (trailingRounds == null) {
+                return false;
+            }
+            trailingRounds--;
+            return false;
+        }
+        remainingRounds--;
+        return remainingRounds <= 0;
     }
 }

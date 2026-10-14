@@ -24,6 +24,23 @@ import java.util.Optional;
  * comparison stage remains absent.
  */
 public interface SpellCastingService {
+
+    /** Conjurar Defensivamente: "+1PA" on a cast priced in Pontos de Ação. */
+    int DEFENSIVE_ACTION_POINT_SURCHARGE = 1;
+
+    /** Conjurar Defensivamente: "Grau de Dificuldade aumentado em +1 nível". */
+    int DEFENSIVE_DIFFICULTY_STEPS = 1;
+
+    /** Impedir Conjuração: every this many points of damage taken … */
+    int DISRUPTION_DAMAGE_STEP = 5;
+    /** … cost the casting roll this much. */
+    int DISRUPTION_PENALTY = 2;
+
+    /** The Redutor Impedir Conjuração leaves on a casting roll after damage points of (mitigated) damage — ≤ 0. */
+    static int disruptionPenalty(final int damage) {
+        return -DISRUPTION_PENALTY * (Math.max(0, damage) / DISRUPTION_DAMAGE_STEP);
+    }
+
     /**
      * Casts request's Magia from its caster, deriving both required interactions from the Magia
      * itself and registering any lasting Área de Efeito on request's Scene.

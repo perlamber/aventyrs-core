@@ -91,7 +91,7 @@ public class AmmunitionServiceImpl implements AmmunitionService {
 
     @Override
     public void consume(final CombatantSheet holder, final Weapon weapon, final ProjectileItem projectile,
-                        final int shots) {
+                        final int shots, final int destroyed) {
         requireFirable(holder, weapon, projectile, shots);
         if (weapon == null || weapon.getAmmunitionKind() == null || shots <= 0) {
             return;
@@ -105,7 +105,7 @@ public class AmmunitionServiceImpl implements AmmunitionService {
             takeFromBag(holder, projectile, shots);
         }
         if (holder.isInCombat()) {
-            holder.recordFiredProjectiles(projectile, shots);
+            holder.recordFiredProjectiles(projectile, shots - Math.min(shots, Math.max(0, destroyed)));
         }
     }
 

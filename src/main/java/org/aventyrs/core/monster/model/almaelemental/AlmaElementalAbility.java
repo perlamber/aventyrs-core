@@ -1,5 +1,6 @@
 package org.aventyrs.core.monster.model.almaelemental;
 
+import org.aventyrs.core.character.Resistance;
 import lombok.Getter;
 import org.aventyrs.core.ability.ActiveAbility;
 import org.aventyrs.core.character.AttributeDomain;
@@ -86,7 +87,7 @@ public enum AlmaElementalAbility implements MonstrousAbility {
 
         @Override
         public int resolveCriticalResistance(final AbilityContext context) {
-            return MonstrousTraits.CRITICAL_RESISTANCE_INSTANCE;
+            return Resistance.RC.instance();
         }
 
         @Override
@@ -103,7 +104,7 @@ public enum AlmaElementalAbility implements MonstrousAbility {
     /**
      * The chosen Arma Natural, and from Deviante +2 on its attacks. Fúria Elemental's element typing
      * and its Cataclismo are not applied: the Efeito lands on the holder, while "a Arma Natural causa
-     * dano Físico Elemental" retypes a future attack's damage, which no self effect can reach.
+     * dano Elemental" retypes a future attack's damage, which no self effect can reach.
      */
     ARMAMENTO_ELEMENTAL("Armamento Elemental", PRESA, 
             "Efeito Passivo – Escolha uma Arma Natural, este Monstro possui a Arma Natural escolhida.\n"

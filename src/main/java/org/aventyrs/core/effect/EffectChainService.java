@@ -18,8 +18,11 @@ import java.util.Optional;
  * the roll's margin directly; {@link #hits} stays for a caller holding a bare challenge number, and has none yet.
  */
 public interface EffectChainService {
-    int BASE_REQUIRED_MARGIN = 5;
-    int RESOLUTO_REQUIRED_MARGIN = 7;
+    /** Resistência à Corrente de Efeitos' "valor padrão é 5" — {@link org.aventyrs.core.character.Resistance#EFFECT_CHAIN_BASE}. */
+    int BASE_REQUIRED_MARGIN = org.aventyrs.core.character.Resistance.EFFECT_CHAIN_BASE;
+
+    /** Resoluto's enumerated +2 on top of the base. */
+    int RESOLUTO_REQUIRED_MARGIN = BASE_REQUIRED_MARGIN + 2;
 
     /**
      * {@link #RESOLUTO_REQUIRED_MARGIN} when {@code target} holds {@link
@@ -49,6 +52,10 @@ public interface EffectChainService {
         margin += target.getFeats().stream()
                 .mapToInt(feat -> feat.resolveEffectChainResistanceIncrease(target, defenderPosition))
                 .sum();
+        // Anatomia de Morto-Vivo: "Resistência a Correntes de Efeitos +2" (core 0.1.6.23).
+        if (defender.hasUndeadAnatomy()) {
+            margin += org.aventyrs.core.monster.UndeadAnatomy.EFFECT_CHAIN_RESISTANCE;
+        }
         if (attacker != null) {
             Character source = attacker.getCharacter();
             margin -= source.getFeats().stream()

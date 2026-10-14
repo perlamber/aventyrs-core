@@ -191,6 +191,21 @@ public class TranslatableMessages {
     /** A second common Subordinado of a grade the character already commands — only a Prodigioso may share it. */
     public static final String SUBORDINATE_GRADE_HELD = "SUBORDINATE_GRADE_HELD";
 
+    /** A caster already controls as many invocações as their Foco ("número máximo de invocações", core 0.1.6.24). */
+    public static final String SUMMON_LIMIT_REACHED = "SUMMON_LIMIT_REACHED";
+
+    /** Reanimar / Criar Carniçal touch "um cadáver" — the target is not a dead body (core 0.1.6.24). */
+    public static final String RAISE_REQUIRES_CORPSE = "RAISE_REQUIRES_CORPSE";
+
+    /** A body raised four times can never be raised again (table ruling, 2026-10-14). */
+    public static final String CORPSE_EXHAUSTED = "CORPSE_EXHAUSTED";
+
+    /** Servo Cadavérico makes a Cavaleiro or a Torre — another grade was asked for (core 0.1.6.25). */
+    public static final String SERVO_CADAVERICO_GRADE_NOT_ALLOWED = "SERVO_CADAVERICO_GRADE_NOT_ALLOWED";
+
+    /** Açougueiro: "não poderá controlar mais nenhum outro Carniçal com esta magia" (core 0.1.6.25). */
+    public static final String BUTCHER_CARNICAL_EXCLUSIVE = "BUTCHER_CARNICAL_EXCLUSIVE";
+
     /** Cativar Animal touches "um animal" — the target is not one (core 0.0.92). */
     public static final String CAPTIVATE_REQUIRES_ANIMAL = "CAPTIVATE_REQUIRES_ANIMAL";
 
@@ -657,4 +672,52 @@ public class TranslatableMessages {
 
     /** A held Talento forbids Habilidades de Atributo of this Atributo — {@code Feat#forbidsAttributeAbility}. */
     public static final String ATTRIBUTE_ABILITY_FORBIDDEN = "ATTRIBUTE_ABILITY_FORBIDDEN";
+
+    /** Preparação: the named action costs more than 2PA — "cujo Tempo seja igual ou inferior à 2PA". */
+    public static final String PREPARED_ACTION_TOO_COSTLY = "PREPARED_ACTION_TOO_COSTLY";
+
+    /** Preparação: the picked action is already a Reação — it has no Turn of its own to be held from. */
+    public static final String PREPARED_ACTION_NOT_PREPARABLE = "PREPARED_ACTION_NOT_PREPARABLE";
+
+    /** Firing a Preparação: none is held, or it was already fired or lapsed. */
+    public static final String NO_PREPARED_ACTION = "NO_PREPARED_ACTION";
+
+    /** Sacrifício: "Apenas uma vez por Cena de Combate" — already taken this combat. */
+    public static final String SACRIFICE_ALREADY_USED = "SACRIFICE_ALREADY_USED";
+
+    /** Sacrifício: the attacked ally is not adjacent to the interceptor. */
+    public static final String SACRIFICE_ALLY_NOT_ADJACENT = "SACRIFICE_ALLY_NOT_ADJACENT";
+
+    /** A Reação with no Reação left to spend, or a Condição refusing Reações. */
+    public static final String NO_REACTION_AVAILABLE = "NO_REACTION_AVAILABLE";
+
+    /** Movement bought with PA after a Reposicionar this Turn — they exclude each other (table ruling). */
+    public static final String MOVEMENT_AFTER_REPOSITION = "MOVEMENT_AFTER_REPOSITION";
+
+    /** Correr: "Não é possível Correr em Terrenos Difíceis". */
+    public static final String RUN_IN_DIFFICULT_TERRAIN = "RUN_IN_DIFFICULT_TERRAIN";
+
+    /** Recuo Defensivo: "Limitado a apenas uma vez por Rodada". */
+    public static final String RETREAT_ALREADY_TAKEN = "RETREAT_ALREADY_TAKEN";
+
+    /** Voar: nothing lets this combatant fly. */
+    public static final String CANNOT_FLY = "CANNOT_FLY";
+
+    /** A movement a Condição forbids (Agarrado, Imobilizado, …). */
+    public static final String MOVEMENT_PREVENTED = "MOVEMENT_PREVENTED";
+
+    /** Imobilizar: "Apenas alvos Rendidos ou Inconscientes podem ser imobilizados". */
+    public static final String IMMOBILIZE_TARGET_NOT_HELPLESS = "IMMOBILIZE_TARGET_NOT_HELPLESS";
+
+    /** Imobilizar / Encontrão / Atacar Objetos: the target is not within reach (adjacent). */
+    public static final String TARGET_NOT_ADJACENT = "TARGET_NOT_ADJACENT";
+
+    /** Investida / Encontrão: "Distância mínima igual ao Movimento Base padrão para sua Categoria de Tamanho". */
+    public static final String CHARGE_TOO_SHORT = "CHARGE_TOO_SHORT";
+
+    /** Investida / Encontrão: "Precisa ser feita em linha reta, livre de barreiras, obstáculos e outros personagens". */
+    public static final String CHARGE_LINE_BLOCKED = "CHARGE_LINE_BLOCKED";
+
+    /** Atacar Objetos / Desarmar: the item named is not one the target has equipped. */
+    public static final String ITEM_NOT_EQUIPPED = "ITEM_NOT_EQUIPPED";
 }

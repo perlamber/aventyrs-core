@@ -1,22 +1,39 @@
 # Correntes de Efeitos e Efeitos Críticos — source index
 
-Source: `V19 - Corrente de Efeitos e Efeitos Críticos 20260814 (1).docx` (2026-08-14), converted
+Source: `V19 - Corrente de Efeitos e Efeitos Críticos 20261012.docx` (2026-10-12; was the 20260814 file), converted
 verbatim to `efeitos-criticos.txt` with `textutil -convert txt`. The authoritative catalog for
 both mechanisms; read it alongside [`magias-index.md`](magias-index.md), which counts how the
 Magias *use* them.
 
-**45 entries in three lists**, none of which is a single flat catalog:
+**49 entries in three lists**, none of which is a single flat catalog:
 
 | list | n | lines | in code |
 | --- | --- | --- | --- |
-| Corrente de Efeitos | 13 | 9–46 | — no type exists; only `Definhar` is built |
-| Efeitos Críticos **Defensivos** | 9 | 58–92 | ✅ all 9 — `DefensiveCriticalEffectType` |
-| Efeitos Críticos **Ofensivos** | 23 | 120–214 | ✅ all 23 — `CriticalEffectType` |
+| Corrente de Efeitos | 17 | 9–59 | ✅ all 17 — `effect.EffectChain` classes (see below) |
+| Efeitos Críticos **Defensivos** | 9 | 71–105 | ✅ all 9 — `DefensiveCriticalEffectType` |
+| Efeitos Críticos **Ofensivos** | 23 | 133–227 | ✅ all 23 — `CriticalEffectType` |
 
 Every entry in both Efeito Crítico lists is written as a **Maior/Menor pair**, matching
 `CriticalEffect`'s existing `ACERTO_CRITICO_MAIOR`/`ACERTO_CRITICO_MENOR` split exactly. The
 Correntes are single-bodied — no severity tier — which matches `EffectChainService` firing on a
 margin rather than on a critical.
+
+## 20261012 revision — four Correntes added (core 0.1.6.12)
+
+The only change from the 20260814 text: **Desarmar**, **Lançar ao Chão**, **Envenenar** and **Impacto Meteórico**
+join the Corrente list. Both Efeito Crítico lists are byte-identical, so the line numbers quoted further down for them
+are the 20260814 ones and run 13 lines low. Table rulings (2026-10-12):
+
+| Corrente | class | consumer | ruling |
+| --- | --- | --- | --- |
+| Desarmar | `Desarmar` | Ações de Combate's *Atacar Objetos / Desarmar* (not imported) | Out of hand, still owned. A weapon is sheathed and drawn again at the draw cost. An Escudo goes to the inventory and is re-equipped at `CharacterSheet#getEquipCost` (1PA in combat). The attacker picks; the default is the weapon in hand, else the Escudo. Armas Naturais and Manopla de Segurança are immune. Not `CombatantSheet#disarm`. |
+| Lançar ao Chão | `LancarAoChao` | Ações de Combate's *Encontrão* (not imported) | Caído, open-ended, sourced to the attacker. |
+| Envenenar | `Envenenar` | none yet | The first Corrente that reads a payload from its source: the granting attack supplies the Veneno's `ConditionEffect`s and the Descanso that ends it. If it supplies nothing, bare Envenenado lasts until any Descanso. |
+| Impacto Meteórico | `ImpactoMeteorico` | `PowerStoneType#ADAMANTE_BRUTO`'s Efeito Base (`createBaseEffectChain`) | Host weapon only. +2 PV after mitigation (like Rugido's), `ATTACK_EXPLOSION` reported. |
+
+Still open: no in-scene draw/ready-shield action in the API/client (a disarmed combatant re-arms through the GM),
+and the companion `V19 - Ações de Combate, Danos e Resistências 20261012.docx` — which also defines Resistência à
+Corrente de Efeitos (5 by default) — is not imported yet.
 
 ## The document's own prose sections are empty
 
@@ -145,7 +162,7 @@ Worth stating, because these classes predate this document:
   randomly. Note the catalog distinguishes the recovery: Maior recovers at the next **Descanso
   Longo**, Menor at the next Descanso. `PendingEgoRecovery` carries no such distinction.
 
-## Corrente de Efeitos — 13 catalog entries, and none of them is what a Magia names
+## Corrente de Efeitos — 13 catalog entries (17 since 20261012), and none of them is what a Magia names
 
 > **Status (core 0.0.85):** every entry below is an authored `effect.EffectChain` class. The "mechanisms" table
 > further down is historical for these: Enrijecer's Perícias Físicas scope, Oprimir's Roubo de Determinação, Ferida

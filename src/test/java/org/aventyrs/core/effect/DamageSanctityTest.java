@@ -67,12 +67,13 @@ class DamageSanctityTest {
 
     /** The Zumbi's Anatomia de Morto-Vivo Menor: "imunes a danos Profanos e Naturais". */
     @Test
-    void theZumbiIsImmuneToProfanoAndNatural() {
+    void theZumbiIsImmuneToProfanoButNoLongerToNatural() {
         MonsterSheet zumbi = Zumbi.builder().build().spawn(new Player());
 
         assertTrue(zumbi.isImmuneToDamage(DamageType.FISICO, PROFANE_PHYSICAL));
-        assertTrue(zumbi.isImmuneToDamage(DamageType.ELEMENTAL,
-                new DamageDescriptor(DamageType.ELEMENTAL, ElementalType.NATURAL)));
+        // The manual's Anatomia de Morto-Vivo replaced the Menor, and with it the Natural immunity (ruling 2026-10-14).
+        assertFalse(zumbi.isImmuneToDamage(DamageType.MAGICO,
+                new DamageDescriptor(DamageType.MAGICO, ElementalType.NATURAL)));
         assertFalse(zumbi.isImmuneToDamage(DamageType.FISICO, null));
         assertEquals(0, new DamageServiceImpl().calculateFinalDamage(zumbi, null, PROFANE_PHYSICAL, null, 8, false));
     }
@@ -107,7 +108,7 @@ class DamageSanctityTest {
         warded.grantBlessing(new Blessing(ModifierType.PROFANE_DAMAGE_REDUCTION, 3, 5, TargetScope.SELF, "test"));
         DamageServiceImpl damage = new DamageServiceImpl();
 
-        assertEquals(damage.calculateFinalDamage(warded, null, new DamageDescriptor(DamageType.MAGICO), null, 8, false) - 3,
+        assertEquals(damage.calculateFinalDamage(warded, null, new DamageDescriptor(DamageType.MAGICO, null, org.aventyrs.core.character.DamageSanctity.UMBRAL), null, 8, false) - 3,
                 damage.calculateFinalDamage(warded, null,
                         new DamageDescriptor(DamageType.MAGICO, null, DamageSanctity.PROFANO), null, 8, false));
     }

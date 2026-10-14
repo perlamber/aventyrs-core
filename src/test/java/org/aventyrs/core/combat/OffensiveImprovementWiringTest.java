@@ -1,5 +1,6 @@
 package org.aventyrs.core.combat;
 
+import org.aventyrs.core.character.Resistance;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -247,8 +248,8 @@ class OffensiveImprovementWiringTest {
         CharacterSheet resistant = sheet();
         resistant.grantTemporaryBonus(ModifierType.DAMAGE_REDUCTION, 2, 3);
         resistant.applyEffect(new TimedElementalResistance(ElementalType.FOGO, 1, 3, false));
-        assertEquals(6, damage.calculateFinalDamage(resistant, null, DamageType.FISICO, null, 10, false, false, null,
-                Set.of(), ElementalType.FOGO));   // RD 2 and RE 2
+        assertEquals(10 - 2 - Resistance.RE.instance(), damage.calculateFinalDamage(resistant, null, DamageType.FISICO,
+                null, 10, false, false, null, Set.of(), ElementalType.FOGO));   // RD 2 and one RE instance
         assertEquals(8, damage.calculateFinalDamage(resistant, null, DamageType.FISICO, null, 10, false, false, null,
                 Set.of(BypassedReduction.RE), ElementalType.FOGO));
     }

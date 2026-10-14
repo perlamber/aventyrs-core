@@ -525,14 +525,13 @@ public class SenhorDaBriga implements AventyrTitle {
             if (impactoElementalElement != null
                     && holder.getRemainingEnhancedAttacks(PunhoInigualavelAbility.IMPACTO_ELEMENTAL) > 0) {
                 if (holdsGrandeMestreDasBrigas()) {
-                    // "rolados contra a DM de seus alvos, causam danos mágicos": ELEMENTAL is this
-                    // core's magical elemental damage — keeping the chosen element, which MAGICO
-                    // cannot carry. A reading, flagged in docs/senhor-da-briga.md.
+                    // "rolados contra a DM de seus alvos, causam danos mágicos": a Mágico Elemental of
+                    // the chosen element (2026-10-12 taxonomy). A reading, flagged in docs/senhor-da-briga.md.
                     defenseType = DefenseType.MAGIC;
-                    descriptor = new DamageDescriptor(DamageType.ELEMENTAL, impactoElementalElement);
+                    descriptor = new DamageDescriptor(DamageType.MAGICO, impactoElementalElement);
                     criticalEffect = CriticalEffectType.CATACLISMO;
                 } else {
-                    descriptor = new DamageDescriptor(DamageType.FISICO_ELEMENTAL, impactoElementalElement);
+                    descriptor = new DamageDescriptor(DamageType.ELEMENTAL, impactoElementalElement);
                 }
             }
             if (holder.getRemainingEnhancedAttacks(PunhoInigualavelAbility.AGARRAR_E_DERRUBAR) > 0) {

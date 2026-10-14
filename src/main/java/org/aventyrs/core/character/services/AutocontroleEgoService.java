@@ -31,7 +31,7 @@ public interface AutocontroleEgoService {
 
     /**
      * Temporary: "receber RA por 1 Rodada; adicionalmente, durante este tempo, receber RD, RM ou RE, à sua escolha".
-     * One instance each ({@code DamageService#DEFAULT_DAMAGE_REDUCTION}), lasting until the holder's next Turn
+     * One instance each ({@code Resistance#RD}), lasting until the holder's next Turn
      * begins (the "por 1 Rodada" ruling). element names the RE's element, and is required for it.
      *
      * @throws IllegalArgumentException for {@code RE} without an element (nothing spent)

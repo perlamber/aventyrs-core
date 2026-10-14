@@ -1,5 +1,7 @@
 package org.aventyrs.core.item;
 
+import org.aventyrs.core.character.Resistance;
+
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.effect.DefensiveCriticalEffectType;
 import org.aventyrs.core.modifier.ModifierType;
@@ -44,7 +46,7 @@ public enum ArmorItem implements CriticallyDefensiveItem {
             ItemFavor.builder()
                     .description("Dano de Corte sofrido é reduzido em -2.")
                     .requirements(new ItemRequirements(AttributeDomain.STRENGTH, 3))
-                    .bonus(new ItemBonus(ModifierType.DAMAGE_REDUCTION, 2))
+                    .bonus(new ItemBonus(ModifierType.DAMAGE_TAKEN_REDUCTION, Resistance.RDS.instances(2)))
                     .build(),
             DefensiveCriticalEffectType.RETORNO_DE_DANOS),
 
@@ -116,7 +118,7 @@ public enum ArmorItem implements CriticallyDefensiveItem {
                     .description("Dano de Corte e Perfuração sofrido é reduzido em -2, "
                             + "Movimento Base reduzido à metade.")
                     .requirements(new ItemRequirements(AttributeDomain.STRENGTH, 4))
-                    .bonus(new ItemBonus(ModifierType.DAMAGE_REDUCTION, 2))
+                    .bonus(new ItemBonus(ModifierType.DAMAGE_TAKEN_REDUCTION, Resistance.RDS.instances(2)))
                     .build(),
             DefensiveCriticalEffectType.PROVOCAR),
 
@@ -139,7 +141,7 @@ public enum ArmorItem implements CriticallyDefensiveItem {
             ItemFavor.builder()
                     .description("Dano de Corte e Perfuração sofrido é reduzido em -1.")
                     .requirements(new ItemRequirements(AttributeDomain.STRENGTH, 3))
-                    .bonus(new ItemBonus(ModifierType.DAMAGE_REDUCTION, 1))
+                    .bonus(new ItemBonus(ModifierType.DAMAGE_TAKEN_REDUCTION, Resistance.RDS.instances(1)))
                     .build(),
             DefensiveCriticalEffectType.RETORNO_DE_DANOS),
 
@@ -160,7 +162,7 @@ public enum ArmorItem implements CriticallyDefensiveItem {
             ItemFavor.builder()
                     .description("Dano de Corte sofrido é reduzido em -1.")
                     .requirements(new ItemRequirements(AttributeDomain.STRENGTH, 3))
-                    .bonus(new ItemBonus(ModifierType.DAMAGE_REDUCTION, 1))
+                    .bonus(new ItemBonus(ModifierType.DAMAGE_TAKEN_REDUCTION, Resistance.RDS.instances(1)))
                     .build(),
             DefensiveCriticalEffectType.RETORNO_DE_DANOS),
 
@@ -189,7 +191,7 @@ public enum ArmorItem implements CriticallyDefensiveItem {
             ItemFavor.builder()
                     .description("Dano Mágico sofrido reduzido em -2.")
                     .requirements(new ItemRequirements(AttributeDomain.GNOSE, 3))
-                    .bonus(new ItemBonus(ModifierType.DAMAGE_REDUCTION, 2))
+                    .bonus(new ItemBonus(ModifierType.DAMAGE_TAKEN_REDUCTION, Resistance.RDS.instances(2)))
                     .build(),
             DefensiveCriticalEffectType.SURTO_ARCANO),
 
@@ -211,7 +213,7 @@ public enum ArmorItem implements CriticallyDefensiveItem {
             ItemFavor.builder()
                     .description("Dano sofrido reduzido em -1.")
                     .requirements(new ItemRequirements(AttributeDomain.GNOSE, 4))
-                    .bonus(new ItemBonus(ModifierType.DAMAGE_REDUCTION, 1))
+                    .bonus(new ItemBonus(ModifierType.DAMAGE_TAKEN_REDUCTION, Resistance.RDS.instances(1)))
                     .build(),
             DefensiveCriticalEffectType.SURTO_ARCANO),
 

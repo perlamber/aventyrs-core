@@ -1,11 +1,13 @@
 package org.aventyrs.core.item;
 
+import org.aventyrs.core.character.Resistance;
 import java.util.List;
 
 import org.aventyrs.core.character.CriticalDamage;
 import org.aventyrs.core.character.services.DamageService;
 import org.aventyrs.core.effect.CriticalEffectType;
 import org.aventyrs.core.effect.Effect;
+import org.aventyrs.core.effect.ImpactoMeteorico;
 import org.aventyrs.core.effect.Rugido;
 import org.aventyrs.core.modifier.ModifierType;
 import org.aventyrs.core.sheet.CombatantSheet;
@@ -53,8 +55,8 @@ import lombok.Getter;
  * A Violento effect that improves <em>an attack</em> (Margem, crit damage, Efeito, Corrente) applies only to attacks
  * made with the host weapon itself. Every other clause carries a per-constant TODO naming its missing system.
  *
- * <p>A numberless "RD" is {@link DamageService#DEFAULT_DAMAGE_REDUCTION} points, a numberless "RDS" one point, and a
- * numberless "Resistência à Críticos" {@link CombatantSheet#CRITICAL_RESISTANCE_INSTANCE}. These are the same
+ * <p>A numberless "RD" is {@link Resistance#RD} points, a numberless "RDS" one point, and a
+ * numberless "Resistência à Críticos" {@link Resistance#RC}. These are the same
  * readings every other source uses.
  */
 @Getter
@@ -63,23 +65,25 @@ public enum PowerStoneType {
     /**
      * Adamante Bruto (Sintética).
      *
-     * <p>Real: Base Vigor +1; Protetivo RD and RDS.
+     * <p>Real: Base Vigor +1 and the Corrente Impacto Meteórico ({@link #createBaseEffectChain} — on attacks with its
+     * host weapon only, table ruling 2026-10-12); Protetivo RD and RDS.
      *
-     * <p>TODO:
-     * <ul>
-     *   <li>the Impacto Meteórico Corrente — V19 names it without stating its effect;</li>
-     *   <li>the Violento "Ataques Ignoram RD, Acertos Críticos … ignoram Meio-Dano" — no attack-side
-     *       mitigation-bypass flag exists.</li>
-     * </ul>
+     * <p>TODO: the Violento "Ataques Ignoram RD, Acertos Críticos … ignoram Meio-Dano" — no attack-side
+     * mitigation-bypass flag exists.
      */
     ADAMANTE_BRUTO("Adamante Bruto", "Sintética",
             "Vigor +1, ataques recebem a Corrente de Efeitos – Impacto Meteórico.",
             "RD e RDS.",
             "Ataques Ignoram RD, Acertos Críticos adicionalmente ignoram efeitos de Meio-Dano.",
             List.of(new ItemBonus(ModifierType.VIGOR_BONUS, 1)),
-            List.of(new ItemBonus(ModifierType.DAMAGE_REDUCTION, DamageService.DEFAULT_DAMAGE_REDUCTION),
-                    new ItemBonus(ModifierType.DAMAGE_TAKEN_REDUCTION, 1)),
-            List.of()),
+            List.of(new ItemBonus(ModifierType.DAMAGE_REDUCTION, Resistance.RD.instance()),
+                    new ItemBonus(ModifierType.DAMAGE_TAKEN_REDUCTION, Resistance.RDS.instance())),
+            List.of()) {
+        @Override
+        public Effect createBaseEffectChain() {
+            return new ImpactoMeteorico();
+        }
+    },
 
     /**
      * Aqua Marina (Elemental: Água).
@@ -112,7 +116,7 @@ public enum PowerStoneType {
             "Ignora o primeiro dano Elemental: Magma sofrido, então concede RE: Magma.",
             "Dano Crítico +1d6, Dano causado é Elemental: Magma em substituição aos seus tipos.",
             List.of(new ItemBonus(ModifierType.LESSER_CRITICAL_MARGIN, 1),
-                    new ItemBonus(ModifierType.CRITICAL_RESISTANCE, CombatantSheet.CRITICAL_RESISTANCE_INSTANCE)),
+                    new ItemBonus(ModifierType.CRITICAL_RESISTANCE, Resistance.RC.instance())),
             List.of(), List.of()) {
         @Override
         public CriticalDamage resolveCriticalDamage(final ItemType hostType, final boolean hostWielded) {
@@ -250,7 +254,7 @@ public enum PowerStoneType {
             List.of(new ItemBonus(ModifierType.MOVEMENT, 1),
                     new ItemBonus(ModifierType.ATAQUE_CORPO_A_CORPO_ROLL_BONUS, Skill.ADVANTAGE_BONUS),
                     new ItemBonus(ModifierType.ATAQUE_A_DISTANCIA_ROLL_BONUS, Skill.ADVANTAGE_BONUS)),
-            List.of(new ItemBonus(ModifierType.CRITICAL_RESISTANCE, CombatantSheet.CRITICAL_RESISTANCE_INSTANCE)),
+            List.of(new ItemBonus(ModifierType.CRITICAL_RESISTANCE, Resistance.RC.instance())),
             List.of(new ItemBonus(ModifierType.LESSER_CRITICAL_MARGIN, 1))) {
         @Override
         public int resolveMajorCriticalMarginIncrease(final ItemType hostType, final boolean hostWielded) {
@@ -293,7 +297,7 @@ public enum PowerStoneType {
             "Você recupera 3PV no início de cada Rodada e se torna imune a efeitos de Possessão.",
             "Danos profanos reduzidos em -3. Imunidade a Doenças.",
             "Dano causado é Sagrado substituição aos seus tipos e aumenta em +2d6 contra Mortos-Vivos e Abissais.",
-            List.of(), List.of(new ItemBonus(ModifierType.PROFANE_DAMAGE_REDUCTION, 3)), List.of()),
+            List.of(), List.of(new ItemBonus(ModifierType.PROFANE_DAMAGE_REDUCTION, Resistance.RDS.instances(3))), List.of()),
 
     /**
      * Relâmpago Dourado (Temporal).
@@ -346,7 +350,7 @@ public enum PowerStoneType {
             "Ignora o primeiro dano Elemental: Gelo sofrido, então concede RE: Gelo.",
             "Danos causados são aumentados em +1d6 e são Elemental: Gelo em substituição aos seus tipos.",
             List.of(new ItemBonus(ModifierType.STRENGTH_BONUS, 1),
-                    new ItemBonus(ModifierType.DAMAGE_REDUCTION, DamageService.DEFAULT_DAMAGE_REDUCTION)),
+                    new ItemBonus(ModifierType.DAMAGE_REDUCTION, Resistance.RD.instance())),
             List.of(), List.of()),
 
     /**
@@ -444,6 +448,15 @@ public enum PowerStoneType {
             case TURMALINA_OBSCURA -> CriticalEffectType.OFERENDA_MALDITA;
             default -> null;
         };
+    }
+
+    /**
+     * The Corrente de Efeitos a bound stone's Efeito Base puts on an attack with its host weapon, built fresh for that
+     * attack. Adamante Bruto's is an Impacto Meteórico; every other stone returns {@code null}. Host-weapon-scoped like
+     * the Violento's (table ruling, 2026-10-12): a Base Corrente on a stone bound to armour reaches no attack.
+     */
+    public Effect createBaseEffectChain() {
+        return null;
     }
 
     /**

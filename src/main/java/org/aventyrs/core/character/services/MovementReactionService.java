@@ -78,4 +78,39 @@ public interface MovementReactionService {
      */
     List<CombatantSheet> getProvokedReactors(CombatantSheet mover, SceneContext sceneContext, Manoeuvre manoeuvre,
                                              CombatantSheet chargeTarget);
+
+    /**
+     * Where along route the movement provokes Defender o Perímetro, and from whom (core 0.1.6.17; table ruling
+     * 2026-10-14). route lists the mover's positions in order, its start first. Each hostile of moverContext with a
+     * position in positions reacts at the first position its melee reach covers — the start included, since leaving
+     * it is moving within reach — and at no later one. Distance is three-dimensional ({@code HexGrid#distance3d}) less
+     * both bodies' radii.
+     *
+     * <p>The same exemptions as {@link #getProvokedReactors} apply: Reposicionar provokes nothing, a held exemption
+     * none, and an Investida's own target does not react unless a Talento lets it. A {@code null} moverContext is
+     * nobody. Empty when nobody reacts; checkpoints in route order.
+     */
+    java.util.List<org.aventyrs.core.action.ReactionCheckpoint> getRouteCheckpoints(
+            CombatantSheet mover, java.util.List<org.aventyrs.core.scene.grid.BoardPosition> route, Manoeuvre manoeuvre,
+            SceneContext moverContext,
+            java.util.Map<CombatantSheet, org.aventyrs.core.scene.grid.BoardPosition> positions,
+            CombatantSheet chargeTarget);
+
+    /**
+     * The same, with some hostiles' melee reach already known in UD (body radius included) — a client's stand-in for a
+     * combatant another client owns carries no weapons, so its owner advertises the reach and the mover's client passes
+     * it here. A hostile in knownReachUd threatens a position whose gap is within that figure; any other is judged by
+     * the weapons on its sheet.
+     */
+    java.util.List<org.aventyrs.core.action.ReactionCheckpoint> getRouteCheckpoints(
+            CombatantSheet mover, java.util.List<org.aventyrs.core.scene.grid.BoardPosition> route, Manoeuvre manoeuvre,
+            SceneContext moverContext,
+            java.util.Map<CombatantSheet, org.aventyrs.core.scene.grid.BoardPosition> positions,
+            CombatantSheet chargeTarget, java.util.Map<CombatantSheet, Integer> knownReachUd);
+
+    /**
+     * How far sheet's melee reach extends, in UD, from the weapons it holds ready — drawn ones and Armas Naturais
+     * swung as an Ataque Corpo-a-Corpo — or empty with none in hand. What a client advertises for a combatant it owns.
+     */
+    java.util.OptionalInt getMeleeReachUd(CombatantSheet sheet);
 }

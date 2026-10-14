@@ -1,5 +1,6 @@
 package org.aventyrs.core.monster.summon;
 
+import org.aventyrs.core.character.Resistance;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -60,9 +61,9 @@ public class NatureSummonAbility implements SkillCompetencyAbility {
     @Modifier(ModifierType.DAMAGE_REDUCTION)
     public int damageReduction() {
         return switch (kind) {
-            case ORGULHO_DE_LACERTO -> ORGULHO_DAMAGE_REDUCTION;
-            case ANCIENTE -> ANCIENTE_DAMAGE_REDUCTION;
-            case EXPERIMENTO_DE_LACERTO -> powers.contains(LacertoPower.BRUTO) ? DamageService.DEFAULT_DAMAGE_REDUCTION : 0;
+            case ORGULHO_DE_LACERTO -> Resistance.RDS.instances(ORGULHO_DAMAGE_REDUCTION);
+            case ANCIENTE -> Resistance.RDS.instances(ANCIENTE_DAMAGE_REDUCTION);
+            case EXPERIMENTO_DE_LACERTO -> powers.contains(LacertoPower.BRUTO) ? Resistance.RD.instance() : 0;
             default -> 0;
         };
     }
@@ -70,7 +71,7 @@ public class NatureSummonAbility implements SkillCompetencyAbility {
     @Modifier(ModifierType.ABSOLUTE_DAMAGE_REDUCTION)
     public int absoluteDamageReduction() {
         return kind == NatureSummonKind.ORGULHO_DE_LACERTO && powers.contains(LacertoPower.BRUTO)
-                ? DamageService.DEFAULT_DAMAGE_REDUCTION
+                ? Resistance.RA.instance()
                 : 0;
     }
 

@@ -1,5 +1,6 @@
 package org.aventyrs.core.title.bruxo;
 
+import org.aventyrs.core.character.Resistance;
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.CriticalDamage;
@@ -86,7 +87,7 @@ class BruxoInvocationTest {
         assertEquals(4, enhancement.regenerationPerRound());
         assertEquals(4, enhancement.sizeIncrease());
         assertEquals(8, enhancement.cometDamageBonus());
-        assertEquals(new DamageDescriptor(DamageType.ELEMENTAL, ElementalType.GELO),
+        assertEquals(new DamageDescriptor(DamageType.MAGICO, ElementalType.GELO),
                 enhancement.comet().orElseThrow().descriptor());
         assertEquals(DamageSanctity.PROFANO, enhancement.profaneAura().orElseThrow().descriptor().sanctity());
         // One Habilidade de Oráculo Abissal: RDS 2 + 1.
@@ -213,7 +214,7 @@ class BruxoInvocationTest {
                 feat.resolveCriticalDamage(SkillType.ATAQUE_CORPO_A_CORPO, null, null, null, null, null));
         assertEquals(DefenseType.MAGIC,
                 feat.resolveTargetDefenseOverride(SkillType.ATAQUE_CORPO_A_CORPO, null, null, null));
-        assertEquals(new DamageDescriptor(DamageType.ELEMENTAL, ElementalType.FOGO),
+        assertEquals(new DamageDescriptor(DamageType.MAGICO, ElementalType.FOGO),
                 feat.resolveDamageRetype(null, SkillType.ATAQUE_CORPO_A_CORPO, null));
     }
 
@@ -249,7 +250,7 @@ class BruxoInvocationTest {
         int beside = damage.calculateFinalDamage(ally, adjacent, DamageType.MAGICO, null, 10, false);
         int away = damage.calculateFinalDamage(ally, apart, DamageType.MAGICO, null, 10, false);
 
-        assertEquals(away - DamageService.DEFAULT_DAMAGE_REDUCTION, beside);
+        assertEquals(away - Resistance.RM.instance(), beside);
     }
 
     @Test

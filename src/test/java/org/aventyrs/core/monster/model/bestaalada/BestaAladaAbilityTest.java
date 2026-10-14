@@ -105,7 +105,7 @@ class BestaAladaAbilityTest {
         activeAbilities.activate(sheet.getCharacter(), sheet, held(sheet, "Forma de Vento"), 1);
         assertEquals(0, finalDamage(sheet, DamageType.FISICO, null));
         assertEquals(0, finalDamage(sheet, DamageType.MAGICO, null));
-        assertEquals(10, finalDamage(sheet, DamageType.ELEMENTAL, ElementalType.VENTO));
+        assertEquals(10, finalDamage(sheet, DamageType.MAGICO, ElementalType.VENTO));
         assertEquals(10, finalDamage(sheet, DamageType.PRIMORDIAL, null));
     }
 }

@@ -1,7 +1,23 @@
 Defesas e Resistências
 
-Fonte: bloco de regras fornecido pelo autor. Este arquivo é a fonte da verdade para o
-subsistema de Resistências (RD/RM/RE/RC/RA/RDS/Meio-Dano/Resistência à Corrente de Efeitos).
+Fonte: bloco de regras fornecido pelo autor, atualizado por "V19 - Ações de Combate, Danos e
+Resistências 20261012" (texto integral em acoes-de-combate.txt, que prevalece). Este arquivo é a
+fonte da verdade para o subsistema de Resistências (RD/RM/RE/RC/RA/RDS/Meio-Dano/Resistência à
+Corrente de Efeitos). Os valores por instância vivem em org.aventyrs.core.character.Resistance.
+
+================================================================================================
+Tipos de Dano (atualização da mesa, 2026-10-12)
+
+  Físico, Primordial, Elemental, Mágico Elemental, Físico Profano, Mágico Profano, Físico Sagrado,
+  Mágico Sagrado, Físico Umbral, Mágico Umbral, Danos de Queda e Danos de Asfixia.
+  (O antigo "Físico Elemental" passa a se chamar apenas "Elemental".)
+
+  Decisões da mesa (2026-10-12):
+  - Elemental é reduzido apenas por RE (nunca por RD) — além de RDS e RA.
+  - Mágico Elemental é reduzido por RE, RM, RDS e RA.
+  - Todo Dano Mágico é qualificado (Elemental, Profano, Sagrado ou Umbral); não existe Dano Mágico puro.
+  - (Substituída em 2026-10-13) Danos de Queda e de Asfixia são Dano Primordial (acoes-de-combate.txt):
+    nenhuma Resistência os reduz, nem RA.
 
 ================================================================================================
 Resistindo a Danos e Efeitos Ofensivos
@@ -17,7 +33,7 @@ Resistência à Magias (RM)
   Duração não se acumula entre instâncias).
 
 Resistência Elemental (RE)
-  Cada instância reduz Danos Elementais Físicos e Mágicos em -2.
+  Cada instância reduz Danos Elementais e Mágicos Elementais em -3.
   Reduz a Duração de Efeitos Elementais contínuos em -1 Unidade (a redução de Duração não se
   acumula entre instâncias).
 
@@ -35,7 +51,8 @@ Resistência Absoluta (RA)
   instâncias).
 
 Redução de Danos Sofridos (RDS)
-  Cada instância reduz os Danos não-PRIMORDIAIS de ordens Físicas e Mágicas em -1.
+  Cada instância reduz Danos de ordens Físicas e Mágicas em -1, não aplicável à danos Primordiais,
+  Profanos, Sagrados e Umbrais.
 
 Meio-Dano
   Instâncias de Meio-Dano não são acumulativas entre si e reduzem os Danos Sofridos à metade.

@@ -66,7 +66,42 @@ public enum Manoeuvre {
     LIBERTAR_SE_DA_PREDACAO(ActionKind.ESCAPE_DEVOURED),
 
     /** Levantar-se — 1PA, leaving Caído; provokes Defender o Perímetro ({@code StandUpService}). */
-    LEVANTAR_SE(ActionKind.STAND_UP);
+    LEVANTAR_SE(ActionKind.STAND_UP),
+
+    /**
+     * Correr — 2PA, an Atletismo roll from GD Médio: twice the Movimento Base, +2UD per GD beaten; only an adjacent
+     * hostile may react; never through Terreno Difícil; a Falha Crítica ends Caído (core 0.1.6.18,
+     * {@code MovementManoeuvreService}).
+     */
+    CORRER(ActionKind.MOVEMENT),
+
+    /** Escalar — 2PA, up a climbable face: half the Movimento Base vertically; a failure by more than 5 falls. */
+    ESCALAR(ActionKind.MOVEMENT),
+
+    /** Nadar — 2PA, through water: half the Movimento Base; a failure by more than 5 submerges. */
+    NADAR(ActionKind.MOVEMENT),
+
+    /** Saltar — 2PA: half the Movimento Base, +2UD per GD beaten; ignores Terreno Difícil and gaps in the air. */
+    SALTAR(ActionKind.MOVEMENT),
+
+    /** Recuo Defensivo — 2PA, once per Rodada, always away: half the Movimento Base, provoking no Reação. */
+    RECUO_DEFENSIVO(ActionKind.MOVEMENT),
+
+    /** Voar — taking off ("Iniciar um voo provoca Reações Defender o Perímetro de seus inimigos"). */
+    VOAR(ActionKind.MOVEMENT),
+
+    /**
+     * Encontrão — 3PA, a straight-line charge that pushes instead of hurting: an Ataque Corpo-a-Corpo with no damage,
+     * 1UD back on a hit (2UD on a critical), carrying Lançar ao Chão; -2 Defesas on a miss ({@code ShoveChargeService},
+     * core 0.1.6.19).
+     */
+    ENCONTRAO(null),
+
+    /**
+     * Atacar Objetos / Desarmar — 2PA, an attack against an equipped item at one GD level harder, its damage halved,
+     * carrying Desarmar ({@code ObjectAttackService}, core 0.1.6.19).
+     */
+    ATACAR_OBJETOS(null);
 
     private final ActionKind actionKind;
 

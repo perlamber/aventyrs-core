@@ -8,7 +8,7 @@ import org.aventyrs.core.sheet.InteractionResult;
  * Cataclismo — "Na Rodada seguinte o alvo sofre uma quantidade de dano igual ao dano Elemental
  * causado por este ataque" (Maior) / "metade" (Menor). Reads the hit this chain's {@code
  * DamageInteraction} just recorded ({@code CombatantSheet#getLastDamageReceived()}); only an
- * Elemental or Físico Elemental hit has an elemental figure to repeat. Scheduled as {@code
+ * Elemental or Elemental hit has an elemental figure to repeat. Scheduled as {@code
  * PostponedDamage} — already mitigated, landing at the next Rodada boundary.
  */
 public class Cataclismo extends AbstractCriticalEffect {

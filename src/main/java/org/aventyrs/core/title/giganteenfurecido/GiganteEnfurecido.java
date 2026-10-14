@@ -1,5 +1,6 @@
 package org.aventyrs.core.title.giganteenfurecido;
 
+import org.aventyrs.core.character.Resistance;
 import lombok.NonNull;
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
@@ -83,7 +84,7 @@ public class GiganteEnfurecido implements AventyrTitle {
     static final int BERSERKER_HIT_DEFESAS = -2;
     static final int BERSERKER_HIT_STRENGTH = 1;
     /** Desprezar Danos: "você recebe RA" — one instance. */
-    static final int DESPREZAR_ABSOLUTE_REDUCTION = 2;
+    static final int DESPREZAR_ABSOLUTE_REDUCTION = Resistance.RA.instance();
 
     /** Berserker's "A cada Cena … apenas 1 vez para cada inimigo atacante", keyed per attacker. */
     record BerserkerHit(UUID attackerId) {

@@ -194,4 +194,18 @@ public interface ChargeService {
      * @return the granted {@code TemporaryBonus}, or {@code null} on a hit or a waived penalty
      */
     TemporaryBonus applyOutcome(CombatantSheet sheet, boolean hit);
+
+    /**
+     * "Distância mínima igual ao Movimento Base padrão para sua Categoria de Tamanho" (acoes-de-combate.txt 20261013,
+     * core 0.1.6.19) — the size table's Movimento Base, not the character's own, shared by Investida and Encontrão.
+     */
+    int getMinimumDistance(CombatantSheet sheet);
+
+    /**
+     * Why a charge from from landing on landing is refused — "Precisa ser feita em linha reta, livre de barreiras,
+     * obstáculos e outros personagens" and the minimum distance — a {@code TranslatableMessages} key, or empty.
+     */
+    java.util.Optional<String> refusalForLine(CombatantSheet sheet, org.aventyrs.core.scene.grid.GridPosition from,
+                                              org.aventyrs.core.scene.grid.GridPosition landing,
+                                              org.aventyrs.core.scene.grid.MovementMap map);
 }

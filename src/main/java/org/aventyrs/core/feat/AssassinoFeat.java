@@ -1,5 +1,6 @@
 package org.aventyrs.core.feat;
 
+import org.aventyrs.core.character.Resistance;
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.sheet.CharacterSheet;
@@ -414,7 +415,9 @@ public enum AssassinoFeat implements Feat {
                                                     final AttackSource attackSource, final CombatantSheet holder,
                                                     final SkillRoll skillRoll) {
             return skillRoll != null && skillRoll.activated(GOLPE_SOBRENATURAL)
-                    ? new DamageDescriptor(DamageType.MAGICO, null) : null;
+                    // "este ataque causa Danos Mágicos" — Mágico Profano (table ruling, 2026-10-12: Mágico is qualified).
+                    ? new DamageDescriptor(DamageType.MAGICO, null, org.aventyrs.core.character.DamageSanctity.PROFANO)
+                    : null;
         }
 
         @Override
@@ -480,10 +483,10 @@ public enum AssassinoFeat implements Feat {
             return isHidden(holder) ? SHADOW_SHIELD_BONUS : 0;
         }
 
-        /** "+3 … e RDS" — an RDS, so it reaches magical hits too, never Primordial ones. */
+        /** "+3 em suas Defesas e RDS" — the +3 is the Defesas'; the RDS is one instance (table ruling, 2026-10-13). */
         @Override
         public int resolveDamageTakenReduction(final Character character, final CombatantSheet holder) {
-            return isHidden(holder) ? SHADOW_SHIELD_BONUS : 0;
+            return isHidden(holder) ? Resistance.RDS.instance() : 0;
         }
     },
 

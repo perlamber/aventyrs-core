@@ -1,5 +1,6 @@
 package org.aventyrs.core.race;
 
+import org.aventyrs.core.character.Resistance;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.aventyrs.core.modifier.Modifier;
@@ -24,7 +25,7 @@ public enum GuamposRacialAbility implements SkillCompetencyAbility {
      * against, and RD is what {@code DamageService}'s {@code ignoreDamageReduction} flag exists
      * to bypass, which is the ordinary reading of a plain "reduz o dano sofrido".
      *
-     * <p>The value is a literal 1 rather than {@code DamageService.DEFAULT_DAMAGE_REDUCTION}
+     * <p>The value is a literal 1 rather than {@code Resistance#RD}
      * (+2): that constant is for a clause whose rules text states no number, and this one states
      * its own.
      *
@@ -37,9 +38,9 @@ public enum GuamposRacialAbility implements SkillCompetencyAbility {
      * rather than a modifier scan.
      */
     VIGOR_DE_EPONA("Guampos recebem +1 Multiplicador de PV e reduzem em -1 todo dano sofrido.") {
-        @Modifier(ModifierType.DAMAGE_REDUCTION)
+        @Modifier(ModifierType.DAMAGE_TAKEN_REDUCTION)
         public int damageReduction() {
-            return DAMAGE_REDUCTION;
+            return Resistance.RDS.instances(DAMAGE_REDUCTION);
         }
     };
 

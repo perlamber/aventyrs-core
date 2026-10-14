@@ -1,5 +1,7 @@
 package org.aventyrs.core.item;
 
+import org.aventyrs.core.character.Resistance;
+
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.effect.DefensiveCriticalEffectType;
 import org.aventyrs.core.modifier.ModifierType;
@@ -106,7 +108,7 @@ public enum ShieldItem implements CriticallyDefensiveItem {
                     .description("Adicionalmente aos bônus defensivos desencadeados quando não "
                             + "fizer ações ofensivas, danos sofridos são reduzidos em -1.")
                     .requirements(new ItemRequirements(AttributeDomain.STRENGTH, 3))
-                    .bonus(new ItemBonus(ModifierType.DAMAGE_REDUCTION, 1,
+                    .bonus(new ItemBonus(ModifierType.DAMAGE_TAKEN_REDUCTION, Resistance.RDS.instances(1),
                             FavorCondition.NO_OFFENSIVE_ACTION_THIS_ROUND))
                     .bonus(new ItemBonus(ModifierType.DEFESAS, 1,
                             FavorCondition.NO_OFFENSIVE_ACTION_THIS_ROUND))
@@ -129,7 +131,7 @@ public enum ShieldItem implements CriticallyDefensiveItem {
                     .description("Adicionalmente aos bônus defensivos desencadeados quando não "
                             + "fizer ações ofensivas, danos sofridos são reduzidos em -1.")
                     .requirements(new ItemRequirements(AttributeDomain.STRENGTH, 3))
-                    .bonus(new ItemBonus(ModifierType.DAMAGE_REDUCTION, 1,
+                    .bonus(new ItemBonus(ModifierType.DAMAGE_TAKEN_REDUCTION, Resistance.RDS.instances(1),
                             FavorCondition.NO_OFFENSIVE_ACTION_THIS_ROUND))
                     .bonus(new ItemBonus(ModifierType.DEFESAS, 2,
                             FavorCondition.NO_OFFENSIVE_ACTION_THIS_ROUND))

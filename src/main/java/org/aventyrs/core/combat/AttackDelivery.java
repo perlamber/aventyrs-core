@@ -223,6 +223,9 @@ public class AttackDelivery {
                 attack.getAttacker(), attack.getAttackSkill(), attack.getAttackSource(), additionalTargets.size()))
                 || halvesAttackDamage(attack, attackRoll);
         Retaliation retaliation = RetaliationResolver.resolve(defender, attack.getAttackSkill());
+        // Espinhosa / Rigidez Refletora: the primary target's worn Aprimoramentos answer the attack, hit or miss.
+        EquipmentRetaliation equipmentRetaliation = org.aventyrs.core.item.DefensiveEnhancements.retaliationAgainst(
+                defender, attack.getAttackSkill(), attack.getProjectile());
 
         List<CombatantSheet> extraTargets = additionalTargets.stream().map(AttackTarget::defender).toList();
         InteractionResult attackResult = SkillInteractionFactory.create(attack.getAttackSkill())
@@ -243,6 +246,7 @@ public class AttackDelivery {
                 .auraHalvesDamage(auraHalvesDamage)
                 .everyTargetHalved(everyTargetHalved)
                 .retaliation(retaliation)
+                .equipmentRetaliation(equipmentRetaliation)
                 .unappliedDifficultyReduction(attackResult.getDifficultyReduction())
                 .unappliedSpellResistanceReduction(SpellResistance.difficultyReduction(defender, attack.getAttackSource()));
 
@@ -256,25 +260,36 @@ public class AttackDelivery {
                     .build()));
             return result.attackResult(attackResult).build();
         }
-        result.firedProjectile(attack.getProjectile()).projectilesToConsume(projectilesFired);
+        result.firedProjectile(attack.getProjectile()).projectilesToConsume(projectilesFired)
+                .projectilesDestroyed(equipmentRetaliation != null && equipmentRetaliation.projectileDestroyed()
+                        ? projectilesFired : 0);
+        // Benção Ymiriana: being the target of an attack — hit or miss, primary or additional — opens its window.
+        org.aventyrs.core.item.DefensiveEnhancements.onAttacked(defender);
+        additionalTargets.forEach(target -> org.aventyrs.core.item.DefensiveEnhancements.onAttacked(target.defender()));
 
         int margin = attackTotal - requiredTotal;
         // A Cego attacker's failed 1d6 misses whatever the total.
         boolean blindMiss = Boolean.TRUE.equals(attackResult.getBlindCheckFailed());
         // Aptidão Mágica Dracônica: a Magia the defender can cast never lands on them.
         // Sorte's chosen success lands "independente do resultado dos dados" — never through an immunity.
-        boolean hit = (margin >= 0 || forcedSuccess(attackRoll)) && !blindMiss
+        // Sacrifício (core 0.1.6.17): the interceptor's Defesas are ignored — the attack lands whatever the roll.
+        boolean hit = (margin >= 0 || forcedSuccess(attackRoll) || attack.isIntercepted()) && !blindMiss
                 && !SpellResistance.immune(defender, attack.getAttackSource());
         CriticalResult rolledCritical = attackResult.getCriticalResult();
         // Sorte's permanent point: on a hit, the Efeitos Críticos apply as Maior — see SorteEffect.
         CriticalResult criticalResult = unleashed(attackRoll) && hit ? CriticalResult.ACERTO_CRITICO_MAIOR : rolledCritical;
+        // Sacrifício: "aplica o Efeito Crítico Menor natural" — at least a Menor, a Maior staying Maior.
+        if (attack.isIntercepted() && hit && (criticalResult == null || !criticalResult.isCriticalSuccess())) {
+            criticalResult = CriticalResult.ACERTO_CRITICO_MENOR;
+        }
         // Frenesi Assustador: a fear-struck attacker "se tornam incapazes de desferir Efeitos Críticos
         // Menores e não podem desencadear Correntes de Efeitos" while the Gigante who cast it is down.
         boolean suppressed = attack.getAttacker().isMinorCriticalAndChainSuppressed();
         boolean criticalEffectTriggered = hit && criticalResult != null && criticalResult.isCriticalSuccess()
                 && !(suppressed && criticalResult.isMinor());
         boolean effectChainTriggered = hit && !suppressed && !superficial(attack)
-                && (unleashed(attackRoll) || margin >= effectChainService.getRequiredMargin(attack.getAttacker(),
+                && (unleashed(attackRoll) || attack.isIntercepted()
+                        || margin >= effectChainService.getRequiredMargin(attack.getAttacker(),
                         AttackReceiver.positionOf(attack.getScene(), attack.getAttacker(), attack.getSceneContext()),
                         defender, AttackReceiver.positionOf(attack.getScene(), defender, null)));
 
@@ -442,9 +457,14 @@ public class AttackDelivery {
         if (effectChainTriggered) {
             chains.addAll(attack.getEffectChains());
             chains.addAll(effectChainsGrantedByFeats(attack, criticalResult));
-            // A bound Pedra do Poder's Violento Corrente — Hematita do Vendaval's Rugido — with its host weapon.
+            // A bound Pedra do Poder's Correntes with its host weapon — Adamante Bruto's Base Impacto Meteórico,
+            // Hematita do Vendaval's Violento Rugido.
             org.aventyrs.core.item.PowerStone stone = boundStoneOf(attack);
             if (stone != null) {
+                Effect baseChain = stone.getStoneType().createBaseEffectChain();
+                if (baseChain != null) {
+                    chains.add(baseChain);
+                }
                 Effect stoneChain = stone.getStoneType().createViolentEffectChain(
                         criticalResult != null && criticalResult.isCriticalSuccess());
                 if (stoneChain != null) {

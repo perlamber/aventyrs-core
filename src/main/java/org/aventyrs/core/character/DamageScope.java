@@ -20,12 +20,19 @@ import java.util.Set;
  *                 matches every element
  * @param sanctity the sacred or profane nature it is limited to, or {@code null} for any (core 0.0.89) — a hit only
  *                 matches one with a {@link DamageDescriptor} naming that nature
+ * @param elementFree whether a hit carrying any element is outside it — "que não sejam Elementais", which since the
+ *                 2026-10-12 taxonomy must also leave out a Mágico Elemental
  */
-public record DamageScope(@NonNull Set<DamageType> types, ElementalType element, DamageSanctity sanctity) {
+public record DamageScope(@NonNull Set<DamageType> types, ElementalType element, DamageSanctity sanctity,
+                          boolean elementFree) {
 
     /** A scope of no particular nature — every scope before core 0.0.89. */
     public DamageScope(@NonNull final Set<DamageType> types, final ElementalType element) {
-        this(types, element, null);
+        this(types, element, null, false);
+    }
+
+    public DamageScope(@NonNull final Set<DamageType> types, final ElementalType element, final DamageSanctity sanctity) {
+        this(types, element, sanctity, false);
     }
 
     /** Every hit of one nature, whatever its type — "imunes a danos Profanos". */
@@ -36,18 +43,22 @@ public record DamageScope(@NonNull Set<DamageType> types, ElementalType element,
     /** Every hit. */
     public static final DamageScope ALL = new DamageScope(Set.of(DamageType.values()), null);
 
-    /** "Danos Físicos" — a plain physical hit, elemental or not. */
-    public static final DamageScope PHYSICAL = new DamageScope(Set.of(DamageType.FISICO, DamageType.FISICO_ELEMENTAL), null);
+    /**
+     * "Danos Físicos" — a Físico hit, whatever its sanctity. Since the 2026-10-12 taxonomy an Elemental hit (the pre-update
+     * Físico-Elemental) is no longer Físico.
+     */
+    public static final DamageScope PHYSICAL = new DamageScope(Set.of(DamageType.FISICO), null);
 
-    /** "Danos Mágicos". */
+    /** "Danos Mágicos" — any Mágico hit, Elemental, Profano, Sagrado or Umbral. */
     public static final DamageScope MAGICAL = new DamageScope(Set.of(DamageType.MAGICO), null);
 
-    /** "Efeitos e danos que não sejam Elementais ou Primordiais". */
-    public static final DamageScope NON_ELEMENTAL_NON_PRIMORDIAL = new DamageScope(Set.of(DamageType.FISICO, DamageType.MAGICO), null);
+    /** "Efeitos e danos que não sejam Elementais ou Primordiais" — Físico, or a Mágico hit naming no element. */
+    public static final DamageScope NON_ELEMENTAL_NON_PRIMORDIAL =
+            new DamageScope(Set.of(DamageType.FISICO, DamageType.MAGICO), null, null, true);
 
-    /** Danos of one element, physical or not. */
+    /** Danos of one element — Elemental or Mágico Elemental. */
     public static DamageScope element(@NonNull final ElementalType element) {
-        return new DamageScope(Set.of(DamageType.ELEMENTAL, DamageType.FISICO_ELEMENTAL), element);
+        return new DamageScope(Set.of(DamageType.MAGICO, DamageType.ELEMENTAL), element);
     }
 
     /** Whether a hit of {@code type}, described by {@code descriptor} (nullable), falls inside this scope. */
@@ -57,6 +68,9 @@ public record DamageScope(@NonNull Set<DamageType> types, ElementalType element,
             return false;
         }
         if (sanctity != null && (descriptor == null || descriptor.sanctity() != sanctity)) {
+            return false;
+        }
+        if (elementFree && descriptor != null && descriptor.elementalType() != null) {
             return false;
         }
         if (element == null) {

@@ -1,5 +1,6 @@
 package org.aventyrs.core.sheet;
 
+import org.aventyrs.core.character.Resistance;
 import lombok.Getter;
 
 /**
@@ -31,10 +32,10 @@ import lombok.Getter;
 public class PeleDePedra extends TemporaryEffect {
 
     /** "após isso você recebe RDS 5." */
-    public static final int INITIAL_DAMAGE_REDUCTION = 5;
+    public static final int INITIAL_DAMAGE_REDUCTION = Resistance.RDS.instances(5);
 
     /** "A Redução de Danos Sofridos é reduzida em -2 para cada dano sofrido." */
-    public static final int DECAY_PER_HIT = 2;
+    public static final int DECAY_PER_HIT = Resistance.RDS.instances(2);
 
     /** Whether the one free negation is still available. */
     private boolean negationAvailable = true;

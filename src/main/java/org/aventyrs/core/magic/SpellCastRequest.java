@@ -105,6 +105,20 @@ public class SpellCastRequest {
      */
     private final boolean alternateEffectChain;
 
+    /**
+     * Damage the caster lost, after mitigation, to Impedir Conjuração Reações answering this cast (core 0.1.6.17;
+     * table ruling 2026-10-14): "Redutor de -2 em sua Rolagem de Conjuração para cada 5 pontos de danos sofridos". 0
+     * when nobody interrupted it.
+     */
+    private final int disruptionDamage;
+
+    /**
+     * Conjurar e Mimetizar Magias Defensivamente (acoes-de-combate.txt 20261013, core 0.1.6.20): "+1PA. Grau de
+     * Dificuldade aumentado em +1 nível. Benefício: Impede a Reação Impedir Conjuração. … Desvantagem na rolagem de
+     * efeitos de Dano Mágico e Cura Mágica." The caller opens no Impedir Conjuração window for it.
+     */
+    private final boolean defensive;
+
     /** Whether the caster opted into feat for this cast. */
     public boolean activated(final org.aventyrs.core.feat.Feat feat) {
         return activatedFeats.contains(feat);

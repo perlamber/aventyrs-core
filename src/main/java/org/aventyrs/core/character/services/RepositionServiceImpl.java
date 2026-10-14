@@ -68,7 +68,16 @@ public class RepositionServiceImpl implements RepositionService {
             bonus += item.resolveFavorBonus(ModifierType.REPOSITION_DISTANCE, sheet);
             bonus += item.resolveEnhancementBonus(ModifierType.REPOSITION_DISTANCE, null, character);
         }
-        return DISTANCE_UD + Math.max(0, bonus);
+        return getBaseDistance(sheet) + Math.max(0, bonus);
+    }
+
+    /**
+     * "Move-se … igual à metade da Categoria de Tamanho do Personagem (mínimo 1UD)" (acoes-de-combate.txt 20261013,
+     * core 0.1.6.18) — half the effective Categoria, rounded down, never below {@link #DISTANCE_UD}.
+     */
+    static int getBaseDistance(final CombatantSheet sheet) {
+        return Math.max(DISTANCE_UD,
+                new CharacterSizeServiceImpl().getEffectiveSizeCategory(sheet).getCategory() / 2);
     }
 
     private String refusalFor(final CombatantSheet sheet, final int turnNumber, final SceneContext sceneContext) {

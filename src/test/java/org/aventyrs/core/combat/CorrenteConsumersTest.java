@@ -212,4 +212,68 @@ class CorrenteConsumersTest {
                         || result.getUnappliedCriticalEffects().contains(CriticalEffectType.CATACLISMO),
                 "Cataclismo is applied, or reported for want of its dice");
     }
+
+    /** A sheet in combat wearing armour and a blade, with stone bound to host. */
+    private static CharacterSheet stoneBearer(final org.aventyrs.core.item.AbstractWeapon blade,
+                                              final org.aventyrs.core.item.AbstractItem armour,
+                                              final org.aventyrs.core.item.Item host,
+                                              final org.aventyrs.core.item.PowerStone stone) {
+        CharacterSheet sheet = CharacterSheet.of(fighter()
+                .equipment(new ArrayList<>(List.of(blade, armour)))
+                .drawnWeapons(new ArrayList<>(List.of(blade)))
+                .build(), new Player());
+        sheet.addToInventory(stone);
+        sheet.startCombat();
+        new org.aventyrs.core.item.PowerStoneServiceImpl().bind(sheet, stone, host, false);
+        return sheet;
+    }
+
+    private static org.aventyrs.core.item.AbstractWeapon masterpieceBlade() {
+        org.aventyrs.core.item.AbstractWeapon blade = org.aventyrs.core.item.AbstractWeapon.builder().name("Lâmina")
+                .category(org.aventyrs.core.item.ItemCategory.LIGHT_BLADE).hardness(20)
+                .damageBase(org.aventyrs.core.character.DamageBase.of(1, 1))
+                .skillType(SkillType.ATAQUE_CORPO_A_CORPO).build();
+        blade.setMasterpiece(org.aventyrs.core.item.OffensiveMasterpiece.PRECISA);
+        return blade;
+    }
+
+    private static org.aventyrs.core.item.AbstractItem masterpieceArmour() {
+        org.aventyrs.core.item.AbstractItem armour = org.aventyrs.core.item.AbstractItem.builder().name("Peitoral")
+                .category(org.aventyrs.core.item.ItemCategory.ARMOR).hardness(20).build();
+        armour.setMasterpiece(org.aventyrs.core.item.ItemMasterpiece.of(
+                org.aventyrs.core.item.DefensiveMasterpiece.REFORCADA));
+        return armour;
+    }
+
+    /** Adamante Bruto's Efeito Base: "ataques recebem a Corrente de Efeitos – Impacto Meteórico" — its host weapon's. */
+    @Test
+    void adamanteBrutoGivesItsHostWeaponImpactoMeteorico() {
+        org.aventyrs.core.item.AbstractWeapon blade = masterpieceBlade();
+        CharacterSheet sheet = stoneBearer(blade, masterpieceArmour(), blade, org.aventyrs.core.item.PowerStone.of(
+                org.aventyrs.core.item.PowerStoneType.ADAMANTE_BRUTO, org.aventyrs.core.item.PowerStoneQuality.JOIA));
+
+        assertTrue(carries(attack(sheet, blade, List.of(6, 6, 6), null), org.aventyrs.core.effect.ImpactoMeteorico.class));
+        assertFalse(carries(attack(sheet, blade, List.of(1, 1, 2), null), org.aventyrs.core.effect.ImpactoMeteorico.class),
+                "below the Corrente threshold");
+    }
+
+    /** Host weapon only (table ruling, 2026-10-12): bound to armour, it reaches no attack. */
+    @Test
+    void adamanteBrutoOnArmourGivesNoAttackImpactoMeteorico() {
+        org.aventyrs.core.item.AbstractWeapon blade = masterpieceBlade();
+        org.aventyrs.core.item.AbstractItem armour = masterpieceArmour();
+        CharacterSheet sheet = stoneBearer(blade, armour, armour, org.aventyrs.core.item.PowerStone.of(
+                org.aventyrs.core.item.PowerStoneType.ADAMANTE_BRUTO, org.aventyrs.core.item.PowerStoneQuality.JOIA));
+
+        assertFalse(carries(attack(sheet, blade, List.of(6, 6, 6), null), org.aventyrs.core.effect.ImpactoMeteorico.class));
+    }
+
+    /** Only Adamante Bruto's Efeito Base names a Corrente. */
+    @Test
+    void onlyAdamanteBrutoHasABaseCorrente() {
+        for (org.aventyrs.core.item.PowerStoneType type : org.aventyrs.core.item.PowerStoneType.values()) {
+            assertEquals(type == org.aventyrs.core.item.PowerStoneType.ADAMANTE_BRUTO,
+                    type.createBaseEffectChain() != null, type.name());
+        }
+    }
 }
