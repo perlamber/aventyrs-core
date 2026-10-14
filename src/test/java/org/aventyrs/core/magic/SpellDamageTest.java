@@ -11,19 +11,27 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 class SpellDamageTest {
 
     @Test
-    void halfFocusElementalIsZeroDiceZeroFlatHalfFocusOfThatElement() {
-        SpellDamage damage = SpellDamage.halfFocusElemental(0, ElementalType.MAGMA);
+    void halfFocusMagicalElementalIsZeroDiceZeroFlatHalfFocusOfThatElement() {
+        SpellDamage damage = SpellDamage.halfFocusMagicalElemental(0, ElementalType.MAGMA);
 
         assertEquals(0, damage.diceCount());
         assertEquals(0, damage.flatBonus());
         assertEquals(FocusScaling.HALF, damage.focusScaling());
-        assertEquals(DamageType.ELEMENTAL, damage.damageType());
+        assertEquals(DamageType.MAGICO, damage.damageType());
         assertEquals(ElementalType.MAGMA, damage.elementalType());
     }
 
     @Test
-    void halfFocusMagicalCarriesNoElement() {
-        assertNull(SpellDamage.halfFocusMagical(2).elementalType());
+    void halfFocusElementalIsTheNonMagicalElementalNature() {
+        SpellDamage damage = SpellDamage.halfFocusElemental(2, ElementalType.FOGO);
+
+        assertEquals(DamageType.ELEMENTAL, damage.damageType());
+        assertEquals(ElementalType.FOGO, damage.elementalType());
+    }
+
+    @Test
+    void halfFocusPrimordialCarriesNoElement() {
+        assertNull(SpellDamage.halfFocusPrimordial(2).elementalType());
     }
 
     @Test
@@ -33,20 +41,26 @@ class SpellDamageTest {
     }
 
     @Test
+    void anUnqualifiedMagicalSpellDamageIsRejected() {
+        assertThrows(IllegalOperationException.class,
+                () -> new SpellDamage(1, 0, FocusScaling.HALF, DamageType.MAGICO, null));
+    }
+
+    @Test
     void aNonElementalTypeWithAnElementIsRejected() {
         assertThrows(IllegalOperationException.class,
-                () -> new SpellDamage(1, 0, FocusScaling.HALF, DamageType.MAGICO, ElementalType.FOGO));
+                () -> new SpellDamage(1, 0, FocusScaling.HALF, DamageType.FISICO, ElementalType.FOGO));
     }
 
     @Test
     void aNegativeDiceCountIsRejected() {
         assertThrows(IllegalOperationException.class,
-                () -> new SpellDamage(-1, 0, FocusScaling.NONE, DamageType.MAGICO, null));
+                () -> new SpellDamage(-1, 0, FocusScaling.NONE, DamageType.PRIMORDIAL, null));
     }
 
     @Test
     void aNullFocusScalingIsRejected() {
         assertThrows(IllegalOperationException.class,
-                () -> new SpellDamage(1, 0, null, DamageType.MAGICO, null));
+                () -> new SpellDamage(1, 0, null, DamageType.PRIMORDIAL, null));
     }
 }

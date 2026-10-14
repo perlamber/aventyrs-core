@@ -30,15 +30,6 @@ public final class MonstrousTraits {
     /** Pick id for "Escolha um Elemento". */
     public static final String ELEMENT = "element";
 
-    /** One Instância of Resistência a Críticos (RC), as {@code getTotalCriticalResistance} counts it. */
-    public static final int CRITICAL_RESISTANCE_INSTANCE = 2;
-
-    /** One instance of RD/RM/RA — "Cada instância reduz … em -2". */
-    public static final int REDUCTION_INSTANCE = 2;
-
-    /** One instance of RDS — "Cada instância reduz … em -1", carried as {@code ModifierType#DAMAGE_TAKEN_REDUCTION}. */
-    public static final int RDS_INSTANCE = 1;
-
     private MonstrousTraits() {
     }
 

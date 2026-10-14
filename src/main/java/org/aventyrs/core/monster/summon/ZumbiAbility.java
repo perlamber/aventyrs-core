@@ -134,7 +134,8 @@ public class ZumbiAbility implements SkillCompetencyAbility {
     }
 
     private static boolean isLiving(final CombatantSheet sheet) {
-        return !(sheet instanceof MonsterSheet monster) || !monster.isUndead();
+        // The Anatomia de Morto-Vivo travels with a summon onto any sheet (core 0.1.6.27).
+        return !sheet.hasUndeadAnatomy() && (!(sheet instanceof MonsterSheet monster) || !monster.isUndead());
     }
 
     /**

@@ -1,5 +1,6 @@
 package org.aventyrs.core.item;
 
+import org.aventyrs.core.character.Resistance;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.DamageDescriptor;
 import org.aventyrs.core.character.DefenseType;
@@ -46,10 +47,8 @@ public enum DefensiveImprovement implements Improvement {
             return 1;
         }
     },
-    // The enabler for a Pedra do Poder — see PowerStone / PowerStoneType and
-    // AbstractItem#setPowerStone, which gates the socket on this constant being fitted.
-    ENCAIXE("Encaixe", ItemRarity.EPIC, 0, 0, 0, 0, 0,
-            null, "Apenas Armaduras e Escudos, permite encaixe de Pedra do Poder."),
+    // Encaixe (the Pedra do Poder socket) was removed by table ruling, 2026-10-12: any Obra-Prima
+    // Armadura or Escudo now takes a stone — see Item#acceptsPowerStone.
     AJUSTADA("Ajustada", ItemRarity.COMMON, 1, 0, 0, 0, 0,
             null, "PV deste item é reduzido em -5, Categoria de Peso do item reduzida em -1 nível.") {
         @Override
@@ -99,10 +98,13 @@ public enum DefensiveImprovement implements Improvement {
          */
         @Override
         public int resolveDamageBaseIncrease(final Weapon weapon, final Character character) {
-            boolean natural = character == null
-                    ? weapon.getCategory() == ItemCategory.NATURAL_WEAPON
-                    : character.treatsAsNaturalWeapon(weapon);
-            return natural ? 1 : 0;
+            return naturalWeapon(weapon, character) ? 1 : 0;
+        }
+
+        /** Its Favor: "Margem Crítica Menor de Ataques efetuados com Armas Naturais aumenta em +1 número". */
+        @Override
+        public int resolveCriticalMarginIncrease(final Weapon weapon, final Character character) {
+            return naturalWeapon(weapon, character) ? 1 : 0;
         }
     },
     BENCAO_ELEMENTAL("Benção Elemental", ItemRarity.UNCOMMON, 0, 0, 0, 0, 0,
@@ -125,23 +127,35 @@ public enum DefensiveImprovement implements Improvement {
         @Override
         public int resolveDamageReduction(final DamageDescriptor damageDescriptor, final Character character,
                                           final ElementalType selectedElementalType) {
-            return matchesElement(selectedElementalType, damageDescriptor)
-                    && (damageDescriptor.damageType() == org.aventyrs.core.character.DamageType.ELEMENTAL
-                    || damageDescriptor.damageType() == org.aventyrs.core.character.DamageType.FISICO_ELEMENTAL)
-                    ? 2 : 0;
+            // "Recebe RE" — one instance. The element names the hit whatever its nature (Elemental or Mágico
+            // Elemental) — matchesElement suffices.
+            return matchesElement(selectedElementalType, damageDescriptor) ? Resistance.RE.instance() : 0;
         }
     },
-    // TODO: hostile Enchantment/Curse duration and magic-damage-scoped mitigation do not exist.
+    /**
+     * Both halves read by {@link DefensiveEnhancements} (core 0.1.6.11): the hostile Duração by {@code
+     * SpellCastingService} when a hostile Encantamento/Maldição lands, the -1 by {@code DamageService} on any Mágico
+     * hit, whatever its qualifier (table ruling, 2026-10-12).
+     */
     BENCAO_ELDURIANA("Benção Elduriana", ItemRarity.RARE, 0, 0, 0, 0, 0,
             "Duração de Encantamentos e Maldições hostis reduzidas em -1 Rodada.",
             "Danos Mágicos sofridos reduzidos em -1."),
-    // TODO: damage-type-scoped mitigation does not exist.
+    /**
+     * Read by {@link DefensiveEnhancements#damageTakenReduction} (core 0.1.6.11): -1 on an Elemental or element-naming
+     * hit, -1 on a Físico one.
+     */
     BENCAO_VULCANA("Benção Vulcana", ItemRarity.RARE, 0, 0, 0, 0, 0,
             "Danos Elementais sofridos reduzidos em -1.", "Danos Físicos sofridos reduzidos em -1."),
-    // TODO: needs an after-being-attacked trigger and one-Rodada attack bonus state.
+    /**
+     * Its Danos column reaches every attack ({@link DefensiveEnhancements#damageRollBonus}); being attacked opens the
+     * +2 window until the end of the wearer's next Turn ({@link DefensiveEnhancements#onAttacked}, core 0.1.6.11).
+     */
     BENCAO_YMIRIANA("Benção Ymiriana", ItemRarity.RARE, 0, 0, 0, 1, 0,
             "O Bônus em Danos aumenta para +2 por 1 Rodada após sofrer um ataque.", null),
-    // TODO: needs a terrain choice and the SceneContext-aware item-bonus path.
+    /**
+     * Vantagem em Furtividade always; its Favor's "Vantagem adicional" (+2, the Perito ruling) while the Scene's
+     * terrain is the one chosen at creation ({@link ItemImprovement#camuflada}, core 0.1.6.11).
+     */
     CAMUFLADA("Camuflada", ItemRarity.COMMON, 0, 0, 0, 0, 0,
             "Vantagem adicional nas rolagens de Furtividade em tipo de ambiente definido na criação do item.",
             "Apenas equipamentos do tipo Armadura. Vantagem em rolagens de Furtividade.") {
@@ -151,8 +165,26 @@ public enum DefensiveImprovement implements Improvement {
             return skillType == SkillType.FURTIVIDADE && modifierType == skillType.getRollBonusType()
                     ? Skill.ADVANTAGE_BONUS : 0;
         }
+
+        @Override
+        public boolean requiresTerrainChoice() {
+            return true;
+        }
+
+        @Override
+        public int resolveBonus(final ModifierType modifierType, final SkillType skillType, final Character character,
+                                final org.aventyrs.core.scene.SceneContext sceneContext,
+                                final org.aventyrs.core.scene.TerrainType selectedTerrain) {
+            int base = resolveBonus(modifierType, skillType, character);
+            boolean chosenTerrain = base > 0 && selectedTerrain != null && sceneContext != null
+                    && sceneContext.isTerrain(selectedTerrain);
+            return base + (chosenTerrain ? Skill.ADVANTAGE_BONUS : 0);
+        }
     },
-    // TODO: retaliation damage and damage to attacking weapons are not modeled.
+    /**
+     * Reported by {@link DefensiveEnhancements#retaliationAgainst} (core 0.1.6.11): its Favor's 2 Dano Físico to a
+     * melee attacker and 2 to their weapon, hit or miss, on the primary target only (table ruling, 2026-10-12).
+     */
     ESPINHOSA("Espinhosa", ItemRarity.COMMON, 0, 0, 0, 0, 0,
             "Dano dos espinhos aumentado para 2.", "Atacantes corpo-a-corpo e suas armas sofrem 1 pontos de Dano Físico ao te atacar."),
     CAMADA_DE_REFORCO("Camada de Reforço", ItemRarity.UNCOMMON, 0, 0, 0, 0, 0,
@@ -170,13 +202,19 @@ public enum DefensiveImprovement implements Improvement {
             return selectedDefense == null || selectedDefense == defenseType ? 1 : 0;
         }
     },
-    // TODO: damage to weapons and projectile destruction are not modeled.
+    /** Reported by {@link DefensiveEnhancements#retaliationAgainst} like {@link #ESPINHOSA} (core 0.1.6.11). */
     RIGIDEZ_REFLETORA("Rigidez Refletora", ItemRarity.COMMON, 0, 0, 0, 0, 0,
             null, "Armas de atacantes corpo-a-corpo sofrem 2 pontos de danos, projeteis são destruídos."),
-    // TODO: needs living-character classification, reduced-to-zero trigger, range and life-steal resolution.
+    /**
+     * {@link DefensiveEnhancements#reapSouls}, a caller-driven sweep after damage (core 0.1.6.11); its Danos column
+     * reaches every attack.
+     */
     SOLVE_VIDAS("Maldição: Solve-Vidas", ItemRarity.MYTHIC, 0, 0, 0, 1, 0,
             "Sempre que um Personagem inimigo vivo tiver seus PV reduzidos à 0 ou menos em até Distância Curta ele será imediatamente morto e você recupera uma quantidade de PV igual ao Vigor dele.", null),
-    // TODO: needs a non-seed spell-effect trigger and recovery from magical Monster abilities.
+    /**
+     * {@link DefensiveEnhancements#onAffectedBySpell}, caller-driven once per Magia landing (core 0.1.6.11). TODO: the
+     * "efeitos de habilidades mágicas de Monstros" half — no Habilidade Monstruosa is classified as magical.
+     */
     LADRA_DO_AETHER("Maldição: Ladra do AEther", ItemRarity.MYTHIC, 0, 0, 1, 1, 0,
             "Sempre que você for afetado por efeitos de Magias que não sejam sementes ou efeitos de habilidades mágicas de Monstros você recupera 1PM e 1PD.", null);
 
@@ -227,6 +265,31 @@ public enum DefensiveImprovement implements Improvement {
 
     public boolean requiresElementalTypeChoice() {
         return false;
+    }
+
+    /**
+     * Whether a creation-time terrain is asked for — {@link #CAMUFLADA}. Unlike the other two choices it is optional
+     * ({@link ItemImprovement#of} accepts the bare form), so an older copy without one still loads.
+     */
+    public boolean requiresTerrainChoice() {
+        return false;
+    }
+
+    /** The terrain-aware form {@link ItemImprovement} calls; defaults to the three-argument {@code resolveBonus}. */
+    public int resolveBonus(final ModifierType modifierType, final SkillType skillType, final Character character,
+                            final org.aventyrs.core.scene.SceneContext sceneContext,
+                            final org.aventyrs.core.scene.TerrainType selectedTerrain) {
+        return resolveBonus(modifierType, skillType, character);
+    }
+
+    /** Whether weapon counts as an Arma Natural for character — asking the wielder, as every such clause does. */
+    private static boolean naturalWeapon(final Weapon weapon, final Character character) {
+        if (weapon == null) {
+            return false;
+        }
+        return character == null
+                ? weapon.getCategory() == ItemCategory.NATURAL_WEAPON
+                : character.treatsAsNaturalWeapon(weapon);
     }
 
     public int getEffectiveDefenseBonus(final DefenseType defenseType, final Character character,

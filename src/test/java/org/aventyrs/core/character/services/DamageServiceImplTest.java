@@ -1,5 +1,6 @@
 package org.aventyrs.core.character.services;
 
+import org.aventyrs.core.character.Resistance;
 import org.aventyrs.core.ability.AttributeAbility;
 import org.aventyrs.core.ability.VigorAbility;
 import org.aventyrs.core.character.AttributeDomain;
@@ -533,12 +534,12 @@ class DamageServiceImplTest {
                 null, true, 1, false);
 
         // Torre's RA alone in the RA total; Bastião's RDS alone in the RD total.
-        assertEquals(DamageService.DEFAULT_DAMAGE_REDUCTION,
+        assertEquals(Resistance.RD.instance(),
                 damageService.getTotalAbsoluteDamageReduction(holderSheet, sceneContext));
         assertEquals(BASTIAO_SELF_RDS,
                 damageService.getTotalDamageTakenReduction(holderSheet, sceneContext));
         // Both subtract from one incoming hit.
-        assertEquals(10 - DamageService.DEFAULT_DAMAGE_REDUCTION - BASTIAO_SELF_RDS,
+        assertEquals(10 - Resistance.RA.instance() - BASTIAO_SELF_RDS,
                 damageService.calculateFinalDamage(holderSheet, sceneContext, (DamageType) null, null, 10, false));
     }
 
@@ -555,7 +556,8 @@ class DamageServiceImplTest {
                 .equipment(List.of(ArmorItem.ARMADURA_COMPLETA))
                 .build();
 
-        assertEquals(2, damageService.getTotalDamageReduction(character));
+        // "Dano de Corte sofrido é reduzido em -2" — two RDS instances (table ruling, 2026-10-13).
+        assertEquals(Resistance.RDS.instances(2), damageService.getTotalDamageTakenReduction(character));
         assertEquals(10 - 2, damageService.calculateFinalDamage(character, 10, false));
     }
 
@@ -568,7 +570,7 @@ class DamageServiceImplTest {
                 .equipment(List.of(ArmorItem.ARMADURA_COMPLETA))
                 .build();
 
-        assertEquals(0, damageService.getTotalDamageReduction(character));
+        assertEquals(0, damageService.getTotalDamageTakenReduction(character));
     }
 
     @Test

@@ -28,19 +28,6 @@ import java.util.List;
  * source (like a Título ability's own PV comparison) would have added.
  */
 public interface DamageService {
-    /**
-     * The RD an ability grants when its own rules text doesn't spell out an explicit bonus
-     * (e.g. just "concede RD" with no number). Also reused as RA's own unspecified-bonus
-     * default (e.g. {@code InitiativeAdvantage#TORRE_EM_MOVIMENTO}'s "você recebe RA" with no
-     * number of its own) and as RM's ({@link #getTotalMagicReduction}) — RD, RA and RM are
-     * independent reductions, but {@code docs/rules/defesas-e-resistencias.txt} prices one
-     * instance of each at the same -2, and nothing in the rules text suggests a different
-     * unspecified-amount convention for one versus the others.
-     */
-    int DEFAULT_DAMAGE_REDUCTION = 2;
-
-    /** One instance of RDS — "Cada instância reduz … em -1"; what a numberless RDS clause grants. */
-    int DAMAGE_TAKEN_REDUCTION_INSTANCE = 1;
 
     /**
      * Total RD: summed from {@code attributeAbilities}, {@code skillCompetencyAbilities},
@@ -194,10 +181,46 @@ public interface DamageService {
      * Feat#isImmuneToSpell}) and an RM against it ({@code Feat#resolveSpellMagicReduction}). A
      * {@code null} spell is the seven-argument form.
      */
+    default int calculateFinalDamage(CombatantSheet target, SceneContext sceneContext,
+                                     DamageType damageType, CombatantSheet source,
+                                     int rawDamage, boolean ignoreDamageReduction, boolean halfDamage,
+                                     org.aventyrs.core.magic.Spell spell) {
+        return calculateFinalDamage(target, sceneContext, damageType, source, rawDamage, ignoreDamageReduction,
+                halfDamage, spell, java.util.Set.of(), null);
+    }
+
+    /**
+     * Same as the eight-argument form, for a hit that ignores only some mitigation stages and deals an element on
+     * top of its own type (core 0.1.6.9) — the shape a weapon's Aprimoramentos give one hit.
+     *
+     * <p>bypassed names the stages skipped ({@link org.aventyrs.core.character.BypassedReduction}: Benção
+     * Vulcana's RD, its Corrente's RE and RM); RA is never among them. additionalElement makes the hit <b>fully both
+     * types</b> (table ruling, 2026-10-12, Benção Elemental): the target's immunity to that element stops it, the
+     * element's RE comes off on top of the hit's own reductions, and a Fraqueza to it applies — never twice for one
+     * Talento. {@code null} for none.
+     */
+    default int calculateFinalDamage(CombatantSheet target, SceneContext sceneContext,
+                                     DamageType damageType, CombatantSheet source,
+                                     int rawDamage, boolean ignoreDamageReduction, boolean halfDamage,
+                                     org.aventyrs.core.magic.Spell spell,
+                                     java.util.Set<org.aventyrs.core.character.BypassedReduction> bypassed,
+                                     org.aventyrs.core.magic.ElementalType additionalElement) {
+        return calculateFinalDamage(target, sceneContext, damageType, null, source, rawDamage, ignoreDamageReduction,
+                halfDamage, spell, bypassed, additionalElement);
+    }
+
+    /**
+     * The longest form: the hit's full {@link DamageDescriptor} — its element and sanctity — beside everything the
+     * ten-argument form takes. damageDescriptor wins over damageType when both are given; either may be {@code null}.
+     * What the attack path ({@code DamageInteraction}) calls since the 2026-10-12 damage taxonomy, so a Mágico
+     * Elemental hit reaches RE and an element-scoped immunity on a real attack too.
+     */
     int calculateFinalDamage(CombatantSheet target, SceneContext sceneContext,
-                             DamageType damageType, CombatantSheet source,
+                             DamageType damageType, DamageDescriptor damageDescriptor, CombatantSheet source,
                              int rawDamage, boolean ignoreDamageReduction, boolean halfDamage,
-                             org.aventyrs.core.magic.Spell spell);
+                             org.aventyrs.core.magic.Spell spell,
+                             java.util.Set<org.aventyrs.core.character.BypassedReduction> bypassed,
+                             org.aventyrs.core.magic.ElementalType additionalElement);
 
     /** Descriptor-aware final-damage calculation for elemental attacks. */
     int calculateFinalDamage(CombatantSheet target, SceneContext sceneContext,
@@ -270,6 +293,15 @@ public interface DamageService {
      *
      * @return the effects this hit started, empty when it started none
      */
+    /**
+     * Whether target holds at least one instance of kind right now — what a Duração clause asks ("Reduz a Duração de
+     * Efeitos … contínuos em -1 Unidade"), since it does not grow with the instances. RE is judged against
+     * descriptor's element ({@code false} with none); RD, RM and RA ignore descriptor. Only RD, RM, RE and RA are
+     * answered — any other kind is {@code false}.
+     */
+    boolean holdsResistance(CombatantSheet target, org.aventyrs.core.character.Resistance kind,
+                            DamageDescriptor descriptor, SceneContext sceneContext);
+
     /**
      * Whether finalDamage (already mitigated) would take target from above 0 PV to 0 or below — the
      * moment a "se um ataque ou efeito for reduzir seus PV para zero ou menos" Reação is offered

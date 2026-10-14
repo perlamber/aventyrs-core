@@ -118,7 +118,7 @@ Pré-requisitos: Especialização ‘Oráculo Abissal’
 Custo de Ativação: Nenhum, habilidade passiva
 Tempo de Ativação: 0 PA, sempre ativa
 Descrição: Você aprende um novo Misticismo, escolhido entre magias do tipo Elemental: Magma ou Profana.
-Suas invocações recebem Cataclismo como Efeito Crítico adicional em seus ataques, também recebem +1d6 de Dano Físico Elemental: Magma em suas rolagens de Dano Crítico.
+Suas invocações recebem Cataclismo como Efeito Crítico adicional em seus ataques, também recebem +1d6 de Dano Elemental: Magma em suas rolagens de Dano Crítico.
 A Margem Crítica Menor dos ataques de suas invocações é aumentada em +1, então em +1 para cada 2 Habilidades ou Suprema de Oráculo Abissal que você possuir.
 
 Suprema – Benção dos Raios do Nordeste
@@ -343,7 +343,7 @@ Pré-requisitos: Especialização ‘Abraçado pela Escuridão’
 Custo de Ativação: Variável
 Tempo de Ativação: 2PA
 Descrição: O Custo de Ativação desta Habilidade é igual ao seu próprio Vigor em PV.
-Enquanto ativo os Espinhos Venenos de Gaea causam danos aos personagens que lhe atacarem Corpo-a-Corpo, Vigor pontos de Dano Físico Elemental: Natural. Personagem que lhe infligirem danos adicionalmente perdem -1 Multiplicador de Pontos de Vida (Malefício Veneno) por 2 Rodadas.
+Enquanto ativo os Espinhos Venenos de Gaea causam danos aos personagens que lhe atacarem Corpo-a-Corpo, Vigor pontos de Dano Elemental: Natural. Personagem que lhe infligirem danos adicionalmente perdem -1 Multiplicador de Pontos de Vida (Malefício Veneno) por 2 Rodadas.
 Duração do Efeito: 2 Rodadas.
 
 Habilidade – Placidez de Undine, Rancor de Haloi
@@ -653,7 +653,7 @@ Características Especiais:
 	•	Graduações adicionais em Perícias +2 para cada Habilidade de Receptáculo (Graduações máximas igual ao dobro dos Atributos)
 	•	Bônus Racial de +3 em Defesas para cada 2 Habilidades de Receptáculo
 	•	Categoria de Tamanho +1 para cada 2 Habilidades de Receptáculo
-	•	Elementais que possuam Vigor 5 ou superior causam 1+Metade do Vigor Pontos de Dano Físico Elemental em todos os personagens adjacentes, danos aumentam em +1d6 com Vigor 7.
+	•	Elementais que possuam Vigor 5 ou superior causam 1+Metade do Vigor Pontos de Dano Elemental em todos os personagens adjacentes, danos aumentam em +1d6 com Vigor 7.
 	•	Elementais que possuam Força 5 ou superior a Margem Crítica Menor de Perícias de Ataque muda para 15, com Força 7 a Margem Crítica Menor muda para 13.
 	•	Elementais que possuam Graduações 5 ou superior reduzem a GD das rolagens de Perícias em -1 Nível, com Graduação 14 podem reduzir a GD das rolagens em até -2 Níveis.
 	•	Possuem Habilidades e formas de Movimentos adicionais conforme seu tipo
@@ -664,7 +664,7 @@ Outras Informações:
 	•	Danos de Ataques 2d6+1 (Base 0+ Metade da Força, Efeito Crítico Cataclismo).
 
 Tipo	Vulnerabilidade	Movimento Extra	Habilidade
-Fogo	Água	Voo	Atacantes sofrem Instinto pontos de Dano Físico Elemental
+Fogo	Água	Voo	Atacantes sofrem Instinto pontos de Dano Elemental
 Magma	Gelo	Vertical	Danos Críticos +3, primeiro ataque da Rodada +1d6
 Terra	Ar	Vertical	Danos sofridos reduzidos em -2, armas de atacantes sofrem 2+ Metade do Vigor pontos de danos
 Natureza	Eletricidade	Vertical e Natação	Ataques Corrente de Efeitos – Corrosão: equipamentos defensivos sofrem 1d6 pontos de danos
@@ -707,7 +707,7 @@ Tempo de Ativação: 0 PA, sempre ativa
 Descrição: Quando você Ativar Corpo Vazio você incorpora um espírito Abissal e, para efeitos de Magias e Habilidades, você é considerado um personagem Abissal.
 Fisiologia Abissal – Você é imune a maldições, seus ataques recebem Roubo de Vida 1 e aplicam o Malefício Amaldiçoado em seus alvos por 2 Rodadas, personagens amaldiçoados desta forma tem seu Multiplicador de PV reduzido em -1 (não cumulativo).
 Enquanto em forma Abissal as Habilidades de Olho do Abismo permitem que você transforme seu lado Abissal em um tipo Elemental criado e abençoado pela Escuridão Profunda, substituindo temporariamente suas características por Fisiologia Elemental.
-Fisiologia Elemental – Você é imune ao um tipo de Elemento (conforme Elemental) e seus ataques se tornam Físico Elemental em substituição e recebem Cataclismo como Efeito Crítico adicional.
+Fisiologia Elemental – Você é imune ao um tipo de Elemento (conforme Elemental) e seus ataques se tornam Elemental em substituição e recebem Cataclismo como Efeito Crítico adicional.
 Um mesmo personagem não pode adquirir as Especializações Olho do Abismo e Coração Celeste.
 
 Habilidade – Encarnação do Leviatã (Água)
@@ -746,7 +746,7 @@ Tempo de Ativação: 0 PA, sempre ativa
 Descrição: Quando você Ativar Corpo Vazio você incorpora um espírito Celestial e, para efeitos de Magias e Habilidades, você é considerado um personagem Celestial.
 Fisiologia Celestial – Você emite uma Aura chamada Aura Celeste, Seus aliados adjacentes recuperam 3PV a cada Rodada, você recupera PV iguais à metade deste valor, e todos se tornam imunes aos Malefícios Abalado, Assustado e Apavorado.
 Enquanto em forma Celestial as Habilidades de Coração Celeste permitem que você transforme seu lado Celestial em um tipo Elemental criado e abençoado pela Luz Primordial, substituindo temporariamente suas características por Fisiologia Elemental.
-Fisiologia Elemental – Você é imune ao um tipo de Elemento (conforme Elemental) e seus ataques se tornam Físico Elemental em substituição e recebem Cataclismo como Efeito Crítico adicional
+Fisiologia Elemental – Você é imune ao um tipo de Elemento (conforme Elemental) e seus ataques se tornam Elemental em substituição e recebem Cataclismo como Efeito Crítico adicional
 Um mesmo personagem não pode adquirir as Especializações Olho do Abismo e Coração Celeste.
 
 Habilidade – Encarnação de Ahó (Terra)
@@ -1019,7 +1019,7 @@ Pré-requisitos: Especialização Punho Inigualável
 Custo de Ativação: 1PD
 Tempo de Ativação: 2PA
 Descrição: Escolha um Elemento entre Fogo, Magma, Terra, Água, Gelo, Ar, Eletricidade ou Natural, depois de escolhido não é possível mudar o Elemento.
-Você recebe Vantagem em suas rolagens de Perícia de Ataque com Armas Naturais e o tipo de dano causado muda para Dano Físico Elemental do tipo escolhido.
+Você recebe Vantagem em suas rolagens de Perícia de Ataque com Armas Naturais e o tipo de dano causado muda para Dano Elemental do tipo escolhido.
 A Duração de Impacto Elemental é igual à 2+ o número de outras Habilidades e Supremas de Punho Inigualável que você possuir, a Habilidade é cancelada ao final da Cena mesmo se ainda houver quantidade de ataques disponíveis.
 	•	Grande Mestre das Brigas: Enquanto Impacto Elemental estiver ativo seus ataques com Armas Naturais são rolados contra a DM de seus alvos, causam danos mágicos e seu Efeito Crítico é alterado para Cataclismo.
 

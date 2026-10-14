@@ -1,0 +1,195 @@
+Pedras do Poder
+O que são Pedras do Poder
+Pedras do Poder são essências solidificadas do poder dos Monstros, também chamadas de Núcleo Monstruoso.
+Todos os monstros possuem seu corpo, como parte fundamental de sua anatomia, um órgão esférico – similar à uma pérola - por onde circula seu poder, a fonte de suas Habilidades Monstruosas. 
+Os Elfos da Grande Academia Arcana descobriram em seus extensos estudos que remover este núcleo, esta Pedra, de Monstros antigos ou poderosos pode beneficiar aventureiros, trazendo parte do poder destes monstros para o próprio arsenal.
+Apenas monstros dos tipos Predadores, ou superiores, possuem Núcleos poderosos o bastante para serem usadas para esta finalidade. 
+Após derrotar um Monstro e remover sua Pedra do Poder, é preciso refinar a pedra, um processo que exige grande domínio da arte da Joalheria, transformando a pedra bruta em uma Jolda, Joia, Relíquia ou AEthernum.
+Refinar uma Pedra do Poder exige uma rolagem de Profissão: Joalheria, o tipo de refino alcançado depende da GD alcançada.
+	•	Jolda – Difícil.
+	•	Joia – Muito Difícil.
+	•	Relíquia – Improvável.
+	•	AEthernum – Inimaginável.
+Tentar criar uma Obra-Prima aumenta a GD em +1 nível.
+O Joalheiro não sabe o tipo de Refino que irá alcançar até executar o trabalho, falhar (alcançando GD inferior à Difícil) indica a perda do material. O Tempo desta ação tem por média 1 semana.
+Após criar uma Obra-Prima, o joalheiro pode tentar aprimorar a Pedra do Poder, concedendo a ela um único Aprimoramento de Obra-Prima, uma ação que costuma levar em média 1 dia adicional. 
+O GD para aprimorar uma Obra-Prima depende do nível de refinamento alcançado.
+	•	Joia – Improvável.
+	•	Relíquia – Inimaginável.
+	•	AEthernum – Milagre.
+Falhar (alcançado GD inferior a Improvável) indica a destruição da Pedra do Poder, por isso poucos tem a coragem de arriscar alcançar tal feito em Pedras de grande qualidade, mas aqueles que o fazem conseguem vender seus trabalhos por valores extraordinários.
+
+Vinculando Pedras do Poder
+Após refinadas, Pedras do Poder podem ser vinculadas aos Equipamentos, assim concedendo seus poderes para o seu Personagem.
+Vincular tem o Tempo de Ação igual à 1PA, apenas Equipamentos Obras-Primas do Tipo Arma, Armadura e Escudo podem receber as pedras.
+O poder monstruoso é intenso demais para Equipamentos que não sejam Regalias, por isso durante a Vinculação a Pedra do Poder inflige danos ao Equipamento, reduzindo sua Dureza, a quantidade de Danos varia conforme a qualidade do Refinamento. 
+Enquanto vinculada seu usuário recebe um surto de poder, conforme o Efeito Base da Pedra. Se o Equipamento for uma Arma, adicionalmente concede o Efeito Violento, mas se for uma Armadura ou Escudo, adicionalmente concede o Efeito Protetivo.
+Finalizada a Duração dos Efeitos, a Pedra do Poder e o Equipamento – ambos – entram em estado de Resfriamento. Uma Pedra em estado de Resfriamento não pode ser utilizada enquanto resfriando, da mesma forma o Equipamento não poderá receber novas pedras.
+
+Tipos de Pedras do Poder
+Adamante Bruto (Sintética)
+	•	Efeito Base: Vigor +1, ataques recebem a Corrente de Efeitos – Impacto Meteórico.
+	•	Efeito Protetivo: RD e RDS.
+	•	Efeito Violento: Ataques Ignoram RD, Acertos Críticos adicionalmente ignoram efeitos de Meio-Dano.
+
+Aqua Marina (Elemental: Água)
+	•	Efeito Base: Danos de Asfixia reduzidos à zero, concede Movimento Base de Natação.
+	•	Efeito Protetivo: Ignora o primeiro dano Elemental: Água sofrido, então concede RE: Água.
+	•	Efeito Violento: Distância do Ataque aumenta em +2UD, Dano causado é Elemental: Água em substituição aos seus tipos.
+
+Calcita Vulcânica (Elemental: Magma)
+	•	Efeito Base: Margem Crítica Menor de ataques aumentada em +1 e Resistência à Críticos.
+	•	Efeito Protetivo: Ignora o primeiro dano Elemental: Magma sofrido, então concede RE: Magma.
+	•	Efeito Violento: Dano Crítico +1d6, Dano causado é Elemental: Magma em substituição aos seus tipos.
+
+Cianita Dracônica (Dracônica)
+	•	Efeito Base: Instinto +1, Bônus de +2 em Danos Elementais.
+	•	Efeito Protetivo: O primeiro Dano Elemental sofrido em cada Rodada é reduzido à metade (efeito de meio-dano).
+	•	Efeito Violento: Ignora RE e reduz a Resistência à Correntes de Efeitos do alvo em -2.
+
+Citrino Incandescente (Elemental: Fogo)
+	•	Efeito Base: Personagens em Distância Muito Curta sofrem 3 pontos de Dano Elemental: Fogo a cada Rodada.
+	•	Efeito Protetivo: Ignora o primeiro dano Elemental: Fogo sofrido, então concede RE: Fogo.
+	•	Efeito Violento: Dano causado é Elemental: Fogo em substituição aos seus tipos, recebe Inflamar como Efeito Crítico adicional. 
+
+Coração Vazio (Planar)
+	•	Efeito Base: Você sofre 2 pontos de Dano Primordial no início de cada Rodada, danos sofridos desta forma só podem ser recuperados com Descansos Verdadeiros. 
+	•	Efeito Protetivo: Inimigos que te ataquem Corpo-a-Corpo sofrem 3 pontos de Dano Primordial, este efeito possui Roubo de Vida 2.
+	•	Efeito Violento: Dano causado é Primordial em substituição aos seus tipos, você recebe Roubo de Vida 2.
+
+Esfera de AEther (Primordial)
+	•	Efeito Base: Foco +1
+	•	Efeito Protetivo: Danos mágicos sofridos reduzidos à metade, Duração de Encantamentos e Maldições sofridas reduzidas à metade.
+	•	Efeito Violento: Pode ser anexo apenas à Artefatos de Conjuração. Dano e Cura mágica +3, Duração de seus Encantamentos e Maldições +2 Rodadas.
+
+Fluorita Prismática (Elemental)
+	•	Efeito Base: Carisma +1, Conjuração +1
+	•	Efeito Protetivo: Defesas +3 para resistir a efeitos Elementais.
+	•	Efeito Violento: Danos causados são Primordiais em substituições aos seus tipos.
+
+Hematita do Vendaval (Elemental: Ar)
+	•	Efeito Base: Destreza +1, Movimento Base +3UD
+	•	Efeito Protetivo: Ignora o primeiro dano Elemental: Ar sofrido, então concede RE: Ar.
+	•	Efeito Violento: Vantagem no Ataque e Corrente de Efeitos – Rugido.
+
+Mitral Puro (Sintética)
+	•	Efeito Base: Vantagem nas rolagens de Perícia de Ataque, Movimento Base +1UD
+	•	Efeito Protetivo: Resistência à Críticos e Resistência a Correntes de Efeitos +1.
+	•	Efeito Violento: Margem Crítica Menor e Maior aumentadas em +1.
+
+Moldavita Selvagem (Natural)
+	•	Efeito Base: Seus ataques infligem Feridas Dolorosas, recebe imunidade a Venenos.
+	•	Efeito Protetivo: Ignora o primeiro dano Elemental: Natural sofrido, você se torna imune a efeitos Naturais.
+	•	Efeito Violento: Dano causado é Elemental: Natural em adição aos seus tipos e são Envenenados:  por 3 Rodadas.
+“Veneno da Moldavita - inflige 1 ponto de Dano Natural por Rodada e reduz o Multiplicador de PV do alvo em -1 (não cumulativo). Duração 2 Rodadas.”
+
+Opala Purificadora (Sagrada)
+	•	Efeito Base: Você recupera 3PV no início de cada Rodada e se torna imune a efeitos de Possessão.
+	•	Efeito Protetivo: Danos profanos reduzidos em -3. Imunidade a Doenças.
+	•	Efeito Violento: Dano causado é Sagrado substituição aos seus tipos e aumenta em +2d6 contra Mortos-Vivos e Abissais.
+
+Relâmpago Dourado (Temporal)
+	•	Efeito Base: Movimento Base aumenta em +2UD, seu primeiro Movimento de cada Rodada não causa a Reação Defender o Perímetro nos 2UD iniciais.
+	•	Efeito Protetivo: Após se mover por ao menos 5UD você recebe +2PA (não cumulativo).
+	•	Efeito Violento: Bônus de +1PA.
+
+Rútilo Subterrâneo (Elemental: Terra)
+	•	Efeito Base: Defesas +2, Vantagem nas Rolagens de Atletismo e seus movimentos ignoram Terreno Difícil.
+	•	Efeito Protetivo: Armas inimigas corpo-a-corpo sofrem 2 pontos de danos. Ignora o primeiro dano Elemental: Terra sofrido, então concede RE: Terra.
+	•	Efeito Violento: Danos causados são Elemental: Terra em substituição aos seus tipos e infligem +1d6 de danos contra objetos.
+
+Sodalita Gélida (Elemental: Gelo)
+	•	Efeito Base: Força +1 e RD.
+	•	Efeito Protetivo: Ignora o primeiro dano Elemental: Gelo sofrido, então concede RE: Gelo.
+	•	Efeito Violento: Danos causados são aumentados em +1d6 e são Elemental: Gelo em substituição aos seus tipos.
+
+Sombra Solidificada (Umbral)
+	•	Efeito Base: Item conta como um subordinado (definido na criação).
+	•	Efeito Protetivo: Danos não-Umbrais reduzidos à metade. 
+	•	Efeito Violento: Dano Base da Arma aumentado em +1, Danos causados são Umbrais em substituição aos seus tipos.
+
+Turmalina Obscura (Profana)
+	•	Efeito Base: Personagens vivos em Área Circular Curta sofrem 1d6 pontos de Dano Profano a cada Rodada.
+	•	Efeito Protetivo: Roubo de Vida 2 e imunidade a Maldições.
+	•	Efeito Violento: Dano causado é Profano em substituição aos seus tipos e recebe Oferenda Maldita como Efeito Crítico adicional.
+
+
+Qualidades, Raridades e Preço
+Jolda (Incomum)
+Preço
+Cargas
+Danos
+Resfriamento
+Duração do Efeito
+5
+6
+3
+5
+2 Rodadas
+Outras Informações: Não pode ser Obra-Prima
+Joia (Raro)
+Preço
+Cargas
+Danos
+Resfriamento
+Duração do Efeito
+12
+10
+2
+4
+3 Rodadas
+Outras Informações: Nenhuma.
+Relíquia (Épico)
+Preço
+Cargas
+Danos
+Resfriamento
+Duração do Efeito
+20
+20
+1
+3
+3 Rodadas
+Outras Informações: Remover antecipadamente reduz tempo de Resfriamento do Equipamento em quantidade proporcional a Duração de restante.
+AEthernum (Mítico)
+Preço
+Cargas
+Danos
+Resfriamento
+Duração do Efeito
+30
+14
+3
+2
+4 Rodadas
+Outras Informações: Pode ser recarregada consumindo cargas de outras Pedras do Poder. Após o processo de recarga a pedra consumida é destruída. Uma AEthernum é incapaz de consumir outra AEthernum.
+
+
+Obras-Primas de Pedras do Poder
+Carga Extra [Preço +9PE]
+	•	O número de Cargas é aumentado em +50%.
+Duração Estendida [Preço +6PE]
+	•	Duração do Efeito aumentada em +2 Rodadas, Tempo de Resfriamento aumentado em +1 Rodada.
+Refinada [Preço +12PE]
+	•	Danos causados durante a Vinculação da Pedra do Poder é reduzido em -1 (mínimo 1).
+Resfriamento Rápido [Preço +6PE]
+	•	Tempo de Resfriamento reduzido em -1 Rodada.
+Solve-Vidas [Preço +8PE]
+	•	A primeira vez que for Vinculada a cada Cena inflige danos ao Personagem, ao invés do Equipamento. Danos causados desta forma são recuperados apenas após Descansos Verdadeiros.
+
+Aprimoramentos de Obras-Primas
+Anima Selvagem [Preço +20PE]
+	•	Você pode usar Cargas desta Pedra do Poder como uma reserva de PD para ativar Habilidades de Títulos Aventyrs.
+Arcanum [Preço +20PE]
+	•	Você pode usar Cargas desta Pedra do Poder como uma reserva de PM para Conjurar ou Mimetizar Magias.
+Conexão Veloz [Preço +10PE]
+	•	Tempo de Vinculação reduzido para Ação Livre.
+Dissipador de Calor [Preço +15PE]
+	•	Apenas uma vez por Cena, na primeira utilização, reduz o tempo de Resfriamento em -1 Rodada.
+Mecanismo de Sobrecarga [Preço +15PE]
+	•	Ao ser ativada pode consumir 3 Cargas, ao invés de 1. A Duração e tempo de Resfriamento são sobrados.
+Última Carga [Preço +5PE]
+	•	Quando estiver com zero cargas pode ser utilizada uma última vez por 2 Rodadas, os Danos causados aos Equipamentos por esta Pedra do Poder são dobrados.
+Vitalitas Immanis [Preço +20PE]
+	•	Você pode usar Cargas desta Pedra do Poder para se curar, recuperando PV igual ao dobro da quantidade de Carga utilizada.
+

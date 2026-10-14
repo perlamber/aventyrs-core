@@ -67,12 +67,13 @@ class DamageSanctityTest {
 
     /** The Zumbi's Anatomia de Morto-Vivo Menor: "imunes a danos Profanos e Naturais". */
     @Test
-    void theZumbiIsImmuneToProfanoAndNatural() {
+    void theZumbiIsImmuneToProfanoButNoLongerToNatural() {
         MonsterSheet zumbi = Zumbi.builder().build().spawn(new Player());
 
         assertTrue(zumbi.isImmuneToDamage(DamageType.FISICO, PROFANE_PHYSICAL));
-        assertTrue(zumbi.isImmuneToDamage(DamageType.ELEMENTAL,
-                new DamageDescriptor(DamageType.ELEMENTAL, ElementalType.NATURAL)));
+        // The manual's Anatomia de Morto-Vivo replaced the Menor, and with it the Natural immunity (ruling 2026-10-14).
+        assertFalse(zumbi.isImmuneToDamage(DamageType.MAGICO,
+                new DamageDescriptor(DamageType.MAGICO, ElementalType.NATURAL)));
         assertFalse(zumbi.isImmuneToDamage(DamageType.FISICO, null));
         assertEquals(0, new DamageServiceImpl().calculateFinalDamage(zumbi, null, PROFANE_PHYSICAL, null, 8, false));
     }
@@ -92,13 +93,11 @@ class DamageSanctityTest {
         assertEquals(0, warded.getDamageTaken());
     }
 
-    /** The two Pedras: Opala's defensive -3 Profano, Turmalina's base -3 Sagrado, and each one's offensive nature. */
+    /** The two Pedras (V19): Opala's Protetivo -3 Profano, and each one's Violento nature. */
     @Test
     void thePedrasReduceAndConferANature() {
         assertEquals(3, PowerStoneType.OPALA_PURIFICADORA.resolveBonus(ModifierType.PROFANE_DAMAGE_REDUCTION,
                 ItemType.DEFENSIVE));
-        assertEquals(3, PowerStoneType.TURMALINA_OBSCURA.resolveBonus(ModifierType.SACRED_DAMAGE_REDUCTION,
-                ItemType.OFFENSIVE));
         assertEquals(DamageSanctity.SAGRADO, PowerStoneType.OPALA_PURIFICADORA.getOffensiveSanctity());
         assertEquals(DamageSanctity.PROFANO, PowerStoneType.TURMALINA_OBSCURA.getOffensiveSanctity());
     }
@@ -109,7 +108,7 @@ class DamageSanctityTest {
         warded.grantBlessing(new Blessing(ModifierType.PROFANE_DAMAGE_REDUCTION, 3, 5, TargetScope.SELF, "test"));
         DamageServiceImpl damage = new DamageServiceImpl();
 
-        assertEquals(damage.calculateFinalDamage(warded, null, new DamageDescriptor(DamageType.MAGICO), null, 8, false) - 3,
+        assertEquals(damage.calculateFinalDamage(warded, null, new DamageDescriptor(DamageType.MAGICO, null, org.aventyrs.core.character.DamageSanctity.UMBRAL), null, 8, false) - 3,
                 damage.calculateFinalDamage(warded, null,
                         new DamageDescriptor(DamageType.MAGICO, null, DamageSanctity.PROFANO), null, 8, false));
     }

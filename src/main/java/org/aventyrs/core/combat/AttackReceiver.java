@@ -188,11 +188,20 @@ public class AttackReceiver {
                 .requiredTotal(requiredTotal)
                 .auraHalvesDamage(auraHalvesDamage)
                 .retaliation(RetaliationResolver.resolve(defender, SkillType.ATAQUE_CORPO_A_CORPO))
+                // Espinhosa / Rigidez Refletora, hit or miss; an unstated Perícia is read as melee, as the thorns are.
+                .equipmentRetaliation(org.aventyrs.core.item.DefensiveEnhancements.retaliationAgainst(defender,
+                        attack.getAttackSkill() == null ? SkillType.ATAQUE_CORPO_A_CORPO : attack.getAttackSkill(),
+                        null))
                 .effectiveDifficultyLevel(effectiveDifficultyLevel);
 
+        if (attack.isIntercepted()) {
+            return resolveIntercepted(attack, defenseResult, result, auraHalvesDamage);
+        }
         if (defenseRoll == null) {
             return result.defenseResult(defenseResult).build();
         }
+        // Benção Ymiriana: being attacked — hit or miss — opens its window.
+        org.aventyrs.core.item.DefensiveEnhancements.onAttacked(defender);
 
         int margin = requiredTotal - defenseTotal;
         // Ímpeto Defensivo Maior: "se torna imune aos ataques dele por 1 Rodada".
@@ -285,6 +294,33 @@ public class AttackReceiver {
                 .effectChainTriggered(effectChainTriggered)
                 .recordedAction(recordedAction(attack, defenseResult, defended, defenseTotal - requiredTotal,
                         criticalResult, effectiveDifficultyLevel))
+                .build();
+    }
+
+    /**
+     * Sacrifício's intercepted attack: no defence is rolled or read; it lands unless the interceptor is immune, its
+     * Efeito Crítico applies as a Menor and every Corrente fires (table ruling, 2026-10-14).
+     */
+    private IncomingAttackResult resolveIntercepted(final IncomingAttack attack, final InteractionResult defenseResult,
+                                                    final IncomingAttackResult.IncomingAttackResultBuilder result,
+                                                    final boolean auraHalvesDamage) {
+        CombatantSheet defender = attack.getDefender();
+        if (SpellResistance.immune(defender, attack.getAttackSource())) {
+            return result.defenseResult(defenseResult).defended(true).build();
+        }
+        org.aventyrs.core.item.DefensiveEnhancements.onAttacked(defender);
+        CriticalResult forced = CriticalResult.FALHA_CRITICA_MENOR;
+        InteractionResult landed = defenseResult.toBuilder()
+                .nextInteraction(buildChain(attack, true, true, forced, auraHalvesDamage))
+                .build();
+        result.unappliedCriticalEffects(CriticalEffectResolver.resolve(attack.getAttacker(),
+                attack.getAttackSource(), attack.getAttackSkill(), forced, true,
+                attack.getAdditionalCriticalEffectTypes(), attack.getDiceRoller(), false).unapplied());
+        return result.defenseResult(landed)
+                .defended(false)
+                .criticalResult(forced)
+                .criticalEffectTriggered(true)
+                .effectChainTriggered(true)
                 .build();
     }
 

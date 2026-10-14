@@ -199,6 +199,23 @@ public interface MonsterTemplate {
     }
 
     /**
+     * Whether this creature has the full Anatomia de Morto-Vivo ({@link UndeadAnatomy}, core 0.1.6.23) — every
+     * spell-raised undead does (table ruling, 2026-10-14). Implies {@link #isUndead()}.
+     */
+    default boolean hasUndeadAnatomy() {
+        return false;
+    }
+
+    /**
+     * Whether this creature has no PV to lose, and damage shortens its invocation's Duração instead — the Abantesma's
+     * "quando sofrem danos a Duração da Magia é reduzida em -1 Rodada" (core 0.1.6.25), settled by {@code
+     * Scene#settleSummons}.
+     */
+    default boolean damageShortensDuration() {
+        return false;
+    }
+
+    /**
      * Whether the Narrador counts this creature among the "inteligentes" — see {@code CombatantSheet#isIntelligent()}.
      * False unless a stat block says so; none does yet.
      */

@@ -1,5 +1,6 @@
 package org.aventyrs.core.item;
 
+import org.aventyrs.core.character.Resistance;
 import java.util.List;
 
 import org.aventyrs.core.character.AttributeDomain;
@@ -24,13 +25,11 @@ import lombok.Getter;
  * <p><b>Two extra columns.</b> The Ofensiva table prints {@code DF | DM | Ataque | Danos |
  * Conjuração | Requisitos} where the Defensiva one prints only {@code DF | DM | Conjuração |
  * Requisitos}, which is why {@link Masterpiece#getAttackBonus()}/{@link
- * Masterpiece#getDamageBonus()} exist at all. Both are exact, authored, and <b>read by nothing</b>
- * — the same state {@link Improvement}'s pair has carried since the defensive catalog was written
- * (four {@code DefensiveImprovement} constants author them too). An "Ataque" bonus would need a
- * roll pass scoped to <i>the weapon the attack was delivered with</i>: {@code
- * AbstractSkillInteraction#sumEquipmentRollBonuses} scans the whole loadout, so routing them
- * through {@code ModifierType.ATAQUE_*_ROLL_BONUS} would let a sheathed Precisa dagger sharpen a
- * sword swing. Add that pass with its first real consumer, not here.
+ * Masterpiece#getDamageBonus()} exist at all. Both reach an attack made <i>with this weapon</i>
+ * through {@link WeaponEnhancements} (core 0.1.6.9) — the weapon-scoped pass that keeps a sheathed
+ * Precisa dagger from sharpening a sword swing, which {@code
+ * AbstractSkillInteraction#sumEquipmentRollBonuses}' loadout scan would not. The Conjuração column
+ * reaches the Conjuração roll while the weapon is drawn.
  *
  * <p><b>What is live.</b> The DF/DM columns reach {@code DefenseService}; a "Dano Base da Arma
  * aumenta em +1" Favor reaches {@code DamageBaseService} through {@link
@@ -52,22 +51,23 @@ import lombok.Getter;
 public enum OffensiveMasterpiece implements Masterpiece {
     // The Favor restates the Ataque column rather than adding to it ("Bônus em rolagens de Ataque
     // +1" is that +1), so there is one grant here, not two — the same net-effect check
-    // ArmorItem#ROUPA_PESADA's two clauses needed. TODO: nothing reads the Ataque column; see this
-    // enum's javadoc for the weapon-scoped roll pass it waits on.
+    // ArmorItem#ROUPA_PESADA's two clauses needed. The column reaches attacks made with this weapon
+    // through WeaponEnhancements#attackRollBonus (core 0.1.6.9).
     PRECISA("Precisa", ItemRarity.COMMON, 0, 0, 1, 0, 0, requirements(AttributeDomain.DEXTERITY, 3),
             "Bônus em rolagens de Ataque +1.", null),
     BRUTAL("Brutal", ItemRarity.UNCOMMON, 0, 0, 0, 1, 0, requirements(AttributeDomain.STRENGTH, 3),
             "Dano Base da Arma aumenta em +1.", null),
-    // TODO: the Favor's Ataque half waits on the weapon-scoped roll pass (see this enum's javadoc);
-    // its Conjuração half has nowhere to land at all — neither SpellCastingService roll takes an
-    // item-granted modifier, which is why Item#getCastingBonus() is inert too.
+    // The Danos column is live (WeaponEnhancements). TODO: the Favor is not — WeaponEnhancements reads the
+    // ungated columns only, and no hook routes a Requisitos-gated Obra-Prima Favor to the attack or the
+    // Conjuração roll yet.
     EQUILIBRADA("Equilibrada", ItemRarity.UNCOMMON, 0, 0, 0, 1, 0,
             requirements(AttributeDomain.STRENGTH, 3, AttributeDomain.GNOSE, 3),
             "Bônus em rolagens de Ataque e Conjuração +1.", null),
     DEFENSORA("Defensora", ItemRarity.COMMON, 1, 1, 0, 0, 0,
             requirements(AttributeDomain.DEXTERITY, 3, AttributeDomain.GNOSE, 3),
             "Dano sofrido reduzido em -1.", null),
-    // TODO: a Conjuração bonus has no consumer — see EQUILIBRADA.
+    // The Conjuração column reaches the roll while the weapon is drawn (WeaponEnhancements#castingRollBonus).
+    // TODO: the Requisitos-gated Favor does not — see EQUILIBRADA.
     CONJURADORA("Conjuradora", ItemRarity.UNCOMMON, 0, 0, 0, 0, 1, requirements(AttributeDomain.FOCUS, 3),
             "Bônus em rolagens de Conjuração +1.", null),
     // The Característica Adicional's "Duração +1" is real (resolveDurationIncreaseInRounds, read by
@@ -115,7 +115,7 @@ public enum OffensiveMasterpiece implements Masterpiece {
     GELO_VERDADEIRO("Material Especial - Gelo Verdadeiro", ItemRarity.RARE, 0, 0, 1, 0, 0,
             requirements(AttributeDomain.STRENGTH, 3),
             "Corrente de Efeitos – Gelo Verdadeiro: Dano +3.",
-            "Dano causado é Físico Elemental: Gelo."),
+            "Dano causado é Elemental: Gelo."),
     // Both halves are real now: the Favor's "Danos Críticos +3" through resolveCriticalDamage, the
     // Característica Adicional's "Margem Crítica Menor +1" through resolveCriticalMarginIncrease.
     MITRAL("Material Especial - Mitral", ItemRarity.EPIC, 0, 0, 1, 0, 0,
@@ -127,7 +127,7 @@ public enum OffensiveMasterpiece implements Masterpiece {
     DENTE_DE_DRAGAO("Material Especial - Dente de Dragão", ItemRarity.MYTHIC, 0, 0, 1, 1, 1,
             requirements(AttributeDomain.DEXTERITY, 3),
             "Corrente de Efeitos – Fúria Dracônica: Área de Efeito – Explosão.",
-            "Dano causado é Físico Elemental."),
+            "Dano causado é Elemental."),
     // The Característica Adicional's "Dano Base +1" is real and unconditional (an Adicional, not a
     // Favor, so no Requisitos gate it) — the one constant here whose scale-up isn't Favor-gated.
     // TODO: the Favor's Corrente de Efeitos is not — no EffectChain exists.
@@ -248,8 +248,9 @@ public enum OffensiveMasterpiece implements Masterpiece {
         if (!requirements.isMetBy(character)) {
             return 0;
         }
-        if (this == DEFENSORA && modifierType == ModifierType.DAMAGE_REDUCTION) {
-            return 1;
+        // "Dano sofrido reduzido em -1" — an unnamed item reduction is RDS (table ruling, 2026-10-13).
+        if (this == DEFENSORA && modifierType == ModifierType.DAMAGE_TAKEN_REDUCTION) {
+            return Resistance.RDS.instances(1);
         }
         return 0;
     }

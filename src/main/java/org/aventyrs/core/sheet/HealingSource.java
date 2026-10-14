@@ -7,6 +7,7 @@ import org.aventyrs.core.magic.Spell;
 import org.aventyrs.core.rest.RestType;
 import org.aventyrs.core.title.AventyrTitle;
 import org.aventyrs.core.title.AventyrTitleAbility;
+import org.aventyrs.core.util.DiceRoller;
 
 import java.util.Arrays;
 import java.util.List;
@@ -39,9 +40,18 @@ import java.util.OptionalInt;
  * @param relayed          the healer's half already resolved elsewhere ({@link #relay}), for a heal
  *                         applied on a sheet whose client holds no real copy of the healer — or {@code
  *                         null}, the ordinary case, where {@link #healer()}'s Títulos are asked directly
+ * @param dice             the caller's dice, for a heal that rolls something of its own on its target — an undead's
+ *                         Anatomia turns a curative heal into "2d6+ Metade do Vigor" Dano Sagrado ({@code
+ *                         UndeadAnatomy#sacredDamage}); {@code null} when the caller supplies none
  */
 public record HealingSource(@NonNull Object key, boolean repeatableInComa, CombatantSheet healer,
-                            Spell spell, AventyrTitleAbility titleAbility, RelayedHealer relayed) {
+                            Spell spell, AventyrTitleAbility titleAbility, RelayedHealer relayed, DiceRoller dice) {
+
+    /** The form with no dice — what every heal but an undead-facing one passes. */
+    public HealingSource(final Object key, final boolean repeatableInComa, final CombatantSheet healer,
+                         final Spell spell, final AventyrTitleAbility titleAbility, final RelayedHealer relayed) {
+        this(key, repeatableInComa, healer, spell, titleAbility, relayed, null);
+    }
 
     /** The ordinary, unrelayed form. */
     public HealingSource(final Object key, final boolean repeatableInComa, final CombatantSheet healer,
@@ -59,7 +69,7 @@ public record HealingSource(@NonNull Object key, boolean repeatableInComa, Comba
      */
     public HealingSource relay(final boolean targetIsDead) {
         if (healer == null) {
-            return new HealingSource(key, repeatableInComa, null, spell, titleAbility, RelayedHealer.NONE);
+            return new HealingSource(key, repeatableInComa, null, spell, titleAbility, RelayedHealer.NONE, dice);
         }
         List<AventyrTitle> titles = healer.getCharacter().getAllTitles();
         int bonus = titles.stream().mapToInt(title -> title.resolveHealingBonus(this, null)).sum()
@@ -76,7 +86,12 @@ public record HealingSource(@NonNull Object key, boolean repeatableInComa, Comba
             }
         }
         return new HealingSource(key, repeatableInComa, null, spell, titleAbility,
-                new RelayedHealer(bonus, bypass, window));
+                new RelayedHealer(bonus, bypass, window), dice);
+    }
+
+    /** This heal carrying the caller's dice — see {@link #dice()}. */
+    public HealingSource withDice(final DiceRoller roller) {
+        return new HealingSource(key, repeatableInComa, healer, spell, titleAbility, relayed, roller);
     }
 
     /** A Magia's own heal — keyed by the Magia's name. */

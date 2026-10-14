@@ -188,11 +188,12 @@ class ZumbiTest {
     }
 
     @Test
-    void theAnatomyMakesItUndeadAndImmuneToFiveEfeitosCriticos() {
+    void theAnatomyMakesItUndeadAndImmuneToSixEfeitosCriticos() {
         MonsterSheet zumbi = Zumbi.builder().build().spawn(new Player());
 
         assertTrue(zumbi.isUndead());
-        assertEquals(Zumbi.ANATOMIA_DE_MORTO_VIVO_MENOR, zumbi.getCriticalEffectImmunities());
+        assertTrue(zumbi.hasUndeadAnatomy(), "the manual's Anatomia replaces the printed Menor (ruling 2026-10-14)");
+        assertEquals(org.aventyrs.core.monster.UndeadAnatomy.CRITICAL_EFFECT_IMMUNITIES, zumbi.getCriticalEffectImmunities());
         assertTrue(zumbi.getCriticalEffectImmunities().contains(CriticalEffectType.SANGRAMENTO));
         // Named but unimplemented effects are immunities all the same — see CriticalEffectType.
         assertTrue(zumbi.getCriticalEffectImmunities().contains(CriticalEffectType.DILACERAR));
@@ -295,6 +296,5 @@ class ZumbiTest {
         assertEquals(10, ZumbiAbility.ENCANTAMENTO_HIT_POINTS);
         assertEquals(2, ZumbiAbility.ENCANTAMENTO_STRENGTH);
         assertEquals(1, ZumbiAbility.LIFE_STEAL);
-        assertEquals(5, Zumbi.ANATOMIA_DE_MORTO_VIVO_MENOR.size());
     }
 }

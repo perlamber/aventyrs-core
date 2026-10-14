@@ -49,6 +49,9 @@ public class ActionPointsServiceImpl implements ActionPointsService {
                 // A Rainha's "+1PA" (core 0.0.92).
                 + org.aventyrs.core.subordinate.SubordinateBenefit.ACTION_POINTS * org.aventyrs.core.subordinate.SubordinateBenefits.count(sheet, sceneContext, org.aventyrs.core.subordinate.SubordinateBenefit.RAINHA_ACTION_POINT)
                 + sumTitleAbilityActionPointBonus(sheet)
+                // A bound Relâmpago Dourado's Violento "Bônus de +1PA" (core 0.1.6.7).
+                + character.getEquipment().stream()
+                        .mapToInt(item -> item.resolvePowerStoneBonus(ModifierType.ACTION_POINTS)).sum()
                 + character.getFeats().stream()
                         .mapToInt(feat -> feat.resolveRoundActionPointsIncrease(character, sceneContext)).sum();
         boolean inCombat = sceneContext != null && sceneContext.isCombatScene();

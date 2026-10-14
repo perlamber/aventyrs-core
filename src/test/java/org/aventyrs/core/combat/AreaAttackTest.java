@@ -183,7 +183,7 @@ class AreaAttackTest {
     @Test
     void aRetaliationIsDealtAsATypedHitAndItsMaleficioRidesAlong() {
         CombatantSheet attacker = sheet();
-        Retaliation thorns = new Retaliation(3, new DamageDescriptor(DamageType.FISICO_ELEMENTAL, ElementalType.NATURAL),
+        Retaliation thorns = new Retaliation(3, new DamageDescriptor(DamageType.ELEMENTAL, ElementalType.NATURAL),
                 ConditionType.ENVENENADO, 2);
 
         int dealt = thorns.dealTo(attacker, null, null, damageService);

@@ -81,6 +81,15 @@ public abstract class TemporaryEffect {
         this.remainingRounds = rounds;
     }
 
+    /**
+     * What this effect is when it is a harmful continuous one — the nature RD/RM/RE/RA read to shorten its Duração
+     * ({@code character.services.ResistanceDurationService}). {@code null} by default: an effect that declares none is
+     * never shortened (a buff, a Condição with no stated nature).
+     */
+    public ContinuousNature getContinuousNature() {
+        return null;
+    }
+
     /** True once a finite effect has no Rodadas left — an open-ended one never expires this way. */
     public boolean isExpired() {
         return remainingRounds != null && remainingRounds <= 0;

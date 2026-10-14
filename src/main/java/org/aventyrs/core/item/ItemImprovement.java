@@ -7,6 +7,7 @@ import org.aventyrs.core.magic.Spell;
 import org.aventyrs.core.magic.ElementalType;
 import org.aventyrs.core.modifier.ModifierType;
 import org.aventyrs.core.scene.SceneContext;
+import org.aventyrs.core.scene.TerrainType;
 import org.aventyrs.core.skill.SkillType;
 
 import java.util.Objects;
@@ -19,12 +20,20 @@ public final class ItemImprovement implements Improvement {
     private final DefensiveImprovement definition;
     private final DefenseType selectedDefense;
     private final ElementalType selectedElementalType;
+    /** Camuflada's "tipo de ambiente definido na criação do item" (core 0.1.6.11), or {@code null}. */
+    private final TerrainType selectedTerrain;
 
     private ItemImprovement(final DefensiveImprovement definition, final DefenseType selectedDefense,
                             final ElementalType selectedElementalType) {
+        this(definition, selectedDefense, selectedElementalType, null);
+    }
+
+    private ItemImprovement(final DefensiveImprovement definition, final DefenseType selectedDefense,
+                            final ElementalType selectedElementalType, final TerrainType selectedTerrain) {
         this.definition = definition;
         this.selectedDefense = selectedDefense;
         this.selectedElementalType = selectedElementalType;
+        this.selectedTerrain = selectedTerrain;
     }
 
     public static ItemImprovement of(@NonNull final DefensiveImprovement definition) {
@@ -49,6 +58,14 @@ public final class ItemImprovement implements Improvement {
         return new ItemImprovement(DefensiveImprovement.BENCAO_ELEMENTAL, null, selectedElementalType);
     }
 
+    /**
+     * Camuflada with its environment — the extra Vantagem in rolagens de Furtividade there. {@link #of} still accepts
+     * a bare Camuflada (a copy made before the choice was recorded): it keeps the Furtividade Vantagem and nothing more.
+     */
+    public static ItemImprovement camuflada(@NonNull final TerrainType selectedTerrain) {
+        return new ItemImprovement(DefensiveImprovement.CAMUFLADA, null, null, selectedTerrain);
+    }
+
     public DefensiveImprovement getDefinition() {
         return definition;
     }
@@ -59,6 +76,10 @@ public final class ItemImprovement implements Improvement {
 
     public ElementalType getSelectedElementalType() {
         return selectedElementalType;
+    }
+
+    public TerrainType getSelectedTerrain() {
+        return selectedTerrain;
     }
 
     @Override
@@ -146,7 +167,29 @@ public final class ItemImprovement implements Improvement {
 
     @Override
     public int resolveBonus(final ModifierType modifierType, final SkillType skillType, final Character character) {
-        return definition.resolveBonus(modifierType, skillType, character);
+        return resolveBonus(modifierType, skillType, character, null);
+    }
+
+    @Override
+    public int resolveBonus(final ModifierType modifierType, final SkillType skillType, final Character character,
+                            final SceneContext sceneContext) {
+        return definition.resolveBonus(modifierType, skillType, character, sceneContext, selectedTerrain);
+    }
+
+    @Override
+    public int resolveCriticalMarginIncrease(final Weapon weapon, final Character character) {
+        return definition.resolveCriticalMarginIncrease(weapon, character);
+    }
+
+    @Override
+    public org.aventyrs.core.character.CriticalDamage resolveCriticalDamage(final Weapon weapon,
+                                                                           final Character character) {
+        return definition.resolveCriticalDamage(weapon, character);
+    }
+
+    @Override
+    public boolean preventsDisarming() {
+        return definition.preventsDisarming();
     }
 
     @Override
@@ -170,11 +213,12 @@ public final class ItemImprovement implements Improvement {
             return false;
         }
         return definition == improvement.definition && selectedDefense == improvement.selectedDefense
-                && selectedElementalType == improvement.selectedElementalType;
+                && selectedElementalType == improvement.selectedElementalType
+                && selectedTerrain == improvement.selectedTerrain;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(definition, selectedDefense, selectedElementalType);
+        return Objects.hash(definition, selectedDefense, selectedElementalType, selectedTerrain);
     }
 }

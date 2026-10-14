@@ -45,7 +45,7 @@ public enum OraculoAbissalAbility implements MisticismoTeacher {
     BENCAO_DOS_VULCOES_DO_NOROESTE(
             "Você aprende um novo Misticismo, escolhido entre magias do tipo Elemental: Magma ou Profana. Suas " +
             "invocações recebem Cataclismo como Efeito Crítico adicional em seus ataques, também recebem +1d6 de " +
-            "Dano Físico Elemental: Magma em suas rolagens de Dano Crítico. A Margem Crítica Menor dos ataques de " +
+            "Dano Elemental: Magma em suas rolagens de Dano Crítico. A Margem Crítica Menor dos ataques de " +
             "suas invocações é aumentada em +1, então em +1 para cada 2 Habilidades ou Suprema de Oráculo Abissal " +
             "que você possuir.",
             false, MisticismoFilter.elementOr(ElementalType.MAGMA, MagicType.PROFANA), 0),

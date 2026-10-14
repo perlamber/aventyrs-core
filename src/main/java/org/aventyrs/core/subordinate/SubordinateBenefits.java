@@ -38,7 +38,7 @@ public final class SubordinateBenefits {
         long allied = sceneContext == null ? 0 : sceneContext.getAllies().stream()
                 .filter(ally -> ally != sheet && sameKind(sheet, ally))
                 .flatMap(ally -> of(ally).stream())
-                .filter(held -> held.isProdigious() && held.getBenefit() == benefit)
+                .filter(held -> held.isProdigiousAt(sceneContext.getCurrentRound()) && held.getBenefit() == benefit)
                 .count();
         return (int) (own + allied);
     }

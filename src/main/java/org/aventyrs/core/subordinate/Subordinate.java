@@ -30,6 +30,12 @@ public class Subordinate extends TemporaryEffect implements org.aventyrs.core.sh
     private final UUID sustainerId;
     /** The N of "Concentração + N" until the focus breaks; {@code null} otherwise. */
     private Integer trailingRounds;
+    /**
+     * The last Scene Rodada it counts as Prodigioso though it isn't one — Servo Cadavérico's Escudeiro Cadavérico,
+     * "conta como um Subordinado Prodigioso nas 2 primeiras Rodadas" (core 0.1.6.25); {@code null} otherwise. Read by
+     * {@link #isProdigiousAt}.
+     */
+    private Integer prodigiousThroughRound;
 
     public Subordinate(@NonNull final SubordinateBenefit benefit, final boolean prodigious, @NonNull final String source,
                        final UUID creatureId, final Integer rounds) {
@@ -52,13 +58,18 @@ public class Subordinate extends TemporaryEffect implements org.aventyrs.core.sh
 
     private Subordinate(final SubordinateBenefit benefit, final boolean prodigious, final String source,
                         final UUID sustainerId, final int trailingRounds, final UUID id) {
+        this(benefit, prodigious, source, null, sustainerId, trailingRounds, id);
+    }
+
+    private Subordinate(final SubordinateBenefit benefit, final boolean prodigious, final String source,
+                        final UUID creatureId, final UUID sustainerId, final int trailingRounds, final UUID id) {
         super((Integer) null);
         this.id = id == null ? UUID.randomUUID() : id;
         this.grade = benefit.getGrade();
         this.benefit = benefit;
         this.prodigious = prodigious;
         this.source = source;
-        this.creatureId = null;
+        this.creatureId = creatureId;
         this.sustainerId = sustainerId;
         this.trailingRounds = trailingRounds;
     }
@@ -89,6 +100,28 @@ public class Subordinate extends TemporaryEffect implements org.aventyrs.core.sh
         trailingRounds = null;
         startCountdown(rounds);
         return rounds <= 0;
+    }
+
+    /**
+     * One with a body on the board, held by sustainerId's Concentração then trailingRounds more (core 0.1.6.25) —
+     * Servo Cadavérico's corpse, "reanimado como um Subordinado".
+     */
+    public static Subordinate sustainedBody(final UUID id, @NonNull final SubordinateBenefit benefit,
+                                            final boolean prodigious, @NonNull final String source,
+                                            @NonNull final UUID creatureId, @NonNull final UUID sustainerId,
+                                            final int trailingRounds) {
+        return new Subordinate(benefit, prodigious, source, creatureId, sustainerId, trailingRounds, id);
+    }
+
+    /** This Subordinado counting as Prodigioso through Scene Rodada round — see {@link #getProdigiousThroughRound()}. */
+    public Subordinate prodigiousThrough(final Integer round) {
+        this.prodigiousThroughRound = round;
+        return this;
+    }
+
+    /** Whether it reaches the group in Scene Rodada round — a Prodigioso, or one counting as one until then. */
+    public boolean isProdigiousAt(final Integer round) {
+        return prodigious || prodigiousThroughRound != null && round != null && round <= prodigiousThroughRound;
     }
 
     /** One with no body on the board and no Duração. */

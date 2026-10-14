@@ -732,7 +732,7 @@ Favor: Nenhum
 Dano | Tipo | Efeito Crítico | Alcance | Requisitos
 Arma | Esmagamento | Inflamar | Arma | Nenhum
 
-Efeitos Adicionais: Corrente de Efeitos – Incendiar: Causa +1d6 pontos de danos e o tipo de dano muda para Físico Elemental: Fogo.
+Efeitos Adicionais: Corrente de Efeitos – Incendiar: Causa +1d6 pontos de danos e o tipo de dano muda para Elemental: Fogo.
 Preço para 10 unidades.
 
 Próteses <em produção>
@@ -741,7 +741,7 @@ Equipamentos Naturais
 Armas Naturais
 
 Arma de Sopro (Leve/Natural)
-Descrição: Armas de Sopro permitem que certos personagens criem e emitir energia física elemental.
+Descrição: Armas de Sopro permitem que certos personagens criem e emitir energia elemental.
 Favor: Adiciona metade do Vigor ao Dano.
 Dano | Tipo | Efeito Crítico | Alcance | Requisitos
 1d6+2 | Elemental | Cataclismo (17) | Cone (Médio) | Vigor 3
@@ -927,7 +927,7 @@ Favor: Corrente de Efeitos – Gelo Verdadeiro: Dano +3
 DF | DM | Ataque | Danos | Conjuração | Requisitos
 +0 | +0 | +1 | +0 | +0 | Força 3
 
-Características Adicionais: Dano causado é Físico Elemental: Gelo
+Características Adicionais: Dano causado é Elemental: Gelo
 Material Especial – Mitral (Épico)
 Favor: Danos Críticos aumentam em +3
 DF | DM | Ataque | Danos | Conjuração | Requisitos
@@ -939,7 +939,7 @@ Favor: Corrente de Efeitos – Fúria Dracônica: Área de Efeito – Explosão.
 DF | DM | Ataque | Danos | Conjuração | Requisitos
 +0 | +0 | +1 | +1 | +1 | Destreza 3
 
-Características Adicionais: Dano causado é Físico Elemental
+Características Adicionais: Dano causado é Elemental
 Material Especial – Adamantina (Épico)
 Favor: Corrente de Efeitos - Ataque Meteórico: Dano Físico +3
 DF | DM | Ataque | Danos | Conjuração | Requisitos
@@ -1128,7 +1128,7 @@ DF | DM | Conjuração | Requisitos
 
 Características Adicionais: Ativar o Favor 1PA e 3PM, Duração 2 Rodadas.
 Material Especial – Gelo Verdadeiro (Raro)
-Favor: Atacantes Corpo-a-Corpo sofrem 3 pontos de danos Físico Elemental: Gelo.
+Favor: Atacantes Corpo-a-Corpo sofrem 3 pontos de danos Elemental: Gelo.
 DF | DM | Conjuração | Requisitos
 +2 | +0 | +0 | Força 3
 
@@ -1145,7 +1145,7 @@ Favor: RE muda para Todos os Elementos. Dano do Elemento do Dragão é reduzido 
 DF | DM | Conjuração | Requisitos
 +2 | +2 | +1 | Vigor 3
 
-Características Adicionais: Usuário ganha RE para resistir a efeitos do Elemento do Dragão. Escudos feitos de Couro de Dragão, quando usados para atacar, causam +1d6 pontos de danos e o tipo de dano muda para Físico Elemental.
+Características Adicionais: Usuário ganha RE para resistir a efeitos do Elemento do Dragão. Escudos feitos de Couro de Dragão, quando usados para atacar, causam +1d6 pontos de danos e o tipo de dano muda para Elemental.
 Material Especial – Adamantina (Épico)
 Favor: Primeiro dano sofrido em Rodadas Ímpares é reduzido à metade (efeito de Meio-Dano). Bônus em DF aumenta para +6 para resistir ao primeiro ataque que inflija danos físicos da Cena.
 DF | DM | Conjuração | Requisitos
@@ -1267,6 +1267,7 @@ DF | DM | Ataque | Danos | Conjuração
 Características Adicionais: Nenhum.
 
 Pedras do Poder
+[Superseded by docs/rules/pedras-do-poder.txt (V19, 2026-10-11) — the text below is the older version, kept for reference.]
 Tipos de Pedras do Poder
 Adamante Bruto (Sintética)
 Efeito Base: Vigor +1, ataques recebem a Corrente de Efeitos – Impacto Meteórico: Ataque se torna Área de Efeito - Explosão.
@@ -1285,7 +1286,7 @@ Efeito Base: Instinto +1, Danos Elementais recebem Cataclismo como Efeito Críti
 Equipamento Defensivo: O primeiro Dano Elemental sofrido em cada Rodada é reduzido à metade (efeito de meio-dano).
 Equipamento Ofensivo: Ignora RE e Efeitos de Meio-Dano utilizados para reduzir danos Elementais.
 Citrino Incandescente (Elemental: Fogo)
-Efeito Base: Personagens em Distância Muito Curta sofrem 3 pontos de Danos Físicos Elementais: Fogo a cada Rodada.
+Efeito Base: Personagens em Distância Muito Curta sofrem 3 pontos de Danos Elementais: Fogo a cada Rodada.
 Equipamento Defensivo: Ignora o primeiro dano Elemental: Fogo sofrido, então concede RE: Fogo.
 Equipamento Ofensivo: Dano causado é Elemental: Fogo em adição aos seus tipos, Efeito Crítico base muda para Inflamar.
 Coração Vazio (Planar)

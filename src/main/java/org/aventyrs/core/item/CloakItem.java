@@ -1,5 +1,6 @@
 package org.aventyrs.core.item;
 
+import org.aventyrs.core.character.Resistance;
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.modifier.ModifierType;
 import org.aventyrs.core.skill.Skill;
@@ -90,7 +91,7 @@ public enum CloakItem implements ItemTemplate {
             ItemFavor.builder()
                     .description("Dano Físico sofrido é reduzido em -1.")
                     .requirements(new ItemRequirements(AttributeDomain.VIGOR, 3))
-                    .bonus(new ItemBonus(ModifierType.DAMAGE_REDUCTION, 1))
+                    .bonus(new ItemBonus(ModifierType.DAMAGE_TAKEN_REDUCTION, Resistance.RDS.instances(1)))
                     .build()),
 
     /**
@@ -125,7 +126,8 @@ public enum CloakItem implements ItemTemplate {
                     .description("Duração de Encantamentos e Maldições reduzidas em -1 Rodada, "
                             + "não reduz duração de Magias Elementais: Fogo, Sagradas e Primordiais.")
                     .requirements(new ItemRequirements(AttributeDomain.FOCUS, 3))
-                    .bonus(new ItemBonus(ModifierType.MAGIC_REDUCTION, 1))
+                    // TODO (acoes-de-combate-plan Phase 2): a shortened Duração of hostile Encantamentos and Maldições,
+                    // not a damage reduction — it used to be modelled as RM 1.
                     .build()),
 
     /**

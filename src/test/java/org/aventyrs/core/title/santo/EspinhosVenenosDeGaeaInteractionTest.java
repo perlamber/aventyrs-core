@@ -143,7 +143,7 @@ class EspinhosVenenosDeGaeaInteractionTest {
         Retaliation retaliation = meleeAttackOn(holder).getRetaliation();
 
         assertEquals(3, retaliation.damage());
-        assertEquals(DamageType.FISICO_ELEMENTAL, retaliation.descriptor().damageType());
+        assertEquals(DamageType.ELEMENTAL, retaliation.descriptor().damageType());
         assertEquals(ElementalType.NATURAL, retaliation.descriptor().elementalType());
         assertEquals(ConditionType.ENVENENADO, retaliation.conditionOnDamage());
         assertEquals(2, retaliation.conditionRounds());

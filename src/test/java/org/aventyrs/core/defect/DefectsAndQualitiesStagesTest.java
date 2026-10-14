@@ -26,6 +26,8 @@ import org.aventyrs.core.combat.IncomingAttack;
 import org.aventyrs.core.feat.QualidadeFeat;
 import org.aventyrs.core.magic.ElementalType;
 import org.aventyrs.core.magic.MagicType;
+import org.aventyrs.core.magic.SpellCastingService;
+import org.aventyrs.core.magic.SpellCastingServiceImpl;
 import org.aventyrs.core.magic.catalog.ProfanarSpell;
 import org.aventyrs.core.magic.catalog.VidaSpell;
 import org.aventyrs.core.rest.RestServiceImpl;
@@ -57,6 +59,7 @@ import java.util.stream.Collectors;
 
 import static org.aventyrs.core.util.TranslatableMessages.ATTRIBUTE_ABILITY_FORBIDDEN;
 import static org.aventyrs.core.util.TranslatableMessages.SKILL_USE_PREVENTED;
+import static org.aventyrs.core.util.TranslatableMessages.SPELL_NEGATION_NOT_AVAILABLE;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -65,9 +68,11 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 /**
  * Plan Phase 3 — the Defeito/Qualidade clauses that needed a new stage: the fixed multiplier, automatic
  * failure, a refused Perícia, halved movement, Rodada parity, typed vulnerability, Condição substitution and
- * Duração, and the per-combat cost relief. Same shape as {@link DefectsAndQualitiesEffectTest}.
+ * Duração, the per-combat cost relief, and Alma de AEther's per-combat negation. Same shape as {@link DefectsAndQualitiesEffectTest}.
  */
 class DefectsAndQualitiesStagesTest {
+
+    private static final SpellCastingService SPELL_CASTING = new SpellCastingServiceImpl();
 
     private final CharacterCreationService creation = new CharacterCreationServiceImpl();
 
@@ -270,7 +275,7 @@ class DefectsAndQualitiesStagesTest {
 
     // ---- Vulnerabilidade -------------------------------------------------------------------------
 
-    private static final DamageDescriptor MAGICAL = new DamageDescriptor(DamageType.MAGICO);
+    private static final DamageDescriptor MAGICAL = new DamageDescriptor(DamageType.MAGICO, null, org.aventyrs.core.character.DamageSanctity.UMBRAL);
     private static final DamageDescriptor PHYSICAL = new DamageDescriptor(DamageType.FISICO);
 
     @Test
@@ -296,8 +301,8 @@ class DefectsAndQualitiesStagesTest {
         CharacterSheet vulnerable = sheet(withDefect(Defect.VULNERABILIDADE, DefectSeverity.MODERADO,
                 VulnerabilityKind.ELEMENTAL, ElementalType.FOGO, ElementalType.GELO));
         DamageServiceImpl damage = new DamageServiceImpl();
-        DamageDescriptor fire = new DamageDescriptor(DamageType.ELEMENTAL, ElementalType.FOGO);
-        DamageDescriptor lightning = new DamageDescriptor(DamageType.ELEMENTAL, ElementalType.ELETRICIDADE);
+        DamageDescriptor fire = new DamageDescriptor(DamageType.MAGICO, ElementalType.FOGO);
+        DamageDescriptor lightning = new DamageDescriptor(DamageType.MAGICO, ElementalType.ELETRICIDADE);
 
         assertEquals(damage.calculateFinalDamage(sheet(base()), null, fire, null, 10, false) + 3,
                 damage.calculateFinalDamage(vulnerable, null, fire, null, 10, false));
@@ -398,5 +403,41 @@ class DefectsAndQualitiesStagesTest {
 
         ready.endCombat();
         assertTrue(relief.waivesTitleActivationDeterminationCost(ready, combatRound(1)), "a new combat");
+    }
+
+    // ---- Alma de AEther --------------------------------------------------------------------------
+
+    /** Offered on every Magia from someone else until used; a use refunds the cast's PM and lasts until combat ends. */
+    @Test
+    void almaDeAetherNegatesOneMagiaPerCombatAndRecoversItsMana() {
+        SpellCastingService spells = SPELL_CASTING;
+        CharacterSheet aether = sheet(withQuality(Quality.ESCOLHIDO_DA_MAGIA, QualityClass.MAIOR));
+        CharacterSheet caster = sheet(base());
+        aether.spendMagicPoints(5);
+
+        assertFalse(spells.canNegateSpell(caster, aether, null), "outside a Cena de Combate");
+        assertFalse(spells.canNegateSpell(aether, aether, combatRound(1)), "never one's own Magia");
+        assertFalse(spells.canNegateSpell(aether, caster, combatRound(1)), "only its holder");
+        assertTrue(spells.canNegateSpell(caster, aether, combatRound(1)));
+        assertTrue(spells.canNegateSpell(caster, aether, combatRound(1)), "asking (declining) spends nothing");
+
+        assertEquals(3, spells.negateSpell(caster, aether, 3, combatRound(1)));
+        assertEquals(2, aether.getManaSpent());
+        assertFalse(spells.canNegateSpell(caster, aether, combatRound(2)), "spent for the rest of the combat");
+        IllegalOperationException refused = assertThrows(IllegalOperationException.class,
+                () -> spells.negateSpell(caster, aether, 3, combatRound(2)));
+        assertEquals(SPELL_NEGATION_NOT_AVAILABLE, refused.getMessage());
+
+        aether.endCombat();
+        assertTrue(spells.canNegateSpell(caster, aether, combatRound(1)), "a new combat");
+        assertEquals(2, spells.negateSpell(caster, aether, 9, combatRound(1)), "recovers no more than was spent");
+        assertEquals(0, aether.getManaSpent());
+    }
+
+    @Test
+    void almaDeAetherIsTheMaiorsAloneAndLinhagemArcanaOffersNoNegation() {
+        CharacterSheet linhagem = sheet(withQuality(Quality.ESCOLHIDO_DA_MAGIA, QualityClass.MENOR));
+
+        assertFalse(SPELL_CASTING.canNegateSpell(sheet(base()), linhagem, combatRound(1)));
     }
 }

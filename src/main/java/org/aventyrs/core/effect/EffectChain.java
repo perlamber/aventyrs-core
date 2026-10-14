@@ -11,7 +11,9 @@ package org.aventyrs.core.effect;
  * Every generic Corrente of {@code docs/rules/efeitos-criticos.txt} is one (core 0.0.85): {@link Definhar},
  * {@link EnrijecerMusculatura}, {@link EscancararDefesas}, {@link Excomungar}, {@link ExplosaoCataclismica},
  * {@link FeridaInfecciosa}, {@link GolpeTrovejante}, {@link MagicaeMortis}, {@link Oprimir}, {@link
- * RemoverAflicao}, {@link Rugido}, {@link ToqueSombrio}, {@link VenenoVampirico} — plus {@link Sobrecura}, the
+ * RemoverAflicao}, {@link Rugido}, {@link ToqueSombrio}, {@link VenenoVampirico}, and the four V19 20261012 added
+ * (core 0.1.6.12) — {@link Desarmar}, {@link LancarAoChao}, {@link Envenenar}, {@link ImpactoMeteorico} — plus {@link
+ * Sobrecura}, the
  * bonus recovery three Vida Magias name. See {@code org.aventyrs.core.effect} package-info for the pipeline this
  * fits into.
  */

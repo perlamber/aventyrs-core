@@ -171,7 +171,7 @@ class MonsterTemplateTest {
         assertEquals(ArmorItem.ARMADURA_COMPLETA.getPhysicalDefenseBonus(),
                 defenseService.getTotalDefense(armoured, DefenseType.PHYSICAL));
         assertEquals(2, ArmorItem.ARMADURA_COMPLETA.resolveFavorBonus(
-                ModifierType.DAMAGE_REDUCTION, armoured.getCharacter()));
+                ModifierType.DAMAGE_TAKEN_REDUCTION, armoured.getCharacter()));
     }
 
     @Test

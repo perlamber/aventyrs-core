@@ -1,5 +1,6 @@
 package org.aventyrs.core.ability;
 
+import org.aventyrs.core.character.Resistance;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.aventyrs.core.character.AttributeDomain;
@@ -70,9 +71,9 @@ public enum VigorAbility implements AttributeAbility {
             }
             if (source != null && target != null
                     && source.getCharacter().getSizeCategory().getCategory() < target.getCharacter().getSizeCategory().getCategory()) {
-                return ENHANCED_DAMAGE_REDUCTION;
+                return Resistance.RDS.instances(ENHANCED_DAMAGE_REDUCTION);
             }
-            return BASE_DAMAGE_REDUCTION;
+            return Resistance.RDS.instances(BASE_DAMAGE_REDUCTION);
         }
     },
 

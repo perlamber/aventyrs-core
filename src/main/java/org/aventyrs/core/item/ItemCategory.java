@@ -7,6 +7,10 @@ public enum ItemCategory {
     WHIP(ItemType.OFFENSIVE), CLUB(ItemType.OFFENSIVE), NATURAL_WEAPON(ItemType.OFFENSIVE), 
     LIGHT_BLADE(ItemType.OFFENSIVE), HEAVY_BLADE(ItemType.OFFENSIVE), SPEAR(ItemType.OFFENSIVE), 
     PROJECTILE(ItemType.OFFENSIVE), POTION(ItemType.CONSUMABLE), SCROLL(ItemType.CONSUMABLE),
+    /** Artefatos de Conjuração — casting foci filed under Armas (Báculo, Varinha, Grimório, …). */
+    CASTING_ARTIFACT(ItemType.OFFENSIVE),
+    /** Pedras do Poder — a carried stone, bound to an Obra-Prima host in combat ({@code PowerStoneService}). */
+    POWER_STONE(ItemType.UTILITY),
     /** Utilidades — tools and kits a character carries (the Kit de Primeiros Socorros); the store's own tab. */
     UTILITIES(ItemType.UTILITY);
 

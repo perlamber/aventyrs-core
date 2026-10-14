@@ -134,7 +134,7 @@ Improvement/Masterpiece layer) and are **stale**. The current shape:
 | Obras-Primas Defensivas | `DefensiveMasterpiece` | 15 / 15 | `DefensiveMasterpieceTest` pins 15 |
 | Aprimoramentos de Obras-Primas Defensivas | `DefensiveImprovement` | 17 / 17 | `DefensiveImprovementTest` pins 17 |
 | Obras-Primas Ofensivas | `OffensiveMasterpiece` | 17 / 17 | fitted bare (no wrapper); `OffensiveMasterpieceTest` pins 17 |
-| Aprimoramentos de Obras-Primas Ofensivas | `OffensiveImprovement` | 18 / 18 | fitted bare; `OffensiveImprovementTest` pins 18 |
+| Aprimoramentos de Obras-Primas Ofensivas | `OffensiveImprovement` | 17 / 17 (Encaixe removed) | fitted bare, Benção Elemental through `OffensiveItemImprovement`; every clause live via `WeaponEnhancements` (0.1.6.9); `OffensiveImprovementTest` pins 17, `OffensiveImprovementWiringTest` the wiring |
 | Tipos de Pedras do Poder | `PowerStoneType` | 17 / 17 | tri-modal (base + defensivo/ofensivo by host `ItemType`); `PowerStoneCatalogTest` pins the counts |
 | Qualidades de Pedra (Jolda/Joia/Relíquia/AEthernum) | `PowerStoneQuality` | 4 / 4 | Preço + Cargas/Resfriamento/Vinculação/Duração — authored-inert, no consumer |
 | Obras-Primas de Pedras do Poder | `PowerStoneMasterpiece` | 5 / 5 | charge-economy deltas folded by `PowerStone` |
@@ -158,9 +158,9 @@ change bar one: `MovementServiceImpl` gained the equipment `MOVEMENT` pass it la
   Resistência/Vulnerabilidade Elemental, no first-instance-per-Rodada damage tracking, no Área de
   Efeito, no attribute-grant-from-equipment hook, no multiplicative/halving stage, no
   Corrupção/immunity, no Roubo de Vida from equipment, no PV-regen tick.
-- **The charge economy is authored-inert** — `PowerStoneQuality`'s Cargas/Resfriamento/Danos de
-  Vinculação/Duração and the `PowerStoneMasterpiece` deltas are exact figures nothing reads (no
-  activation service, no forge/bind step), same as Preço.
+- **Superseded (0.1.6.7)** — the V19 ruleset (`docs/rules/pedras-do-poder.txt`) replaced this
+  section: Encaixe is gone, a stone is a carried item bound in combat by `PowerStoneService`, and the
+  charge economy is consumed. See CLAUDE.md's Pedra do Poder bullet.
 
 ### Not authored
 
@@ -177,9 +177,13 @@ change bar one: `MovementServiceImpl` gained the equipment `MOVEMENT` pass it la
   prose (Correntes de Efeitos, "muda para" overrides, crit-dano — all unreadable), the
   exceptions being the two "Vantagem nas rolagens de Ataque à Distância" Favores (Besta Pesada,
   Javelin → `ATAQUE_A_DISTANCIA_ROLL_BONUS`), Bordão's `DEFESAS +2`, and Espada Gancho's
-  `PHYSICAL_DEFENSE +1`. **Still unauthored:** `Projéteis` (6, ammunition — `PROJECTILE`
-  category exists), `Fortalecimento` (9) and `Artefatos de Conjuração` (9) — the latter two
-  have no `ItemCategory` (not a clean fit for `CLUB`/`GLOVES`).
+  `PHYSICAL_DEFENSE +1`. `Projéteis` are authored (0.1.6.6) as
+  `ProjectileItem` — each of the 6 rows (`ProjectileHead`) as a Flecha and a Virote (table ruling,
+  2026-10-12), stackable by lot; the bows' and crossbows' "Projétil (N)" column takes its effect from
+  the projectile fired. `Artefatos de Conjuração` are authored (0.1.6.8) as
+  `CastingArtifactItem` (`ItemCategory.CASTING_ARTIFACT`; Bola de Crista, Grimório and Varinha have no
+  attack, `Weapon#canAttack()`), read while drawn by `CastingArtifacts`. **Still unauthored:**
+  `Fortalecimento` (9) — no `ItemCategory` (not a clean fit for `CLUB`/`GLOVES`).
 - **12 Equipamentos Naturais** — `ItemCategory.NATURAL_WEAPON` exists; `Arma de Sopro` (breath
   weapon, Cone area) and the five Defesas Naturais have no category.
 - **Equipamentos Tecnológicos** — stub in the source too.
@@ -228,7 +232,8 @@ No wiring needed — these all scan `character.getEquipment()`:
   Olho de Deus* location, the mandatory-Crítico (reported via
   `regaliaCraftingRequiresCriticalResult`), and the PE cost.
 
-Still no consumer: **Preço** (no PE economy) and the **Conjuração** column (no item-granted hook
+**Preço** is spent since 0.1.6.4 — a store purchase and a sheet forge/install/repair (`EquipmentPointPricing`).
+Still no consumer: the **Conjuração** column (no item-granted hook
 on either `SpellCastingService` roll) — real, exact data per the "can't apply it yet doesn't
 mean can't compute it yet" discipline.
 
@@ -285,8 +290,11 @@ the caller has determined the roll succeeded.
   the copy being an Obra-Prima, both enforced in `installImprovement`. `Item#getImprovement()` is
   a deprecated first-or-null shim; every enhancement-aggregation default on `Item` sums the list,
   so no consuming service changed.
-- **Still missing** — no PE economy (cost is reported, not spent — the `ResourcesAdvantage#BARGANHISTA`
-  gap), no Aprimoramento Preço column (so install cost/time are unavailable), the "estende a
+- **PE is spent (0.1.6.4)** — the `CombatantSheet` forms of `forge`/`forgeRegalia`/`installImprovement`/`repair`
+  debit the wallet, with `ResourcesAdvantage#BARGANHISTA`'s -2PE (produce) / -1PE (Aprimoramento) through
+  `EquipmentPointPricing`; an install costs half the Aprimoramento's Preço. Since 0.1.6.5 the same helper also takes
+  Cambalacho's -1PE and Profissão Focado's -1PE / Lenda's -3PE off a purchase or a forge.
+- **Still missing** — an Aprimoramento's install *time*, the "estende a
   Magias e Habilidades" clause of `REPARO_MELHORADO` (no Dureza on either), and the
   `FORJA_VULCANA` benefits (Resistência a Críticos / Margem Crítica Maior / item-scoped choices).
 

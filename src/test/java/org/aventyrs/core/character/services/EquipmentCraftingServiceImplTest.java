@@ -2,9 +2,11 @@ package org.aventyrs.core.character.services;
 
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.CharacterSkill;
+import org.aventyrs.core.character.EgoDomain;
 import org.aventyrs.core.character.fixture.CharacterFixture;
 import org.aventyrs.core.character.fixture.CharacterSkillFixture;
 import org.aventyrs.core.character.services.EquipmentCraftingService.RepairAssessment;
+import org.aventyrs.core.ego.ResourcesAdvantage;
 import org.aventyrs.core.feat.ArtificeFeat;
 import org.aventyrs.core.item.AbstractItem;
 import org.aventyrs.core.item.ArmorItem;
@@ -22,7 +24,9 @@ import org.aventyrs.core.item.ItemWeightClass;
 import org.aventyrs.core.item.RegaliaDonation;
 import org.aventyrs.core.item.RegaliaGrade;
 import org.aventyrs.core.race.CreatureType;
+import org.aventyrs.core.sheet.CharacterSheet;
 import org.aventyrs.core.sheet.IllegalOperationException;
+import org.aventyrs.core.sheet.Player;
 import org.aventyrs.core.skill.DifficultyLevel;
 import org.aventyrs.core.skill.SkillSpecialization;
 import org.aventyrs.core.skill.SkillType;
@@ -459,5 +463,93 @@ class EquipmentCraftingServiceImplTest {
 
         Item divina = service.forgeRegalia(crafter, ProfissaoSpecialization.JOALHERIA, ItemSpecification.regalia(regaliaBase(), RegaliaGrade.DIVINA), RegaliaDonation.willingDivineDonor(CreatureType.DRAGAO));
         assertEquals(RegaliaGrade.DIVINA, divina.getRegaliaGrade());
+    }
+
+    // ------------------------------------------------------------------ PE spent (0.1.6.4)
+
+    private static CharacterSheet sheet(final Character character, final int equipmentPoints) {
+        CharacterSheet sheet = CharacterSheet.of(character, new Player());
+        sheet.grantEquipmentPoints(equipmentPoints);
+        return sheet;
+    }
+
+    private Character barganhista(final int profissaoGraduation, final ProfissaoSpecialization trade) {
+        return crafter(profissaoGraduation, trade).toBuilder()
+                .egoAdvantage(EgoDomain.RECURSOS, ResourcesAdvantage.BARGANHISTA)
+                .build();
+    }
+
+    @Test
+    void aSheetForgePaysTheForgingCost() throws IllegalOperationException {
+        ItemTemplate espadaLonga = template(20, 24, ItemRarity.COMMON, ItemWeightClass.MEDIUM);
+        // Graduação 2: below Focado's -1PE, so the plain half-value price.
+        CharacterSheet smith = sheet(crafter(2, ProfissaoSpecialization.METALURGIA), 30);
+
+        Item forged = service.forge(smith, ProfissaoSpecialization.METALURGIA, ItemSpecification.of(espadaLonga), null);
+
+        assertNotNull(forged);
+        assertEquals(10, service.getFabricationCost(smith.getCharacter(), ItemSpecification.of(espadaLonga)));
+        assertEquals(20, smith.getEquipmentPoints());
+    }
+
+    /** "Comprar ou produzir ... 2PE a menos, até o mínimo de 1PE; ... Aprimoramentos ... -1PE (mínimo 1PE)." */
+    @Test
+    void barganhistaTakesTwoOffProducingAndOneOffAnAprimoramento() {
+        ItemSpecification espadaLonga = ItemSpecification.of(template(20, 24, ItemRarity.COMMON, ItemWeightClass.MEDIUM));
+        ItemSpecification adaga = ItemSpecification.of(template(2, 4, ItemRarity.COMMON, ItemWeightClass.LIGHT));
+        Character plain = crafter(5, ProfissaoSpecialization.METALURGIA);
+        Character haggler = barganhista(5, ProfissaoSpecialization.METALURGIA);
+        ItemImprovement resistente = ItemImprovement.of(DefensiveImprovement.RESISTENTE);
+
+        assertEquals(service.getFabricationCost(plain, espadaLonga) - 2, service.getFabricationCost(haggler, espadaLonga));
+        assertEquals(1, service.getFabricationCost(haggler, adaga), "floored at 1PE");
+        int plainInstall = service.getImprovementInstallCost(plain, resistente);
+        assertEquals(Math.max(1, plainInstall - 1), service.getImprovementInstallCost(haggler, resistente));
+    }
+
+    @Test
+    void aSheetInstallPaysForTheAprimoramento() throws IllegalOperationException {
+        CharacterSheet master = sheet(barganhista(5, ProfissaoSpecialization.METALURGIA), 100);
+        Item armor = service.forge(master.getCharacter(), ProfissaoSpecialization.METALURGIA,
+                ArmorItem.ARMADURA_COMPLETA, uncommonMasterpiece());
+        ItemImprovement resistente = ItemImprovement.of(DefensiveImprovement.RESISTENTE);
+        int cost = service.getImprovementInstallCost(master.getCharacter(), resistente);
+
+        service.installImprovement(master, armor, resistente);
+
+        assertEquals(1, armor.getImprovements().size());
+        assertEquals(100 - cost, master.getEquipmentPoints());
+    }
+
+    /** A refused or unaffordable job costs nothing and makes nothing. */
+    @Test
+    void nothingIsSpentWhenAGateRefusesOrThePeFallShort() throws IllegalOperationException {
+        ItemSpecification espadaLonga = ItemSpecification.of(template(20, 24, ItemRarity.COMMON, ItemWeightClass.MEDIUM));
+        CharacterSheet wrongTrade = sheet(crafter(3, ProfissaoSpecialization.JOALHERIA), 30);
+        assertThrows(IllegalOperationException.class,
+                () -> service.forge(wrongTrade, ProfissaoSpecialization.METALURGIA, espadaLonga, null));
+        assertEquals(30, wrongTrade.getEquipmentPoints());
+
+        CharacterSheet broke = sheet(crafter(5, ProfissaoSpecialization.METALURGIA), 0);
+        Item armor = service.forge(broke.getCharacter(), ProfissaoSpecialization.METALURGIA,
+                ArmorItem.ARMADURA_COMPLETA, uncommonMasterpiece());
+        assertThrows(IllegalOperationException.class,
+                () -> service.installImprovement(broke, armor, ItemImprovement.of(DefensiveImprovement.RESISTENTE)));
+        assertTrue(armor.getImprovements().isEmpty());
+    }
+
+    /** A repair pays its assessed PE; no discount reaches it. */
+    @Test
+    void aSheetRepairPaysTheAssessedCost() throws IllegalOperationException {
+        CharacterSheet smith = sheet(barganhista(3, ProfissaoSpecialization.METALURGIA), 50);
+        AbstractItem armor = damagedArmor(20, 4);
+        int cost = service.assessRepair(armor).equipmentPointCost();
+
+        service.repair(smith, ProfissaoSpecialization.METALURGIA, armor, 4);
+
+        assertEquals(50 - cost, smith.getEquipmentPoints());
+        assertEquals(0, armor.getDamageTaken());
+        assertEquals(0, service.repair(smith, ProfissaoSpecialization.METALURGIA, armor, 4), "undamaged: free, nothing");
+        assertEquals(50 - cost, smith.getEquipmentPoints());
     }
 }

@@ -43,6 +43,15 @@ public record EnvironmentalState(
                 sharingSpaceWith);
     }
 
+    /**
+     * This state with whether the actor is flying or (at least half) under water replaced — what a board's elevation
+     * and terrain say (core 0.1.6.16, {@code scene.grid.BoardPosition}/{@code TerrainCell}).
+     */
+    public EnvironmentalState withFlightAndSubmersion(final boolean flying, final boolean atLeastHalfSubmerged) {
+        return new EnvironmentalState(lightLevel, altitude, flying, atLeastHalfSubmerged, inDifficultTerrain,
+                sharingSpaceWith);
+    }
+
     /** Whether the actor stands in the same space as the combatant with sheetId. */
     public boolean isSharingSpaceWith(final UUID sheetId) {
         return sheetId != null && sharingSpaceWith.contains(sheetId);

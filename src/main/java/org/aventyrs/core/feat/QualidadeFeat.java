@@ -1,5 +1,6 @@
 package org.aventyrs.core.feat;
 
+import org.aventyrs.core.character.Resistance;
 import lombok.Getter;
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
@@ -21,11 +22,14 @@ import org.aventyrs.core.sheet.CombatantSheet;
 import org.aventyrs.core.sheet.ConditionType;
 import org.aventyrs.core.skill.AttackSource;
 import org.aventyrs.core.skill.Skill;
+import org.aventyrs.core.skill.SkillCompetencyAbility;
 import org.aventyrs.core.skill.SkillRoll;
+import org.aventyrs.core.skill.SkillSpecialization;
 import org.aventyrs.core.skill.SkillTrait;
 import org.aventyrs.core.skill.SkillType;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -117,7 +121,7 @@ public enum QualidadeFeat implements Feat {
         /** One instance of RM. */
         @Override
         public int resolveMagicReduction(final Character character) {
-            return DamageService.DEFAULT_DAMAGE_REDUCTION;
+            return Resistance.RM.instance();
         }
 
         @Override
@@ -125,9 +129,11 @@ public enum QualidadeFeat implements Feat {
             return Skill.ADVANTAGE_BONUS;
         }
     },
-    // TODO: "pode escolher negar o Efeito" of the first Magia each Cena de Combate, recovering its PM — a
-    //  choice made at the moment of being affected, which no Magia path offers the target (the closest,
-    //  Feat#isImmuneToSpell, is a standing immunity, not a once-per-combat opt-in).
+    /**
+     * The negation is real through {@code SpellCastingService#canNegateSpell}/{@code #negateSpell}. Table ruling
+     * (2026-10-10): the holder is asked on every Magia that reaches them, and declining keeps the negation —
+     * only using it spends it, until the next combat ({@code CombatantSheet#endCombat()} clears the claim).
+     */
     ESCOLHIDO_DA_MAGIA_MAIOR(QualityClass.MAIOR, "Alma de AEther",
             "Seu multiplicador de PM é aumentado em +1. A primeira vez que você for afetado por uma"
                     + " Magia em cada Cena de Combate você pode escolher negar o Efeito, se o fizer você"
@@ -136,15 +142,40 @@ public enum QualidadeFeat implements Feat {
         public int resolveManaMultiplierIncrease(final Character character) {
             return 1;
         }
+
+        @Override
+        public boolean offersSpellNegation(final CombatantSheet holder, final SceneContext sceneContext) {
+            return sceneContext != null && sceneContext.isCombatScene()
+                    && !holder.isAffectedThisCombat(ALMA_DE_AETHER);
+        }
+
+        @Override
+        public void onSpellNegated(final CombatantSheet holder) {
+            holder.markAffectedThisCombat(ALMA_DE_AETHER);
+        }
     },
-    // TODO: the Especialização owed at the end of the first session — no in-play path grants a Perícia
-    //  Especialização at all (only character creation does), and a PendingAcquisition carries no pick.
+    /**
+     * The Especialização is picked at creation ({@code Quality#resolveChoices} — one of a Perícia trained then) and
+     * granted once the holder has finished a Sessão ({@code Character#getCompletedSessions()}), through
+     * {@link #getGrantedSkillTraits}: derived, like a {@code PendingAcquisition}, so nothing is materialized and a
+     * reloaded character holds exactly what its count says.
+     */
     INTELECTO_SUPERIOR_MENOR(QualityClass.MENOR, "Memória Eidética",
             "Você raramente se esquece de algo que tenha presenciado e tem facilidade em aprender"
                     + " novas coisas. Ao fim da primeira sessão de jogo você adquire uma nova Especialização de"
-                    + " uma Perícia treinada que possuir."),
-    // TODO: the Habilidade de Competência owed at the end of the third session — needs a session count
-    //  (CharacterSheet#applySessionEndAcquisitions never learns which Sessão ended) and a pick.
+                    + " uma Perícia treinada que possuir.") {
+        @Override
+        public List<SkillTrait> getGrantedSkillTraits(final Character character) {
+            return character.getCompletedSessions() < MEMORIA_EIDETICA_SESSIONS ? List.of()
+                    : heldBy(character).flatMap(held -> held.choice(SkillSpecialization.class))
+                            .<List<SkillTrait>>map(List::of).orElse(List.of());
+        }
+    },
+    /**
+     * The Habilidade de Competência is picked at creation — of any Perícia, trained or not — and granted once the
+     * holder has finished three Sessões (the character's own count, table ruling 2026-10-10), the same derived way
+     * as Memória Eidética's Especialização.
+     */
     INTELECTO_SUPERIOR_MAIOR(QualityClass.MAIOR, "Dominar Padrões",
             "Você nunca se esquece nada e rapidamente aprende novas coisas. Adquirir graduações em"
                     + " Perícias, até a terceira graduação, custa 0.5 EXP a menos. Ao fim da terceira sessão de"
@@ -154,6 +185,13 @@ public enum QualidadeFeat implements Feat {
         public BigDecimal resolveGraduationCostReduction(final Character character, final SkillType skillType,
                                                          final int targetGraduation) {
             return targetGraduation <= 3 ? GRADUATION_DISCOUNT : BigDecimal.ZERO;
+        }
+
+        @Override
+        public List<SkillTrait> getGrantedSkillTraits(final Character character) {
+            return character.getCompletedSessions() < DOMINAR_PADROES_SESSIONS ? List.of()
+                    : heldBy(character).flatMap(held -> held.choice(SkillCompetencyAbility.class))
+                            .<List<SkillTrait>>map(List::of).orElse(List.of());
         }
     },
     // TODO: Vantagem on the first roll against each Desprevenido target per Cena — the action log
@@ -368,6 +406,13 @@ public enum QualidadeFeat implements Feat {
     /** Pronto para Ação's two per-combat claims — {@code CombatantSheet#markAffectedThisCombat} keys. */
     private static final String PRONTO_PARA_ACAO_PD = "QUALIDADE_PRONTO_PARA_ACAO_PD";
     private static final String PRONTO_PARA_ACAO_EGO = "QUALIDADE_PRONTO_PARA_ACAO_EGO";
+    /** Alma de AEther's per-combat negation — a {@code CombatantSheet#markAffectedThisCombat} key. */
+    private static final String ALMA_DE_AETHER = "QUALIDADE_ALMA_DE_AETHER";
+
+    /** "Ao fim da primeira sessão de jogo" — Memória Eidética's Especialização. */
+    public static final int MEMORIA_EIDETICA_SESSIONS = 1;
+    /** "Ao fim da terceira sessão de jogo" — Dominar Padrões' Habilidade de Competência. */
+    public static final int DOMINAR_PADROES_SESSIONS = 3;
 
     /** Dominar Padrões' "custa 0.5 EXP a menos". */
     private static final BigDecimal GRADUATION_DISCOUNT = new BigDecimal("0.5");

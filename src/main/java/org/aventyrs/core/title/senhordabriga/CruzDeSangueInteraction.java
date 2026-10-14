@@ -1,5 +1,6 @@
 package org.aventyrs.core.title.senhordabriga;
 
+import org.aventyrs.core.character.Resistance;
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.services.DeterminationPointsService;
 import org.aventyrs.core.character.services.DeterminationPointsServiceImpl;
@@ -40,7 +41,7 @@ public class CruzDeSangueInteraction extends AbstractTitleAbilityInteraction {
     /** "os danos deste ataque aumentam em +1d6" — one counter-attack. */
     static final int COUNTER_ATTACKS = 1;
     /** Malícia de Valentão, "RDS2". */
-    static final int MALICIA_DAMAGE_REDUCTION = 2;
+    static final int MALICIA_DAMAGE_REDUCTION = Resistance.RDS.instances(2);
 
     private final HitPointsService hitPointsService = new HitPointsServiceImpl();
 

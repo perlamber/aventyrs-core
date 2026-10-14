@@ -14,9 +14,11 @@
  *   <li><b>Pick a {@link org.aventyrs.core.race.Race}</b> (e.g.
  *       {@link org.aventyrs.core.race.Human}) — it drives step 2's racial bonuses and
  *       the XP costs {@code Race} exposes for later advancement.</li>
- *   <li><b>Pick an {@link org.aventyrs.core.character.Alignment}</b> — it defaults to
- *       {@code NEUTRAL}, but some Talentos have a moral-alignment prerequisite (e.g. Corruptor
- *       Sombrio accepts {@code NEUTRAL} or {@code EVIL}).</li>
+ *   <li><b>Pick a tendência</b> — a 1–10 number ({@code alignment}), defaulting to
+ *       {@link org.aventyrs.core.character.Alignment#DEFAULT} (6, Neutro);
+ *       {@link org.aventyrs.core.character.Alignment#display(int)} gives its text. Some Talentos
+ *       have a moral-alignment prerequisite read off its band (e.g. Corruptor Sombrio accepts
+ *       {@code NEUTRAL} or {@code EVIL}, i.e. 1–6).</li>
  *   <li><b>Allocate Attributes</b> — {@link org.aventyrs.core.character.services.CharacterCreationService#allocateAttributes}
  *       spends the {@value org.aventyrs.core.character.services.CharacterCreationService#STARTING_ATTRIBUTE_POINTS}
  *       starting points (no base above
@@ -117,7 +119,7 @@
  *         .player(player)
  *         .name("Aria")
  *         .race(race)
- *         .alignment(Alignment.NEUTRAL)
+ *         .alignment(Alignment.DEFAULT)
  *         .attributes(attributes)
  *         .egos(egos)
  *         .actionProfile(ActionProfile.REFLEXOS_RAPIDOS)
@@ -190,6 +192,16 @@
  * so a foe can't climb an Árvore de Magia either.)
  * That's a compile-time guarantee, not a runtime check — see {@code
  * org.aventyrs.core.sheet.CombatantSheet}.
+ *
+ * <h2>Falls and asphyxia, during play</h2>
+ *
+ * Both are caller-driven: the caller measures the height and decides when breathing stops, and hands over the dice.
+ * {@link org.aventyrs.core.character.services.FallService#fall} applies a whole fall (Dano Primordial, Feridas
+ * Dolorosas, death, Caído). Asfixia is a state on the sheet: call
+ * {@link org.aventyrs.core.character.services.AsphyxiaService#stopBreathing} once, then
+ * {@link org.aventyrs.core.character.services.AsphyxiaService#tick} once per Rodada (at the start of the combatant's
+ * Turn, or on the Narrador's "+1 Rodada" outside combat), and
+ * {@link org.aventyrs.core.character.services.AsphyxiaService#breathe} when it gets air again.
  *
  * <h2>Keeping this current</h2>
  *

@@ -113,6 +113,7 @@ public class SkillRoll {
     private final Set<org.aventyrs.core.ego.SorteEffect> sorteEffects;
     private final Set<org.aventyrs.core.ego.InitiativeRollCharge> initiativeCharges;
     private final Set<org.aventyrs.core.ego.AutocontroleDefence> autocontrole;
+    private final org.aventyrs.core.item.ProjectileItem projectile;
 
     public SkillRoll(final List<Integer> dice) {
         this(dice, null, null, null);
@@ -155,7 +156,7 @@ public class SkillRoll {
     public SkillRoll(final List<Integer> dice, final SkillTrait requestedAbility, final Integer targetValue,
                      final ActionCost actionCost, final Manoeuvre manoeuvre, final Set<Feat> activatedFeats) {
         this(dice, requestedAbility, targetValue, actionCost, manoeuvre, activatedFeats, false, null, null, Set.of(),
-                Set.of(), Set.of());
+                Set.of(), Set.of(), null);
     }
 
     private SkillRoll(final List<Integer> dice, final SkillTrait requestedAbility, final Integer targetValue,
@@ -163,7 +164,8 @@ public class SkillRoll {
                       final boolean counselled, final Integer rerolledFromFace, final Integer blindCheckFace,
                       final Set<org.aventyrs.core.ego.SorteEffect> sorteEffects,
                       final Set<org.aventyrs.core.ego.InitiativeRollCharge> initiativeCharges,
-                      final Set<org.aventyrs.core.ego.AutocontroleDefence> autocontrole) {
+                      final Set<org.aventyrs.core.ego.AutocontroleDefence> autocontrole,
+                      final org.aventyrs.core.item.ProjectileItem projectile) {
         if (dice.size() != EXPECTED_DICE_COUNT) {
             throw new IllegalOperationException(INVALID_SKILL_ROLL);
         }
@@ -182,6 +184,7 @@ public class SkillRoll {
         this.sorteEffects = sorteEffects == null ? Set.of() : Set.copyOf(sorteEffects);
         this.initiativeCharges = initiativeCharges == null ? Set.of() : Set.copyOf(initiativeCharges);
         this.autocontrole = autocontrole == null ? Set.of() : Set.copyOf(autocontrole);
+        this.projectile = projectile;
     }
 
     private static void validateFace(final int face) {
@@ -217,7 +220,7 @@ public class SkillRoll {
         }
         int replaced = rerolled.set(lowestIndex, newFace);
         return new SkillRoll(List.copyOf(rerolled), requestedAbility, targetValue, actionCost, manoeuvre,
-                activatedFeats, counselled, replaced, blindCheckFace, sorteEffects, initiativeCharges, autocontrole);
+                activatedFeats, counselled, replaced, blindCheckFace, sorteEffects, initiativeCharges, autocontrole, projectile);
     }
 
     /** The face {@link #rerollingLowestDie} replaced, or {@code null} for a roll nobody rerolled. */
@@ -242,7 +245,7 @@ public class SkillRoll {
     public SkillRoll withBlindCheck(final int face) {
         validateFace(face);
         return new SkillRoll(dice, requestedAbility, targetValue, actionCost, manoeuvre, activatedFeats, counselled,
-                rerolledFromFace, face, sorteEffects, initiativeCharges, autocontrole);
+                rerolledFromFace, face, sorteEffects, initiativeCharges, autocontrole, projectile);
     }
 
     /**
@@ -252,7 +255,7 @@ public class SkillRoll {
      */
     public SkillRoll asManoeuvre(final Manoeuvre manoeuvre, final ActionCost actionCost) {
         return new SkillRoll(dice, requestedAbility, targetValue, actionCost, manoeuvre, activatedFeats, counselled,
-                rerolledFromFace, blindCheckFace, sorteEffects, initiativeCharges, autocontrole);
+                rerolledFromFace, blindCheckFace, sorteEffects, initiativeCharges, autocontrole, projectile);
     }
 
     /** The Cego 1d6 thrown beside this roll, or {@code null} when none was — see {@link #withBlindCheck}. */
@@ -267,7 +270,7 @@ public class SkillRoll {
      */
     public SkillRoll counselled() {
         return new SkillRoll(dice, requestedAbility, targetValue, actionCost, manoeuvre, activatedFeats, true,
-                rerolledFromFace, blindCheckFace, sorteEffects, initiativeCharges, autocontrole);
+                rerolledFromFace, blindCheckFace, sorteEffects, initiativeCharges, autocontrole, projectile);
     }
 
     /**
@@ -284,7 +287,7 @@ public class SkillRoll {
         Set<org.aventyrs.core.ego.SorteEffect> effects = new java.util.HashSet<>(sorteEffects);
         effects.add(effect);
         return new SkillRoll(dice, requestedAbility, targetValue, actionCost, manoeuvre, activatedFeats, counselled,
-                rerolledFromFace, blindCheckFace, effects, initiativeCharges, autocontrole);
+                rerolledFromFace, blindCheckFace, effects, initiativeCharges, autocontrole, projectile);
     }
 
     /**
@@ -297,7 +300,7 @@ public class SkillRoll {
         Set<org.aventyrs.core.ego.SorteEffect> effects = new java.util.HashSet<>(sorteEffects);
         effects.add(org.aventyrs.core.ego.SorteEffect.REROLL_WITH_ADVANTAGE);
         return new SkillRoll(List.copyOf(newDice), requestedAbility, targetValue, actionCost, manoeuvre,
-                activatedFeats, counselled, null, null, effects, initiativeCharges, autocontrole);
+                activatedFeats, counselled, null, null, effects, initiativeCharges, autocontrole, projectile);
     }
 
     /**
@@ -309,7 +312,7 @@ public class SkillRoll {
         Set<org.aventyrs.core.ego.InitiativeRollCharge> charges = new java.util.HashSet<>(initiativeCharges);
         charges.add(charge);
         return new SkillRoll(dice, requestedAbility, targetValue, actionCost, manoeuvre, activatedFeats, counselled,
-                rerolledFromFace, blindCheckFace, sorteEffects, charges, autocontrole);
+                rerolledFromFace, blindCheckFace, sorteEffects, charges, autocontrole, projectile);
     }
 
     /**
@@ -320,7 +323,7 @@ public class SkillRoll {
         Set<org.aventyrs.core.ego.AutocontroleDefence> effects = new java.util.HashSet<>(autocontrole);
         effects.add(effect);
         return new SkillRoll(dice, requestedAbility, targetValue, actionCost, manoeuvre, activatedFeats, counselled,
-                rerolledFromFace, blindCheckFace, sorteEffects, initiativeCharges, effects);
+                rerolledFromFace, blindCheckFace, sorteEffects, initiativeCharges, effects, projectile);
     }
 
     /** Whether this roll carries effect — see {@link #withAutocontrole}. */
@@ -377,6 +380,11 @@ public class SkillRoll {
      * The named manoeuvre this roll is the attack half of, or {@code null} for an ordinary
      * attack — never "not an Investida". See this class's own javadoc for why it rides the roll.
      */
+    /** The projectile this roll fires ({@link #withProjectile}), or {@code null} for every roll that fires none. */
+    public org.aventyrs.core.item.ProjectileItem getProjectile() {
+        return projectile;
+    }
+
     public Manoeuvre getManoeuvre() {
         return manoeuvre;
     }
@@ -483,5 +491,15 @@ public class SkillRoll {
             return CriticalResult.ACERTO_CRITICO_MENOR;
         }
         return CriticalResult.NONE;
+    }
+
+    /**
+     * This roll as the shot of projectile — the Flecha or Virote an Arco or Besta fires ({@code
+     * DeliveredAttack#getProjectile()}, which {@code AttackDelivery} stamps here). Read by the Margem Crítica sum for
+     * a head that widens it (Bodkin's "+1 número"); {@code null} on every roll that fires nothing.
+     */
+    public SkillRoll withProjectile(final org.aventyrs.core.item.ProjectileItem projectile) {
+        return new SkillRoll(dice, requestedAbility, targetValue, actionCost, manoeuvre, activatedFeats, counselled,
+                rerolledFromFace, blindCheckFace, sorteEffects, initiativeCharges, autocontrole, projectile);
     }
 }

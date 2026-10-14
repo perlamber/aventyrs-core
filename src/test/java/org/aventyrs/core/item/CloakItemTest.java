@@ -68,14 +68,15 @@ class CloakItemTest {
     @Test
     void mantoNortenhoFavorGrantsRealDamageReductionOnlyAtVigor3() {
         assertEquals(1, CloakItem.MANTO_NORTENHO
-                .resolveFavorBonus(ModifierType.DAMAGE_REDUCTION, characterWithBase(AttributeDomain.VIGOR, 3)));
+                .resolveFavorBonus(ModifierType.DAMAGE_TAKEN_REDUCTION, characterWithBase(AttributeDomain.VIGOR, 3)));
         assertEquals(0, CloakItem.MANTO_NORTENHO
-                .resolveFavorBonus(ModifierType.DAMAGE_REDUCTION, characterWithBase(AttributeDomain.VIGOR, 2)));
+                .resolveFavorBonus(ModifierType.DAMAGE_TAKEN_REDUCTION, characterWithBase(AttributeDomain.VIGOR, 2)));
     }
 
+    /** Its Favor shortens hostile Encantamentos and Maldições — a Duração, not RM (table ruling, 2026-10-13). */
     @Test
-    void sobretudoDoInquisidorFavorGrantsRealMagicReductionFromItsEfeitoAdicional() {
-        assertEquals(1, CloakItem.SOBRETUDO_DO_INQUISIDOR
+    void sobretudoDoInquisidorFavorGrantsNoMagicReduction() {
+        assertEquals(0, CloakItem.SOBRETUDO_DO_INQUISIDOR
                 .resolveFavorBonus(ModifierType.MAGIC_REDUCTION, characterWithBase(AttributeDomain.FOCUS, 3)));
         assertEquals(0, CloakItem.SOBRETUDO_DO_INQUISIDOR
                 .resolveFavorBonus(ModifierType.MAGIC_REDUCTION, characterWithBase(AttributeDomain.FOCUS, 2)));
@@ -104,7 +105,7 @@ class CloakItemTest {
 
         assertTrue(CloakItem.CAPA_DO_VIAJANTE.getFavor().getBonuses().isEmpty());
         assertTrue(CloakItem.PONCHO_DO_AVENTUREIRO.getFavor().getBonuses().isEmpty());
-        assertEquals(0, CloakItem.CAPA_DO_VIAJANTE.resolveFavorBonus(ModifierType.DAMAGE_REDUCTION, vigor));
+        assertEquals(0, CloakItem.CAPA_DO_VIAJANTE.resolveFavorBonus(ModifierType.DAMAGE_TAKEN_REDUCTION, vigor));
         assertEquals(0, CloakItem.PONCHO_DO_AVENTUREIRO.resolveFavorBonus(ModifierType.MAGIC_REDUCTION, dex));
     }
 

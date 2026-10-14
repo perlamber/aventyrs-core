@@ -1,5 +1,6 @@
 package org.aventyrs.core.sheet;
 
+import org.aventyrs.core.character.Resistance;
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.AttributeValue;
 import org.aventyrs.core.character.Character;
@@ -185,7 +186,7 @@ class FormStateTest {
         assertEquals(0, sheet.getTotalCriticalResistance(null));
 
         sheet.enterForm(FormType.MONSTRUOSA);
-        assertEquals(CombatantSheet.CRITICAL_RESISTANCE_INSTANCE, sheet.getTotalCriticalResistance(null));
+        assertEquals(Resistance.RC.instance(), sheet.getTotalCriticalResistance(null));
 
         sheet.enterForm(FormType.FEERICA);
         assertEquals(0, sheet.getTotalCriticalResistance(null), "the wrong shape grants nothing");
@@ -202,6 +203,6 @@ class FormStateTest {
         assertEquals(0, sheet.getTotalCriticalResistance(null));
 
         sheet.enterForm(FormType.FEERICA);
-        assertEquals(CombatantSheet.CRITICAL_RESISTANCE_INSTANCE, sheet.getTotalCriticalResistance(null));
+        assertEquals(Resistance.RC.instance(), sheet.getTotalCriticalResistance(null));
     }
 }

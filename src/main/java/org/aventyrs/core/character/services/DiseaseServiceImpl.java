@@ -27,6 +27,8 @@ public class DiseaseServiceImpl implements DiseaseService {
                 .map(disease -> adjacent.stream()
                         .filter(other -> other != holder && other != disease.getSource())
                         .filter(other -> !other.hasCondition(ConditionType.DOENTE, null))
+                        // Immune to doenças (the Anatomia de Morto-Vivo, core 0.1.6.23) — nobody to catch it.
+                        .filter(other -> !other.isImmuneToCondition(ConditionType.DOENTE))
                         .toList())
                 .orElse(List.of());
     }

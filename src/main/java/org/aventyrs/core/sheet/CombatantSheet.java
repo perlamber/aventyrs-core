@@ -54,17 +54,6 @@ import java.util.UUID;
  */
 public interface CombatantSheet extends Interactable<CombatantSheet> {
 
-    /**
-     * What <b>one instance</b> of Resistência a Críticos is worth — a -2 to the Margem Crítica
-     * Menor of whoever attacks this combatant, per {@code docs/rules/defesas-e-resistencias.txt}.
-     * Rules text reading "você recebe Resistência a Críticos" with no figure grants exactly one,
-     * the same convention {@code DamageService#DEFAULT_DAMAGE_REDUCTION} carries for a numberless
-     * RD clause. Lives here, on the interface that totals RC ({@link
-     * #getTotalCriticalResistance}), rather than on any one grantor — {@code Feat}, {@code Race}
-     * and a {@code Blessing}-granting Talento all state the same unit.
-     */
-    int CRITICAL_RESISTANCE_INSTANCE = 2;
-
     /** A stable identity for this combatant — what {@code Scene} keys its participants by. */
     UUID getId();
 
@@ -162,6 +151,25 @@ public interface CombatantSheet extends Interactable<CombatantSheet> {
     boolean isBeyondRevival();
 
     /**
+     * How many times this body has been raised as an undead (core 0.1.6.24) — carried from a corpse to the undead
+     * raised from it, and back to the corpse it leaves. A body raised {@code RaiseDeadService#MAX_RAISES} times can
+     * never be raised again (table ruling, 2026-10-14).
+     */
+    int getTimesRaised();
+
+    /** The persistence-restore and raise path's setter for {@link #getTimesRaised()}. */
+    void setTimesRaised(int timesRaised);
+
+    /**
+     * Whether this combatant is a body left behind — an undead raised from a corpse that has fallen or whose Magia
+     * ended ({@code Scene#dismissSummon}, core 0.1.6.24). A corpse can be raised again whatever its PV.
+     */
+    boolean isCorpse();
+
+    /** Marks this combatant as a corpse — see {@link #isCorpse()}. */
+    void markCorpse();
+
+    /**
      * Banks one single-use charge from source — a permission or discount an activation buys for
      * the next thing it applies to: a Curar os Mortos heal that may reach the dead, a Curandeiro
      * Veloz -2PA. Charges from one source stack; {@link #startNewScene()} drops them. Unlike
@@ -230,6 +238,50 @@ public interface CombatantSheet extends Interactable<CombatantSheet> {
      * Race#isImmuneToSpell} (the latter silent while a Forma suppresses innate racial traits; core 0.0.90).
      */
     boolean isImmuneToSpell(org.aventyrs.core.magic.Spell spell);
+
+    /**
+     * Whether this combatant has the Anatomia de Morto-Vivo ({@code monster.UndeadAnatomy}, core 0.1.6.23) — a foe
+     * whose stat block or Habilidades Monstruosas grant it. False for every character sheet.
+     */
+    default boolean hasUndeadAnatomy() {
+        return false;
+    }
+
+    /** Gives this combatant the Anatomia de Morto-Vivo (core 0.1.6.27) — a stat block's, or a summon's carried over. */
+    void grantUndeadAnatomy();
+
+    /**
+     * Whether this combatant has no PV to lose and damage shortens its invocation's Duração instead — the Abantesma
+     * (core 0.1.6.25), read by {@code Scene#settleSummons}.
+     */
+    boolean isDamageShortensDuration();
+
+    /** Marks this combatant as one whose damage shortens its Duração — see {@link #isDamageShortensDuration()}. */
+    void markDamageShortensDuration();
+
+    /** Adds damage this combatant shrugs off — a stat block's immunities, carried with the creature (core 0.1.6.27). */
+    void addDamageImmunities(java.util.Set<org.aventyrs.core.character.DamageScope> scopes);
+
+    /**
+     * Whether spell's damage cannot reach this combatant, while its effects still may — the dead and a Magia Profana
+     * ({@code UndeadAnatomy#isImmuneToSpellDamage}). Unlike {@link #isImmuneToSpell}, which refuses the whole cast,
+     * this leaves Cura Mortis free to land. Read by {@code DamageService}.
+     */
+    default boolean isImmuneToSpellDamage(final org.aventyrs.core.magic.Spell spell) {
+        return false;
+    }
+
+    /**
+     * What a damaging hit heals this combatant instead, rolled with roller: a Raça's ({@code
+     * Race#resolveInvertedSpellHealing}, Vampiro's Magias Profanas) or the Anatomia de Morto-Vivo's Profano effects
+     * ({@code UndeadAnatomy#profaneHealing}). 0 when nothing inverts it, or with no roller.
+     *
+     * @param spell      the Magia the hit is, or {@code null}
+     * @param descriptor the hit's nature, or {@code null}
+     */
+    int resolveInvertedHealing(org.aventyrs.core.magic.Spell spell,
+                               org.aventyrs.core.character.DamageDescriptor descriptor,
+                               org.aventyrs.core.util.DiceRoller roller);
 
     /** The part of {@link #getDamageTaken()} only a Descanso recovers — see {@link #lockDamageUntilRest}. */
     int getRestLockedDamage();
@@ -863,7 +915,7 @@ public interface CombatantSheet extends Interactable<CombatantSheet> {
 
     /**
      * This combatant's total Resistência a Críticos — every source, in {@link
-     * #CRITICAL_RESISTANCE_INSTANCE}-sized units: the standing grants from its Raça ({@code
+     * Resistance#RC}-sized units: the standing grants from its Raça ({@code
      * Race#getCriticalResistance()}) and its held Talentos ({@code
      * Feat#resolveCriticalResistance}), plus any round-scoped {@link
      * ModifierType#CRITICAL_RESISTANCE} {@code TemporaryBonus} ({@code AnaoFeat#VIGOR_DO_INVERNO}
@@ -992,6 +1044,36 @@ public interface CombatantSheet extends Interactable<CombatantSheet> {
      * Rodada-measured Resfriamento must not ride the Turn-end countdown.
      */
     int getRemainingCooldown(ActiveAbility ability);
+
+    /**
+     * Puts item (a Pedra do Poder or the Equipamento that hosted one) on Resfriamento for rounds Rodadas — the
+     * per-item twin of {@link #startCooldown(ActiveAbility, int)}, keyed by identity and burned down at the same Rodada
+     * boundary. 0 or less clears it. Combat-scoped: {@link #endCombat()} clears every one (table ruling, 2026-10-12).
+     */
+    void startItemCooldown(org.aventyrs.core.item.Item item, int rounds);
+
+    /** Rodadas of Resfriamento item still owes, 0 when it is free. */
+    int getRemainingItemCooldown(org.aventyrs.core.item.Item item);
+
+    /** Every Pedra do Poder this sheet has vinculada right now. */
+    java.util.List<PowerStoneBinding> getPowerStoneBindings();
+
+    /** Registers a Vinculação already paid for — {@code PowerStoneService#bind}'s last step. Binds the host. */
+    void startPowerStoneBinding(PowerStoneBinding binding);
+
+    /**
+     * Ends binding: unbinds its host and puts both stone and host on Resfriamento. With early, the bearer removed it
+     * before its Duração ran out, and a stone whose refino says so (Relíquia) shortens the host's Resfriamento by the
+     * same proportion of its Duração left. Called by the Duração lapsing and by {@code PowerStoneService#unbind}.
+     */
+    void endPowerStoneBinding(PowerStoneBinding binding, boolean early);
+
+    /**
+     * Claims stone's first Vinculação of this Cena: true the first time, false after. Solve-Vidas ("A primeira vez que
+     * for Vinculada a cada Cena") and Dissipador de Calor ("uma vez por Cena, na primeira utilização") both read it.
+     * Cleared by {@link #startNewScene()}.
+     */
+    boolean claimFirstPowerStoneUseThisCena(org.aventyrs.core.item.PowerStone stone);
 
     /**
      * Records that ability cannot be used again until a Descanso of restType's tier — the
@@ -1324,8 +1406,45 @@ public interface CombatantSheet extends Interactable<CombatantSheet> {
      *
      * <p>{@code Scene#endCombat()} calls this on every participant. A budget granted through the
      * plain {@link #grantEnhancedAttacks} survives, since its clause names no end at all.
+     *
+     * <p>It also <b>recovers fired projectiles</b> (table ruling, 2026-10-12): floor(half) of each recoverable kind
+     * fired since {@link #startCombat()} goes back into {@link #getInventory()}, reported here for the caller to
+     * show; empty when nothing comes back.
      */
-    void endCombat();
+    java.util.List<org.aventyrs.core.item.RecoveredProjectiles> endCombat();
+
+    /** Whether a combat is running for this sheet — between {@link #startCombat()} and {@link #endCombat()}. */
+    boolean isInCombat();
+
+    /**
+     * Makes this combatant's Magias steps níveis harder to cast until anchor's next Turn starts — Benção Elduriana's
+     * Inquisição, "GD de Magias do Alvo +2 níveis" (table ruling, 2026-10-12: until the attacker's next Turn). Marks
+     * do not stack: a second one from the same anchor replaces the first, and {@link #getSpellDifficultyIncrease}
+     * answers the largest held. {@code Scene#next()} lifts the ones anchored to whoever's Turn begins ({@link
+     * #expireMarksAnchoredTo}); {@link #endCombat()} lifts them all.
+     */
+    void markSpellDifficultyIncrease(CombatantSheet anchor, int steps);
+
+    /** The níveis of GD this combatant's Magias currently carry — 0 when unmarked. */
+    int getSpellDifficultyIncrease();
+
+    /** Lifts every mark anchored to anchor — its Turn has begun. */
+    void expireMarksAnchoredTo(CombatantSheet anchor);
+
+    /**
+     * Notes that units of projectile were fired in the current combat — the ledger {@link #endCombat()} recovers
+     * half of. {@code combat.AmmunitionService#consume} writes it; an unrecoverable kind (Bodkin) is not recorded.
+     */
+    void recordFiredProjectiles(org.aventyrs.core.item.ProjectileItem projectile, int units);
+
+    /**
+     * Takes up to units of projectile back off the recovery ledger — they were destroyed after being recorded as fired
+     * (a Rigidez Refletora the attacker's own client only learns of from the target's owner, core 0.1.6.11).
+     */
+    void discardFiredProjectiles(org.aventyrs.core.item.ProjectileItem projectile, int units);
+
+    /** Units of each projectile fired since the current combat started — see {@link #recordFiredProjectiles}. */
+    java.util.Map<org.aventyrs.core.item.ProjectileItem, Integer> getFiredProjectilesThisCombat();
 
     /**
      * Advances source's combat-scoped counter by one and returns the new value — a figure that
@@ -1638,6 +1757,32 @@ public interface CombatantSheet extends Interactable<CombatantSheet> {
 
     /** The {@link Devoured} this combatant is held by, if swallowed. */
     Optional<Devoured> getDevoured();
+
+    /** The Preparação this combatant holds ready, if any — see {@code PreparationService}. */
+    default Optional<PreparedAction> getPreparedAction() {
+        return getRunningEffects().stream()
+                .filter(PreparedAction.class::isInstance)
+                .map(PreparedAction.class::cast)
+                .filter(prepared -> !prepared.isExpired())
+                .findFirst();
+    }
+
+    /** Fires the held Preparação — its extra Reação is spent. Unvalidated; {@code PreparationService} gates it. */
+    default void firePreparedAction() {
+        getPreparedAction().ifPresent(PreparedAction::fire);
+    }
+
+    /** Recuos Defensivos taken this Rodada — reset as this combatant's Turn begins (core 0.1.6.18). */
+    int getRetreatsTakenThisRound();
+
+    /** Records a Recuo Defensivo, returning its 0-based index this Rodada. */
+    int consumeRetreatThisRound();
+
+    /** This combatant's Asfixia while it cannot breathe, empty while it breathes — see {@code AsphyxiaService}. */
+    Optional<Asphyxia> getAsphyxia();
+
+    /** Replaces the Asfixia state; {@code null} means breathing again. Unvalidated — {@code AsphyxiaService} drives it. */
+    void setAsphyxia(Asphyxia asphyxia);
 
     /**
      * Who holds this combatant Devorado, if anyone — read off any held Devorado, a Bocarra's {@link

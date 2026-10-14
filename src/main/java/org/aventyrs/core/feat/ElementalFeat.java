@@ -1,5 +1,6 @@
 package org.aventyrs.core.feat;
 
+import org.aventyrs.core.character.Resistance;
 import java.util.Optional;
 import java.math.BigDecimal;
 import org.aventyrs.core.magic.Spell;
@@ -48,18 +49,18 @@ public enum ElementalFeat implements Feat {
     /**
      * "Ao tempo de 1PA e ao custo de 2PD você pode encantar uma de suas Armas Naturais ou uma
      * outra arma ao toque, o Dano Base da Arma escolhida aumenta em +2 e o tipo de dano causado
-     * muda para Físico Elemental por 2 Rodadas."
+     * muda para Elemental por 2 Rodadas."
      */
     // Real (0.0.88): GanaElementalActiveAbility (1PA, 2PD) opens a 2-Rodada ActivationWindow; while
     // it is open the holder's weapon attacks are Dano Base +2 (the sheet-aware
-    // resolveDamageBaseIncrease) and Físico Elemental of the holder's own element (resolveDamageRetype).
+    // resolveDamageBaseIncrease) and Elemental of the holder's own element (resolveDamageRetype).
     // ⚠️ "a Arma escolhida" is read as every weapon the holder attacks with in the window: the
     // activation records no weapon. With Golpe Cataclísmico's first attack of the Rodada the type is
-    // Elemental (mágico) instead — "causa danos mágicos".
+    // Mágico Elemental instead — "causa danos mágicos".
     GANA_ELEMENTAL(
             "Ao tempo de 1PA e ao custo de 2PD você pode encantar uma de suas Armas Naturais ou "
                     + "uma outra arma ao toque, o Dano Base da Arma escolhida aumenta em +2 e o "
-                    + "tipo de dano causado muda para Físico Elemental por 2 Rodadas.",
+                    + "tipo de dano causado muda para Elemental por 2 Rodadas.",
             FeatRequirements.builder()
                     .requiredRace(AbstractMesticoRace.class)
                     .build()) {
@@ -84,9 +85,9 @@ public enum ElementalFeat implements Feat {
             }
             ElementalType element = elementOf(attacker).orElse(null);
             if (element == null) {
-                return null;   // a Físico Elemental needs its element — none to name, no retype
+                return null;   // a Elemental needs its element — none to name, no retype
             }
-            return new DamageDescriptor(cataclysmicStrike(holder) ? DamageType.ELEMENTAL : DamageType.FISICO_ELEMENTAL,
+            return new DamageDescriptor(cataclysmicStrike(holder) ? DamageType.MAGICO : DamageType.ELEMENTAL,
                     element);
         }
     },
@@ -189,7 +190,7 @@ public enum ElementalFeat implements Feat {
     /**
      * "Como uma Reação você pode fazer com que seu corpo seja coberto pelo seu elemento…
      * Personagens adjacentes que te causarem danos enquanto seu corpo estiver coberto sofrem 2
-     * pontos de Dano Físico Elemental."
+     * pontos de Dano Elemental."
      */
     // TODO: the retaliation itself would fit Feat#resolveRetaliation (reported on a landed melee
     //  hit), and a Reação can be spent now (CombatantSheet#spendReaction); what is missing is the
@@ -201,7 +202,7 @@ public enum ElementalFeat implements Feat {
                     + "de espinhos elementais, este efeito tem por Duração apenas o Turno em que "
                     + "foi ativado. Personagens adjacentes que te causarem danos enquanto seu "
                     + "corpo estiver coberto de seu elemento ou espinhos sofrem 2 pontos de Dano "
-                    + "Físico Elemental, este Dano é aumentado em +1 para cada Título Aventyr que "
+                    + "Elemental, este Dano é aumentado em +1 para cada Título Aventyr que "
                     + "você tiver Desperto.",
             FeatRequirements.builder()
                     .requiredFeat(RESISTENCIA_ELEMENTAL)
@@ -315,12 +316,12 @@ public enum ElementalFeat implements Feat {
         /** "Você recebe RDS" with no figure — one instance. */
         @Override
         public int resolveDamageTakenReduction(final Character character) {
-            return DamageService.DAMAGE_TAKEN_REDUCTION_INSTANCE;
+            return Resistance.RDS.instance();
         }
 
         @Override
         public int resolveCriticalResistance(final Character character, final SceneContext sceneContext) {
-            return CombatantSheet.CRITICAL_RESISTANCE_INSTANCE;
+            return Resistance.RC.instance();
         }
     };
 
@@ -372,7 +373,7 @@ public enum ElementalFeat implements Feat {
 
         @Override
         public String getDescription() {
-            return "Gana Elemental: o Dano Base da Arma aumenta em +2 e o tipo de dano muda para Físico Elemental "
+            return "Gana Elemental: o Dano Base da Arma aumenta em +2 e o tipo de dano muda para Elemental "
                     + "por 2 Rodadas.";
         }
 

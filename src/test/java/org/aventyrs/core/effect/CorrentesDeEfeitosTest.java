@@ -305,4 +305,143 @@ class CorrentesDeEfeitosTest {
         assertEquals(2, attacker.getDamageTaken());
         assertFalse(target.hasCondition(ConditionType.ENVENENADO, null));
     }
+
+    // ---------- V19 20261012: Lançar ao Chão, Envenenar, Impacto Meteórico, Desarmar ----------
+
+    /** "Alvo recebe a Condição Caído." — open-ended, naming the attacker. */
+    @Test
+    void lancarAoChaoKnocksTheTargetDown() {
+        CharacterSheet attacker = sheet();
+        CharacterSheet target = sheet();
+
+        new LancarAoChao(attacker).applyTo(target);
+
+        assertTrue(target.hasCondition(ConditionType.CAIDO, null));
+        assertTrue(target.getHeldConditions().stream().anyMatch(condition -> condition.getType() == ConditionType.CAIDO
+                && condition.getSource() == attacker && condition.getRemainingRounds() == null));
+    }
+
+    /** With no poison from the source: bare Envenenado, gone at any Descanso. */
+    @Test
+    void envenenarAloneIsEnvenenadoUntilAnyDescanso() {
+        CharacterSheet target = sheet();
+        int multiplier = new HitPointsServiceImpl().getLifeMultiplier(target.getCharacter(), target);
+
+        new Envenenar().applyTo(target);
+
+        assertTrue(target.hasCondition(ConditionType.ENVENENADO, null));
+        assertTrue(target.hasCondition(ConditionType.FRAQUEZA, null));
+        assertEquals(multiplier, new HitPointsServiceImpl().getLifeMultiplier(target.getCharacter(), target));
+
+        new org.aventyrs.core.rest.RestServiceImpl().applyRest(target.getCharacter(), target, RestType.MINIMO);
+        assertFalse(target.hasCondition(ConditionType.ENVENENADO, null));
+    }
+
+    /** "Efeitos do Veneno conforme o ataque" — the source's payload rides the Condição, once. */
+    @Test
+    void envenenarCarriesTheSourcesPoisonWithoutStacking() {
+        CharacterSheet target = sheet();
+        HitPointsServiceImpl hitPoints = new HitPointsServiceImpl();
+        int multiplier = hitPoints.getLifeMultiplier(target.getCharacter(), target);
+        Envenenar venom = new Envenenar(List.of(ConditionType.ConditionEffect.lifeMultiplierLoss(1)), RestType.LONGO);
+
+        venom.applyTo(target);
+        venom.applyTo(target);
+
+        assertEquals(multiplier - 1, hitPoints.getLifeMultiplier(target.getCharacter(), target));
+    }
+
+    /** "+2 pontos de danos e recebe Área de Efeito – Explosão". */
+    @Test
+    void impactoMeteoricoDealsTwoAndReportsTheExplosion() {
+        CharacterSheet target = sheet();
+
+        InteractionResult result = new ImpactoMeteorico().applyTo(target);
+
+        assertEquals(ImpactoMeteorico.DAMAGE_BONUS, target.getDamageTaken());
+        assertEquals(AreaOfEffect.ATTACK_EXPLOSION, result.getTriggeredAreaOfEffect());
+    }
+
+    private static org.aventyrs.core.item.AbstractWeapon blade() {
+        return org.aventyrs.core.item.AbstractWeapon.builder().name("Lâmina")
+                .category(org.aventyrs.core.item.ItemCategory.LIGHT_BLADE).hardness(20)
+                .damageBase(org.aventyrs.core.character.DamageBase.of(1, 1))
+                .skillType(SkillType.ATAQUE_CORPO_A_CORPO).build();
+    }
+
+    private static org.aventyrs.core.item.AbstractItem shield() {
+        return org.aventyrs.core.item.AbstractItem.builder().name("Escudo")
+                .category(org.aventyrs.core.item.ItemCategory.SHIELD).hardness(10).build();
+    }
+
+    private static CharacterSheet armed(final org.aventyrs.core.item.Item... items) {
+        Character character = CharacterFixture.blank(CharacterFixture.BLANK)
+                .equipment(new java.util.ArrayList<>(List.of(items)))
+                .drawnWeapons(new java.util.ArrayList<>())
+                .build();
+        return CharacterSheet.of(character, new Player());
+    }
+
+    /** A weapon in hand is sheathed, still owned — drawn again at the ordinary cost. */
+    @Test
+    void desarmarSheathesTheWeaponInHand() {
+        org.aventyrs.core.item.AbstractWeapon sword = blade();
+        CharacterSheet target = armed(sword);
+        target.getCharacter().drawWeapon(sword);
+
+        InteractionResult result = new Desarmar(null).applyTo(target);
+
+        assertEquals(sword, result.getDroppedItem());
+        assertFalse(target.getCharacter().isDrawn(sword));
+        assertTrue(target.getCharacter().getEquipment().contains(sword));
+    }
+
+    /** An Escudo goes to the inventory, and is put back on through the ordinary priced equip. */
+    @Test
+    void desarmarSendsAShieldToTheInventory() {
+        org.aventyrs.core.item.AbstractItem escudo = shield();
+        CharacterSheet target = armed(escudo);
+
+        new Desarmar(null).applyTo(target);
+
+        assertFalse(target.getCharacter().getEquipment().contains(escudo));
+        assertTrue(target.getInventory().contains(escudo));
+
+        assertTrue(target.removeFromInventory(escudo));
+        target.equip(escudo);
+        assertTrue(target.getCharacter().getEquipment().contains(escudo));
+    }
+
+    /** The weapon in hand outranks the Escudo when the attacker names neither; a named one is honoured. */
+    @Test
+    void desarmarDefaultsToTheWeaponAndHonoursAPick() {
+        org.aventyrs.core.item.AbstractWeapon sword = blade();
+        org.aventyrs.core.item.AbstractItem escudo = shield();
+        CharacterSheet target = armed(sword, escudo);
+        target.getCharacter().drawWeapon(sword);
+
+        assertEquals(java.util.Optional.of(sword), new Desarmar(null).targetOf(target));
+        new Desarmar(escudo).applyTo(target);
+
+        assertTrue(target.getCharacter().isDrawn(sword));
+        assertTrue(target.getInventory().contains(escudo));
+    }
+
+    /** Nothing to drop: a sheathed weapon, an Arma Natural, a Manopla de Segurança. */
+    @Test
+    void desarmarLeavesWhatItCannotReach() {
+        org.aventyrs.core.item.AbstractWeapon sheathed = blade();
+        CharacterSheet target = armed(sheathed);
+        assertNull(new Desarmar(null).applyTo(target).getDroppedItem());
+        assertNull(new Desarmar(org.aventyrs.core.item.NaturalWeapon.GARRAS_AFIADAS).applyTo(target).getDroppedItem());
+
+        org.aventyrs.core.item.AbstractWeapon gripped = blade();
+        gripped.setMasterpiece(org.aventyrs.core.item.OffensiveMasterpiece.PRECISA);
+        gripped.addImprovement(org.aventyrs.core.item.OffensiveImprovement.MANOPLA_DE_SEGURANCA);
+        CharacterSheet guarded = armed(gripped);
+        guarded.getCharacter().drawWeapon(gripped);
+
+        assertNull(new Desarmar(null).applyTo(guarded).getDroppedItem());
+        assertTrue(guarded.getCharacter().isDrawn(gripped));
+    }
 }

@@ -188,6 +188,13 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
     @Getter(AccessLevel.NONE)
     private final Map<ActiveAbility, Integer> cooldowns = new java.util.IdentityHashMap<>();
 
+    /** Resfriamento of a Pedra do Poder or its host, by identity — see {@link #startItemCooldown}. */
+    private final Map<org.aventyrs.core.item.Item, Integer> itemCooldowns = new java.util.IdentityHashMap<>();
+
+    /** Stones already vinculadas once this Cena — see {@link #claimFirstPowerStoneUseThisCena}. */
+    private final java.util.Set<org.aventyrs.core.item.PowerStone> powerStonesUsedThisCena =
+            java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
+
     /**
      * The alternate shape this combatant is currently in — {@code null} for their own, which is
      * the state every sheet starts and mostly stays in. See {@link FormType}.
@@ -329,6 +336,13 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
     /** Reposicionar declared since this Rodada began — see {@link #consumeRepositionThisRound()}. */
     private int repositionsTakenThisRound = 0;
 
+    /** Recuos Defensivos taken since this combatant's Turn began — "Limitado a apenas uma vez por Rodada". */
+    private int retreatsTakenThisRound = 0;
+
+    /** See {@link CombatantSheet#getAsphyxia()}; {@code null} while breathing. */
+    @Getter(AccessLevel.NONE)
+    private Asphyxia asphyxia;
+
     /** Attacks landed on this combatant since this Rodada began — see {@link #recordAttackSuffered()}. */
     private int attacksSufferedThisRound = 0;
 
@@ -349,6 +363,13 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
 
     /** Whether {@link #startCombat()} has already fired this Cena — its idempotency guard, re-armed by {@link #startNewScene()}. */
     private boolean combatStarted = false;
+
+    /** Projectiles fired since {@link #startCombat()} — half come back at {@link #endCombat()}. */
+    /** Inquisição's marks: níveis of GD on this combatant's Magias, each lasting until its anchor's next Turn starts. */
+    private final java.util.Map<CombatantSheet, Integer> spellDifficultyMarks = new java.util.IdentityHashMap<>();
+
+    private final java.util.Map<org.aventyrs.core.item.ProjectileItem, Integer> firedProjectilesThisCombat =
+            new java.util.EnumMap<>(org.aventyrs.core.item.ProjectileItem.class);
 
     /** When this combatant entered Coma or died, and which heal effects its Coma has used — see {@link #heal(int, HealingSource)}. */
     @Getter(AccessLevel.NONE)
@@ -654,7 +675,7 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
         // A heal that damages instead (the Zumbi's "sofrem Danos de Magias Divinas que recuperam PV", core 0.0.91):
         // what it would have healed — the healer's bonus included — lands as raw damage, and no heal happens.
         if (!lifeSteal && invertsHealing(source)) {
-            int harm = Math.max(0, amount + healerHealingBonus(source));
+            int harm = Math.max(0, invertedHealingHarm(amount + healerHealingBonus(source), source));
             applyDamage(harm);
             observeStatus();
             return getDamageTaken();
@@ -875,6 +896,71 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
         }
     }
 
+    /** See {@link CombatantSheet#getTimesRaised()}. */
+    private int timesRaised;
+
+    /** See {@link CombatantSheet#isCorpse()}. */
+    private boolean corpse;
+
+    /** See {@link CombatantSheet#hasUndeadAnatomy()} — held on any sheet since 0.1.6.27, so a summon's travels. */
+    private boolean undeadAnatomy;
+
+    /** See {@link CombatantSheet#isDamageShortensDuration()}. */
+    private boolean damageShortensDuration;
+
+    /** Damage a stat block shrugs off — see {@link CombatantSheet#addDamageImmunities}. */
+    private final Set<org.aventyrs.core.character.DamageScope> grantedDamageImmunities = new HashSet<>();
+
+    @Override
+    public boolean hasUndeadAnatomy() {
+        return undeadAnatomy;
+    }
+
+    @Override
+    public void grantUndeadAnatomy() {
+        undeadAnatomy = true;
+    }
+
+    @Override
+    public boolean isDamageShortensDuration() {
+        return damageShortensDuration;
+    }
+
+    @Override
+    public void markDamageShortensDuration() {
+        damageShortensDuration = true;
+    }
+
+    @Override
+    public void addDamageImmunities(final Set<org.aventyrs.core.character.DamageScope> scopes) {
+        grantedDamageImmunities.addAll(scopes);
+    }
+
+    @Override
+    public boolean isImmuneToSpellDamage(final org.aventyrs.core.magic.Spell spell) {
+        return undeadAnatomy && org.aventyrs.core.monster.UndeadAnatomy.isImmuneToSpellDamage(spell);
+    }
+
+    @Override
+    public int getTimesRaised() {
+        return timesRaised;
+    }
+
+    @Override
+    public void setTimesRaised(final int timesRaised) {
+        this.timesRaised = Math.max(0, timesRaised);
+    }
+
+    @Override
+    public boolean isCorpse() {
+        return corpse;
+    }
+
+    @Override
+    public void markCorpse() {
+        corpse = true;
+    }
+
     @Override
     public void releaseVitalityLock() {
         lockedDamage = 0;
@@ -890,12 +976,40 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
                 || racialTraitsLive() && getCharacter().getRace().isImmuneToSpell(spell);
     }
 
+    @Override
+    public int resolveInvertedHealing(final org.aventyrs.core.magic.Spell spell,
+                                      final org.aventyrs.core.character.DamageDescriptor descriptor,
+                                      final org.aventyrs.core.util.DiceRoller roller) {
+        // The Anatomia de Morto-Vivo's Profano effects: 1d6+ Metade do Vigor (core 0.1.6.23).
+        if (undeadAnatomy && roller != null && (org.aventyrs.core.monster.UndeadAnatomy.isProfane(spell)
+                || descriptor != null && descriptor.sanctity() == org.aventyrs.core.character.DamageSanctity.PROFANO)) {
+            return org.aventyrs.core.monster.UndeadAnatomy.profaneHealing(this, roller);
+        }
+        if (spell == null || !racialTraitsLive()) {
+            return 0;
+        }
+        return getCharacter().getRace().resolveInvertedSpellHealing(spell, getCharacter(), roller);
+    }
+
     /**
      * Whether a heal from source damages this combatant instead — false for a sheet; a {@code MonsterSheet} reads its
-     * stat block ({@code MonsterTemplate#invertsHealing}, core 0.0.91).
+     * stat block ({@code MonsterTemplate#invertsHealing}, core 0.0.91) and its Anatomia de Morto-Vivo.
      */
     protected boolean invertsHealing(final HealingSource source) {
-        return false;
+        return undeadAnatomy && org.aventyrs.core.monster.UndeadAnatomy.invertsHealing(source);
+    }
+
+    /**
+     * What an inverted heal deals: offered, the PV it would have healed — unless an override rolls its own figure
+     * (the Anatomia de Morto-Vivo's 2d6+ Metade do Vigor, core 0.1.6.23).
+     */
+    protected int invertedHealingHarm(final int offered, final HealingSource source) {
+        // The Anatomia's "2d6+ Metade do Vigor pontos de Dano Sagrado", when the heal carries dice.
+        if (undeadAnatomy && source != null && source.dice() != null
+                && org.aventyrs.core.monster.UndeadAnatomy.invertsHealing(source)) {
+            return org.aventyrs.core.monster.UndeadAnatomy.sacredDamage(this, source.dice());
+        }
+        return offered;
     }
 
     /** Whether this combatant's Raça's own traits are in force — not while a Forma suppresses innate ones. */
@@ -1329,6 +1443,17 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
      */
     @Override
     public void addToInventory(final Item item) {
+        // A stack of the same plain projectile merges into the one already carried — the same arrows in a bigger
+        // quiver, never two entries for one kind.
+        if (item.isStackable() && item instanceof org.aventyrs.core.item.AbstractItem incoming) {
+            for (Item held : inventory) {
+                if (held != item && held.isStackable() && held instanceof org.aventyrs.core.item.AbstractItem stack
+                        && stack.getTemplate() == incoming.getTemplate()) {
+                    stack.addUnits(incoming.getQuantity());
+                    return;
+                }
+            }
+        }
         inventory.add(item);
     }
 
@@ -1396,6 +1521,18 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
         if (effect instanceof Condition condition && condition.getType().isMaleficio() && isWardedAgainstMaleficios()
                 || effect instanceof Bleeding && holdsLive(StanchedWound.class)) {
             return;
+        }
+        // RD/RM/RE/RA: "Reduz a Duração de Efeitos … contínuos em -1 Unidade" (core 0.1.6.15) — once, as it lands.
+        if (effect.getRemainingRounds() != null && effect.getContinuousNature() != null) {
+            int reduction = new org.aventyrs.core.character.services.ResistanceDurationServiceImpl()
+                    .getDurationReduction(this, effect.getContinuousNature(), null);
+            if (reduction > 0) {
+                int shortened = effect.getRemainingRounds() - reduction;
+                if (shortened <= 0) {
+                    return;
+                }
+                effect.shortenTo(shortened);
+            }
         }
         int ceiling = effect.maximumSimultaneous();
         if (ceiling < TemporaryEffect.UNLIMITED_SIMULTANEOUS) {
@@ -1576,10 +1713,16 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
         // the same "an expiring effect that must *do* something" case a decaying Condition gets.
         boolean formLapsed = temporaryEffects.stream()
                 .anyMatch(effect -> effect instanceof FormEffect && effect.isExpired());
+        // A lapsing Vinculação must unbind its host and cool both down — same reason.
+        List<PowerStoneBinding> lapsedBindings = temporaryEffects.stream()
+                .filter(effect -> effect instanceof PowerStoneBinding && effect.isExpired())
+                .map(PowerStoneBinding.class::cast)
+                .toList();
         temporaryEffects.removeIf(TemporaryEffect::isExpired);
         if (formLapsed) {
             enterForm(null);
         }
+        lapsedBindings.forEach(binding -> endPowerStoneBinding(binding, false));
         // "Ao fim da duração alvo se torna Assustado" — the fear ladder steps down rather than
         // simply ending, so a decaying Condition is replaced by its successor at the moment it
         // expires, carrying the same origin and that successor's own stated duration. Applied
@@ -1610,6 +1753,9 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
         // traits, so they survive a suppression the Raça's own do not.
         Set<CriticalEffectType> fromAbilities = new HashSet<>();
         getCharacter().getAttributeAbilities().forEach(ability -> fromAbilities.addAll(ability.resolveCriticalEffectImmunities()));
+        if (undeadAnatomy) {
+            fromAbilities.addAll(org.aventyrs.core.monster.UndeadAnatomy.CRITICAL_EFFECT_IMMUNITIES);
+        }
         if (getRacialTraitSuppression().suppressesPhysicalTraits()) {
             return Set.copyOf(fromAbilities);
         }
@@ -1818,6 +1964,7 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
     public void startTurn(final int turnNumber) {
         movementsTakenThisRound = 0;
         repositionsTakenThisRound = 0;
+        retreatsTakenThisRound = 0;
         actionCountAtTurnStart = actionsThisRound.size();
         actionsOfLatestOwnTurn.clear();
         inOwnTurn = true;
@@ -1922,6 +2069,72 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
     private void tickCooldowns() {
         cooldowns.replaceAll((ability, remaining) -> remaining - 1);
         cooldowns.values().removeIf(remaining -> remaining <= 0);
+        itemCooldowns.replaceAll((item, remaining) -> remaining - 1);
+        itemCooldowns.values().removeIf(remaining -> remaining <= 0);
+    }
+
+    @Override
+    public void startItemCooldown(final org.aventyrs.core.item.Item item, final int rounds) {
+        if (rounds <= 0) {
+            itemCooldowns.remove(item);
+            return;
+        }
+        itemCooldowns.put(item, rounds);
+    }
+
+    @Override
+    public int getRemainingItemCooldown(final org.aventyrs.core.item.Item item) {
+        return itemCooldowns.getOrDefault(item, 0);
+    }
+
+    @Override
+    public List<PowerStoneBinding> getPowerStoneBindings() {
+        return temporaryEffects.stream()
+                .filter(PowerStoneBinding.class::isInstance)
+                .map(PowerStoneBinding.class::cast)
+                .filter(binding -> !binding.isExpired())
+                .toList();
+    }
+
+    @Override
+    public void startPowerStoneBinding(final PowerStoneBinding binding) {
+        binding.getHost().setPowerStone(binding.getStone());
+        temporaryEffects.add(binding);
+    }
+
+    @Override
+    public void endPowerStoneBinding(final PowerStoneBinding binding, final boolean early) {
+        temporaryEffects.remove(binding);
+        if (binding.getHost().getPowerStone() == binding.getStone()) {
+            binding.getHost().setPowerStone(null);
+        }
+        int hostCooldown = binding.getCooldownRounds();
+        Integer left = binding.getRemainingRounds();
+        // Relíquia: "Remover antecipadamente reduz tempo de Resfriamento do Equipamento em quantidade proporcional a
+        // Duração de restante".
+        if (early && left != null && left > 0 && binding.getDurationRounds() > 0
+                && binding.getStone().getQuality().reducesCooldownOnEarlyRemoval()) {
+            hostCooldown -= hostCooldown * left / binding.getDurationRounds();
+        }
+        startItemCooldown(binding.getHost(), hostCooldown);
+        startItemCooldown(binding.getStone(), binding.getCooldownRounds());
+    }
+
+    @Override
+    public boolean claimFirstPowerStoneUseThisCena(final org.aventyrs.core.item.PowerStone stone) {
+        return powerStonesUsedThisCena.add(stone);
+    }
+
+    /** Ends every running Vinculação with no Resfriamento, and forgets every item cooldown — combat is over. */
+    private void clearPowerStoneState() {
+        for (PowerStoneBinding binding : getPowerStoneBindings()) {
+            temporaryEffects.remove(binding);
+            if (binding.getHost().getPowerStone() == binding.getStone()) {
+                binding.getHost().setPowerStone(null);
+            }
+        }
+        temporaryEffects.removeIf(PowerStoneBinding.class::isInstance);
+        itemCooldowns.clear();
     }
 
     /**
@@ -2086,6 +2299,7 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
         lastDamageReceived = null;
         damagedByThisCena.clear();
         hitsReceivedThisCena = 0;
+        powerStonesUsedThisCena.clear();
         clearCombatScopedState();
         observeStatus();
         fallenHealing.startNewScene();
@@ -2118,13 +2332,70 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
     }
 
     @Override
-    public void endCombat() {
+    public java.util.List<org.aventyrs.core.item.RecoveredProjectiles> endCombat() {
         combatStarted = false;
+        java.util.List<org.aventyrs.core.item.RecoveredProjectiles> recovered = new ArrayList<>();
+        firedProjectilesThisCombat.forEach((projectile, units) -> {
+            int back = units / 2;
+            if (back > 0) {
+                org.aventyrs.core.item.AbstractItem stack = org.aventyrs.core.item.AbstractItem.fromTemplate(projectile);
+                stack.takeUnits(stack.getQuantity());
+                stack.addUnits(back);
+                addToInventory(stack);
+                recovered.add(new org.aventyrs.core.item.RecoveredProjectiles(projectile, back));
+            }
+        });
+        firedProjectilesThisCombat.clear();
         clearCombatScopedState();
+        return recovered;
+    }
+
+    @Override
+    public void markSpellDifficultyIncrease(final CombatantSheet anchor, final int steps) {
+        if (anchor != null && steps > 0) {
+            spellDifficultyMarks.put(anchor, steps);
+        }
+    }
+
+    @Override
+    public int getSpellDifficultyIncrease() {
+        return spellDifficultyMarks.values().stream().mapToInt(Integer::intValue).max().orElse(0);
+    }
+
+    @Override
+    public void expireMarksAnchoredTo(final CombatantSheet anchor) {
+        spellDifficultyMarks.remove(anchor);
+    }
+
+    @Override
+    public boolean isInCombat() {
+        return combatStarted;
+    }
+
+    @Override
+    public void discardFiredProjectiles(final org.aventyrs.core.item.ProjectileItem projectile, final int units) {
+        if (units > 0) {
+            firedProjectilesThisCombat.computeIfPresent(projectile,
+                    (kind, recorded) -> recorded > units ? recorded - units : null);
+        }
+    }
+
+    @Override
+    public void recordFiredProjectiles(final org.aventyrs.core.item.ProjectileItem projectile, final int units) {
+        if (units > 0 && projectile.getHead().isRecoverable()) {
+            firedProjectilesThisCombat.merge(projectile, units, Integer::sum);
+        }
+    }
+
+    @Override
+    public java.util.Map<org.aventyrs.core.item.ProjectileItem, Integer> getFiredProjectilesThisCombat() {
+        return java.util.Collections.unmodifiableMap(firedProjectilesThisCombat);
     }
 
     /** Everything {@link #endCombat()} drops — also dropped by {@link #startNewScene()}. */
     private void clearCombatScopedState() {
+        clearPowerStoneState();
+        spellDifficultyMarks.clear();
         combatScopedEffects.forEach(temporaryEffects::remove);
         combatScopedEffects.clear();
         combatScopedEnhancements.forEach(enhancedAttacksRemaining::remove);
@@ -2284,6 +2555,10 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
      */
     @Override
     public void recordAction(final CombatantAction action) {
+        // Rendido ends when its holder acts — a defence answers someone else's action and is not one (core 0.1.6.19).
+        if (action.skill() != org.aventyrs.core.skill.SkillType.ESQUIVA_E_APARAR) {
+            removeCondition(ConditionType.RENDIDO);
+        }
         actionsThisRound.add(action);
         actionsThisCena.add(action);
         if (inOwnTurn) {
@@ -2837,6 +3112,10 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
         total += getCharacter().getAttributeAbilities().stream()
                 .mapToInt(AttributeAbility::resolveCriticalResistance)
                 .sum();
+        // A bound Pedra do Poder's Resistência à Críticos (Calcita Vulcânica's Base, Mitral Puro's Protetivo).
+        total += getCharacter().getEquipment().stream()
+                .mapToInt(item -> item.resolvePowerStoneBonus(ModifierType.CRITICAL_RESISTANCE))
+                .sum();
         return total + getTemporaryBonus(ModifierType.CRITICAL_RESISTANCE);
     }
 
@@ -3062,6 +3341,26 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
     }
 
     @Override
+    public int getRetreatsTakenThisRound() {
+        return retreatsTakenThisRound;
+    }
+
+    @Override
+    public int consumeRetreatThisRound() {
+        return retreatsTakenThisRound++;
+    }
+
+    @Override
+    public Optional<Asphyxia> getAsphyxia() {
+        return Optional.ofNullable(asphyxia);
+    }
+
+    @Override
+    public void setAsphyxia(final Asphyxia asphyxia) {
+        this.asphyxia = asphyxia;
+    }
+
+    @Override
     public Optional<Devoured> getDevoured() {
         return temporaryEffects.stream()
                 .filter(Devoured.class::isInstance)
@@ -3208,7 +3507,10 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
                         && scoped.covers(DamageScopeEffect.Kind.IMMUNE, damageType, descriptor))
                 // The Raça's own (Vampiro's Natural, core 0.0.90).
                 || racialTraitsLive() && getCharacter().getRace().getDamageImmunities().stream()
-                        .anyMatch(scope -> scope.matches(damageType, descriptor));
+                        .anyMatch(scope -> scope.matches(damageType, descriptor))
+                // A stat block's own, and the Anatomia de Morto-Vivo's Profano and Asfixia (core 0.1.6.27).
+                || grantedDamageImmunities.stream().anyMatch(scope -> scope.matches(damageType, descriptor))
+                || undeadAnatomy && org.aventyrs.core.monster.UndeadAnatomy.isImmuneToDamage(damageType, descriptor);
     }
 
     @Override
@@ -3221,6 +3523,7 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
     @Override
     public boolean isImmuneToCondition(final ConditionType conditionType) {
         return isCenaImmune(conditionType)
+                || undeadAnatomy && org.aventyrs.core.monster.UndeadAnatomy.CONDITION_IMMUNITIES.contains(conditionType)
                 || getCharacter().getAttributeAbilities().stream().anyMatch(ability -> ability.isImmuneToCondition(conditionType));
     }
 

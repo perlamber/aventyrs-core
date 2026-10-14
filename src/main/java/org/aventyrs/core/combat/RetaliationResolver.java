@@ -28,11 +28,11 @@ import java.util.Objects;
 final class RetaliationResolver {
 
     /**
-     * "Vigor pontos de Dano Físico Elemental: Natural" — the type is fixed because the one source
+     * "Vigor pontos de Dano Elemental: Natural" — the type is fixed because the one source
      * fixes it; a second source naming a different type would make this a column on the grant.
      */
     private static final DamageDescriptor DESCRIPTOR =
-            new DamageDescriptor(DamageType.FISICO_ELEMENTAL, ElementalType.NATURAL);
+            new DamageDescriptor(DamageType.ELEMENTAL, ElementalType.NATURAL);
 
     /** "perdem -1 Multiplicador de Pontos de Vida (Malefício Veneno) por 2 Rodadas". */
     private static final ConditionType CONDITION_ON_DAMAGE = ConditionType.ENVENENADO;

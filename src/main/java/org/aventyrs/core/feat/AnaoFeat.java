@@ -1,5 +1,6 @@
 package org.aventyrs.core.feat;
 
+import org.aventyrs.core.character.Resistance;
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.ability.StrengthAbility;
@@ -194,12 +195,12 @@ public enum AnaoFeat implements Feat {
      * Talento's own +1 included), applied by {@code CombatantSheet#startCombat()} (fired for
      * every participant by {@code Scene#startCombat()}):
      * <ul>
-     *   <li>RD, at {@link DamageService#DEFAULT_DAMAGE_REDUCTION} (the "recebe RD" with no number
+     *   <li>RD, at {@link Resistance#RD} (the "recebe RD" with no number
      *   convention — and exactly one RC/RD instance's -2 per {@code
      *   docs/rules/defesas-e-resistencias.txt}), now summed for real by {@code
      *   DamageServiceImpl}'s {@code CombatantSheet} overload;</li>
      *   <li>Resistência a Críticos, one instance ({@link ModifierType#CRITICAL_RESISTANCE},
-     *   {@link CombatantSheet#CRITICAL_RESISTANCE_INSTANCE}) — summed with any standing RC the
+     *   {@link Resistance#RC}) — summed with any standing RC the
      *   holder's Raça or Talentos grant and subtracted from an attacker's Margem Crítica Menor
      *   widening by {@code
      *   AbstractSkillInteraction} — see that {@code ModifierType}'s javadoc for the pieces of the
@@ -225,10 +226,10 @@ public enum AnaoFeat implements Feat {
         public List<Blessing> resolveCombatStartBlessings(final Character character) {
             int rounds = new HitPointsServiceImpl().getLifeMultiplier(character) / 2;
             return List.of(
-                    new Blessing(ModifierType.DAMAGE_REDUCTION, DamageService.DEFAULT_DAMAGE_REDUCTION,
+                    new Blessing(ModifierType.DAMAGE_REDUCTION, Resistance.RD.instance(),
                             rounds, TargetScope.SELF, name()),
                     new Blessing(ModifierType.CRITICAL_RESISTANCE,
-                            CombatantSheet.CRITICAL_RESISTANCE_INSTANCE,
+                            Resistance.RC.instance(),
                             rounds, TargetScope.SELF, name()));
         }
     };

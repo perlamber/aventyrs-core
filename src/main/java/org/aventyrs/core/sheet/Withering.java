@@ -50,4 +50,11 @@ public class Withering extends TemporaryEffect {
                 org.aventyrs.core.character.DamageType.FISICO, org.aventyrs.core.character.DamageSanctity.PROFANO,
                 valuePerRound));
     }
+
+    /** "Dano Físico Profano". */
+    @Override
+    public ContinuousNature getContinuousNature() {
+        return ContinuousNature.damaging(new org.aventyrs.core.character.DamageDescriptor(
+                org.aventyrs.core.character.DamageType.FISICO, null, org.aventyrs.core.character.DamageSanctity.PROFANO));
+    }
 }

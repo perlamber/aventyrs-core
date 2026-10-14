@@ -1,5 +1,6 @@
 package org.aventyrs.core.title.santo;
 
+import org.aventyrs.core.character.Resistance;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -87,13 +88,13 @@ public enum SantoAbility implements AventyrTitleAbility {
         @Override
         public int resolveAllyDamageReduction(final SceneContext sceneContext, final AventyrTitle holder,
                                               final boolean allyHasLowerPv) {
-            return allyHasLowerPv ? grantedDamageReduction(holder) : 0;
+            return allyHasLowerPv ? Resistance.RDS.instances(grantedDamageReduction(holder)) : 0;
         }
 
         @Override
         public int resolveDamageReduction(final SceneContext sceneContext, final AventyrTitle holder,
                                           final boolean hasLowerPvAdjacentAlly) {
-            return hasLowerPvAdjacentAlly ? grantedDamageReduction(holder) / 2 : 0;
+            return hasLowerPvAdjacentAlly ? Resistance.RDS.instances(grantedDamageReduction(holder) / 2) : 0;
         }
 
         /** "RDS igual a 1+ Metade das Habilidades de Santo que você possuir." */

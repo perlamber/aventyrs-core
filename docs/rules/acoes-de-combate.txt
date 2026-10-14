@@ -1,0 +1,249 @@
+Ações de Combate
+Movimentos
+Movimento Padrão
+	•	Tempo de Ação: 1PA
+	•	Move-se uma Distância, medida em Unidade de Distância (UD), igual ao Movimento Base do Personagem.
+	•	Passar pela Área de Ataque Corpo-a-Corpo de um personagem hostil concede a ele uma Reação do tipo Defender o Perímetro.
+
+Correr
+	•	Tempo de Ação: 2PA
+	•	Requer uma Rolagem de Atletismo: Triatleta com GD Variável, iniciado em Médio.
+	•	Move-se uma Distância, medida em Unidade de Distância (UD), igual ao dobro do Movimento Base do Personagem. 
+	•	Sucessos na Rolagem de Atletismo concedem Bônus de +2UD ao movimento para cada GD superada.
+	•	Passar adjacente a um personagem hostil concede a ele uma Reação do tipo Defender o Perímetro.
+	•	Em função da velocidade, o Personagem hostil terá sua Área de Ataque Corpo-a-Corpo reduzida para adjacente para Reagir a personagens correndo, mesmo que sua Área de Ataque natural ou de sua arma seja maior.
+	•	Falhar na rolagem de Atletismo não concede malefícios ao Personagem, exceto quando esta for uma Falha Crítica.
+	•	Falhas Críticas indicam que o personagem tropeçou e caiu durante a Corrida, recebendo a Condição Caído.
+	•	Personagens que falhem de forma crítica se movem uma quantidade de UD aleatória (considerando uma margem numérica igual ao seu Movimento Base) antes de cair.
+	•	Não é possível Correr em Terrenos Difíceis.
+
+
+Escalar
+	•	Tempo de Ação: 2PA
+	•	Requer uma Rolagem de Atletismo: Triatleta com GD Variável, iniciado em Médio.
+	•	A GD pode variar conforme o tipo de terreno ou parede a ser escalada, determinado pelo Narrador.
+	•	Personagens com Movimento Base Vertical dispensam esta rolagem e são sempre bem-sucedidos.
+	•	Sucessos na rolagem indicam Movimentos Verticais em distância máxima, medida em Unidade de Distância (UD), igual à metade do Movimento Base do Personagem. 
+	•	Falhas na rolagem de Atletismo por uma margem de até 5 números indica que o personagem não se movimentou, falhas que superem a margem de 5 números indica que os personagens caem.
+	•	Quando um personagem cai ele sofre Danos de Queda e a Condição Caído.
+	•	Se houver alguma ameaça ou personagem hostil, o personagem escalando recebe a Condição Desprevenido, exceto quando ele tiver Movimento Base Vertical.
+
+Nadar
+	•	Tempo de Ação: 2PA
+	•	Requer uma Rolagem de Atletismo: Triatleta com GD Variável, iniciado em Médio.
+	•	A GD pode variar conforme o tipo de correnteza ou profundidade, determinado pelo Narrador.
+	•	Personagens com Movimento Base de Natação dispensam esta rolagem e são sempre bem-sucedidos.
+	•	Sucessos na rolagem indicam Movimentos de Natação em distância máxima, medida em Unidade de Distância (UD), igual à metade do Movimento Base do Personagem. 
+	•	Falhas na rolagem de Atletismo por uma margem de até 5 números indica que o personagem não se movimentou, falhas que superem a margem de 5 números indica que os personagens submergem.
+	•	Personagens submersos podem sofrer danos por asfixia.
+	•	Se houver alguma ameaça ou personagem hostil, o personagem escalando recebe a Condição Desprevenido, exceto quando ele tiver Movimento Base Vertical.
+
+	•	
+Recuo Defensivo
+	•	Tempo de Ação: 2PA
+	•	Limitado a apenas uma vez por Rodada
+	•	A ação deve ser sempre se afastando de personagens inimigos.
+	•	Não pode ser usado para se aproximar de inimigos.
+	•	Move-se uma Distância, medida em Unidade de Distância (UD), igual à metade do Movimento Base do Personagem.
+	•	Este movimento não provoca a Reação Defender o Perímetro de seus inimigos.
+
+Reposicionar-se
+	•	Tempo de Ação: Ação Livre
+	•	Move-se uma Distância, medida em Unidade de Distância (UD), igual à metade da Categoria de Tamanho do Personagem (mínimo 1UD)
+	•	Este movimento não provoca Reações de seus inimigos.
+
+Saltar
+	•	Tempo de Ação: 2PA
+	•	Requer uma Rolagem de Atletismo: Triatleta com GD Variável, iniciado em Médio.
+	•	Move-se uma Distância, medida em Unidade de Distância (UD), igual à metade do Movimento Base do Personagem. 
+	•	Sucessos na Rolagem de Atletismo concedem Bônus de +2UD ao movimento para cada GD superada.
+	•	Passar pela Área de Ataque de um personagem hostil concede a ele uma Reação do tipo Defender o Perímetro.
+	•	Sofrer quantidades de danos iguais ou superiores à metade dos PV interrompe o salto, aplica a Condição Caído.
+	•	Falhar na rolagem de Atletismo não concede malefícios ao Personagem, exceto quando esta for uma Falha Crítica.
+	•	Falhas Críticas indicam que o personagem tropeçou e caiu durante a Salto, aplica a Condição Caído.
+	•	Personagens que falhem de forma crítica se movem uma quantidade de UD aleatória (limitado a distância máxima do salto) antes de cair.
+
+Voar
+	•	Tempo de Ação: Variável, conforme efeito de Voo.
+	•	Iniciar um voo provoca Reações Defender o Perímetro de seus inimigos.
+	•	A Duração do voo Variável, conforme efeito de Voo.
+
+Perícias
+Uso de Perícia
+	•	Tempo de Ação: 2PA.
+	•	Ação conforme Perícia utilizada.
+
+Conjurar e Mimetizar Magias
+	•	Conjurar e Mimetizar Magias
+	•	Tempo de Conjuração: Variável
+	•	Descrição: Conforme a magia
+	•	Adicionalmente possui Custo de Conjuração, que subtrai valores de um Bônus Base (PD, PM ou PV) específicos.
+	•	Vulnerável a reação Impedir Conjuração
+
+Conjurar e Mimetizar Magias Defensivamente
+	•	Tempo de Conjuração: +1PA.
+	•	Grau de Dificuldade aumentado em +1 nível.
+	•	Benefício: Impede a Reação Impedir Conjuração.
+	•	Descrição: Conforme a magia, Desvantagem na rolagem de efeitos de Dano Mágico e Cura Mágica.
+
+Habilidades Aventyr e Monstruosas
+Ativar Habilidades 
+	•	Tempo de Ativação: Variável
+	•	Descrição: Efeito conforme Habilidade de Título ou Monstruosa.
+	•	Pode possuir custos adicionais para Ativação ou serem passivos.
+	•	Custos podem subtrair valores de Bônus Base (PD, PM ou PV) específicos ou pontos de EGO.
+
+Manobras de Combate - Ações
+Ataque Básico
+	•	Idêntico à Uso de Perícias, utiliza Perícias de Ataque.
+
+Investida
+	•	Tempo de Ação: 3PA.
+	•	Descrição: Permite se mover e atacar.
+	•	Distância mínima igual ao Movimento Base padrão para sua Categoria de Tamanho.
+	•	Distância máxima igual ao dobro do Movimento Base atual do Personagem.
+	•	Precisa ser feita em linha reta, livre de barreiras, obstáculos e outros personagens.
+	•	Em caso de sucesso recebe Vantagem na rolagem de Dano do Ataque.
+	•	Em caso de falha sofre Redutor de -2 em Defesas por 1 Rodada
+	•	Não permite que o Alvo utilize a reação Defender o Perímetro
+
+Encontrão
+	•	Tempo de Ação: 3PA.
+	•	Descrição: Permite se mover e empurrar um alvo.
+	•	Distância mínima igual ao Movimento Base padrão para sua Categoria de Tamanho.
+	•	Distância máxima igual ao dobro do Movimento Base atual do Personagem.
+	•	Precisa ser feita em linha reta, livre de barreiras, obstáculos e outros personagens.
+	•	Em caso de sucesso alvo é Empurrado 1UD para trás, se for um Acerto Crítico alvo é Empurrado 2UD para trás.
+	•	Recebe a Corrente de Efeitos – Lançar ao Chão.
+	•	Em caso de falha sofre Redutor de -2 em Defesas por 1 Rodada.
+
+Agarrar
+	•	Tempo de Ação: 2PA.
+	•	Descrição: Agarra um alvo.
+	•	Rolagem de Ataque Corpo-a-Corpo (Desarmado, Calda ou Presa).
+	•	Exige que o membro utilizado (uma das Mãos, Calda ou Presa, conforme Arma natural utilizada) esteja livre.
+	•	A rolagem recebe Bônus ou Redutor igual a Categoria de Tamanho.
+	•	Em caso de Sucesso alvo é recebe a Condição Agarrado.
+	•	Em caso de Falha concede a Reação Defender o Perímetro ao alvo.
+	•	Enquanto agarrando outro personagem, apenas ataques com Armas Leves, Médias ou Naturais podem ser efetuados.
+	•	Ambos os personagens (atacante e alvo) são impedidos de realizar movimentos e sofrem Desvantagens em rolagens de perícia.
+	•	Vulnerável a reação Defender o Perímetro.
+
+Atacar Objetos / Desarmar
+	•	Tempo de Ação: 2PA.
+	•	Descrição: Inflige danos aos equipamentos do alvo.
+	•	Rolagem de Perícia de Ataque, GD aumentado em +1 nível.
+	•	Em caso de sucesso inflige Dano ao Equipamento escolhido.
+	•	Danos causados à objetos desta forma são reduzidos à metade (efeito de Meio-Dano).
+	•	Recebe a Corrente de Efeitos – Desarmar.
+	•	Vulnerável a reação Defender o Perímetro.
+
+Imobilizar
+	•	Tempo de Ação: 3PA.
+	•	Descrição: Imobiliza um alvo, impedindo-o de agir.
+	•	Apenas alvos Rendidos ou Inconscientes podem ser imobilizados.
+	•	Alvo recebe a Condição Imobilizado.
+
+Postura Defensiva
+	•	Tempo de Ação: 2PA
+	•	Descrição: Você assume uma Postura que aprimora suas defesas
+	•	Você recebe Bônus de +2 em Defesas, este Bônus muda para +3 se estiver utilizando um Escudo.
+
+Manobras de Combate - Reações
+Ativação Reativa de Habilidade
+	•	Tempo de Ação: Reação
+	•	Descrição: Conforme Habilidade Monstruosa ou de Título Aventyr
+
+Conjuração Reativa
+	•	Tempo de Ação: Reação
+	•	Descrição: Conforme Magia Conjurada
+
+Defender o Perímetro
+	•	Tempo de Ação: Reação
+	•	Descrição: Permite atacar um inimigo que se movimente em sua Área de Ataque.
+	•	Quando um inimigo se mover dentro do seu alcance de Ataque Corpo-a-Corpo você pode executar uma rolagem da Perícia Ataque Corpo-a-Corpo contra ele.
+
+Impedir Conjuração 
+	•	Tempo de Ação: Reação
+	•	Descrição: Permite atacar um inimigo que inicie uma Conjuração ou Mimetismo de Magias dentro de sua Área de Ataque.
+	•	Quando um inimigo iniciar uma Conjuração ou Mimetismo de Magias em seu alcance de Ataque Corpo-a-Corpo você pode executar uma rolagem da Perícia Ataque Corpo-a-Corpo contra ele.
+	•	Caso seja bem-sucedido o alvo recebe Redutor de -2 em sua Rolagem de Conjuração para cada 5 pontos de danos sofridos.
+
+Preparação
+	•	Tempo de Ação: 3PA
+	•	Descrição: Escolha uma Ação (Rolagem de Perícia específica, Ativação de Habilidade, Conjuração de Magia, etc.) cujo Tempo seja igual ou inferior à 2PA. Você recebe uma Reação adicional para executar a ação escolhida.
+
+Sacrifício
+	•	Tempo de Ação: Reação
+	•	Descrição: Você pode agir como escudo humano de um aliado.
+	•	Apenas uma vez por Cena de Combate, quando um personagem aliado adjacente for atacado você pode interceptar o ataque, sofrendo os danos e efeitos.
+	•	O ataque interceptado ignora suas Defesas, aplica o Efeito Crítico Menor natural e desencadeia Correntes de Efeitos.
+
+Tipos de Danos
+Dano é o nome dado aos Efeitos capazes de reduzir Bônus Bases (PD, PM ou PV) de um ou mais personagens, ou a Dureza de um Objeto (como Equipamentos e construções).
+Poder ser classificados como Dano de Ataque, Dano de Queda e Dano de Asfixia.
+
+Dano de Ataque
+	•	Quantidade e Tipo conforme tipo de ataque, arma, habilidade ou magia.
+	•	Pode ser classificado como:
+	•	Físico
+	•	Primordial
+	•	Elemental
+	•	Mágico Elemental
+	•	Físico Profano
+	•	Mágico Profano
+	•	Físico Sagrado
+	•	Mágico Sagrado
+	•	Físico Umbral
+	•	Mágico Umbral
+
+Dano de Queda
+	•	Dano infligido por consequência de queda de grandes alturas e infligido apenas quando a altura – medida em UD – for igual ou superior à Resistência à Quedas.
+	•	Resistência à Quedas é um atributo passivo de todos os personagens e objetos, indica que um personagem reduz à zero todo o Dano de Queda causado por uma altura inferior ao dobro da própria Categoria de Tamanho (mínimo 2UD).
+	•	Dano Primordial igual à Metade da Altura excedente à Resistência à Quedas.
+	•	Para cada 10UD excedente soma-se 1d6 aos danos e aplica Feridas Dolorosas até o próximo efeito de Descanso, quedas de alturas excedentes superiores a 40UD indicam morte instantânea.
+	•	Exemplos: Um Gigante (Categoria de Tamanho +2) sofre danos por altura quando a queda for igual ou superior à 6UD, onde ignora os danos dos 4 primeiros UD devido ao seu Tamanho, então sofre 1 de Dano Primordial (metade da altura excedente); um Goblin (Categoria de Tamanho -1) e um Elfo (Categoria de Tamanho 0), ambos, em contrapartida, sofrem danos quando a queda for igual ou superior à 4UD, ignorando os danos dos 2 primeiros UD (Resistência à Quedas mínima) em razão do Tamanho, então sofrendo 1 ponto de Dano Primordial (metade do excedente).
+
+Dano de Asfixia
+	•	Dano infligido pela incapacidade de respirar de um personagem, não afeta objetos.
+	•	Após Vigor Rodada o personagem sofre 1d6 pontos de Dano Primordial, este dano aumenta em +1d6 a cada instância de dano (máximo 3d6).
+	•	Na quarta instância de danos adicionalmente aplica Feridas Dolorosas até o próximo efeito de Descanso.
+	•	Na sexta instância de danos o personagem sofre morte instantânea por asfixia.
+	•	Exemplos: Um resistente Anão, com Vigor 4, afunda no mar após sua embarcação ser destruída por um Monstro, então falha na rolagem de Atletismo, na quarta Rodada submerso aplica-se a primeira instância de danos (1d6), na oitava Rodada aplica-se a segunda instância de danos (2d6), na décima Rodada o Anão é bem-sucedido na rolagem, consegue subir e alcançar um fragmento da embarcação que ainda boiava, finalmente saindo da água e recuperando o fôlego, encerrando assim o ciclo de asfixia; um frágil Pequenino ativa uma armadilha em uma masmorra, que se enche de gás tóxico. Com seu Vigor 2, sofre a primeira instância de Danos (1d6) na segunda Rodada, mas na terceira Rodada seu aliado abre uma rota de fuga, que o permite fugir, encerrando assim o ciclo de asfixia.
+Resistindo a Danos e Efeitos Ofensivos
+Resistência à Danos (RD) 
+	•	Cada instância reduz o Dano Físico não-PRIMORDIAL e não- ELEMENTAL em -2. 
+	•	Reduz a Duração de Efeitos Físicos contínuos não-PRIMORDIAIS que inflija danos em -1 Unidade (a redução de Duração não se acumula entre instâncias).
+
+Resistência à Magias (RM) 
+	•	Cada instância reduz o Dano Mágico não-PRIMORDIAL em -2.
+	•	Reduz a Duração de Efeitos Mágicos contínuos não-PRIMORDIAIS em -1 Unidade (a redução de Duração não se acumula entre instâncias).
+
+Resistência Elemental (RE) 
+	•	Cada instância reduz Danos Elementais e Mágicos Elementais em -3.
+	•	Reduz a Duração de Efeitos Elementais contínuos em -1 Unidade (a redução de Duração não se acumula entre instâncias).
+
+Resistência à Críticos (RC) 
+	•	A Margem Crítica Menor dos ataques não-PRIMORDIAIS sofridos é reduzida em -2, até o mínimo de 17. 
+	•	A Margem Crítica Maior dos ataques sofridos não-PRIMORDIAIS é reduzida em -1, até o mínimo de 18.
+
+Resistência Absoluta (RA)
+	•	Cada instância reduz os Danos Físicos, Mágicos e Elementais reduzidos em -2.
+	•	A Margem Crítica Menor dos ataques sofridos é reduzida em -1, até o mínimo de 17 (a Redução de Margem Crítica Menor não se acumula entre instâncias). 
+	•	A Margem Crítica Maior dos ataques sofridos é reduzida em -1, até o mínimo de 18 (a Redução de Margem Crítica Menor não se acumula entre instâncias).
+	•	Reduz a Duração de Efeitos contínuos em -1 Unidade (a redução de Duração não se acumula entre instâncias).
+
+Redução de Danos Sofridos (RDS) 
+	•	Cada instância reduz Danos de ordens Físicas e Mágicas em -1, não aplicável à danos Primordiais, Profanos, Sagrados e Umbrais.
+
+Meio-Dano
+	•	Instâncias de Meio-Dano não são acumulativas entre si e reduzem os Danos Sofridos à metade.
+	•	Quando especificado na fonte, pode se limitar a reduzir apenas danos Físicos, Mágicos e Elementais.
+	•	Efeitos de Meio-Dano são os últimos efeitos de Resistência a serem aplicados, vigorando após as reduções de RA, RD, RDS e RM.
+	•	Danos reduzidos à metade por quaisquer efeitos ou fontes não podem ser reduzidos por Efeitos de Meio-Dano.
+
+Resistência à Corrente de Efeitos
+	•	Resistência a Correntes de Efeitos é um atributo passivo que todos os personagens e objetos possuem. O valor padrão é 5, o que indica que Correntes de Efeitos desencadeiam efeitos apenas após superarem às Defesas do alvo em 5 ou mais.
+	•	Aumentos na Resistência a Corrente de Efeitos são sempre enumerados, indicando o valor que deve ser acrescido – somado aos 5 iniciais.
+	•	Reduções na Resistência a Corrente de Efeitos são sempre enumeradas, indicando o valor que deve ser decrescido – subtraído dos 5 iniciais.
+

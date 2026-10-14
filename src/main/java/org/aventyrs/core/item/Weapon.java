@@ -1,5 +1,6 @@
 package org.aventyrs.core.item;
 
+import org.aventyrs.core.sheet.ActionCost;
 import org.aventyrs.core.character.DamageBase;
 import org.aventyrs.core.effect.CriticalEffectType;
 import org.aventyrs.core.scene.Range;
@@ -171,5 +172,90 @@ public interface Weapon extends Item, AttackSource {
      */
     default int getLesserCriticalMargin() {
         return DEFAULT_LESSER_CRITICAL_MARGIN;
+    }
+
+    /**
+     * What this weapon fires — {@link AmmunitionKind#ARROW} for an Arco, {@link AmmunitionKind#BOLT} for a Besta —
+     * or {@code null} (the default) for one that fires nothing. A weapon naming a kind <b>cannot attack without a
+     * compatible projectile</b> (table ruling, 2026-10-12): {@code AttackDelivery} refuses the shot, and {@code
+     * AmmunitionService} lists and spends the ammunition.
+     */
+    default AmmunitionKind getAmmunitionKind() {
+        return null;
+    }
+
+    /**
+     * How many projectiles this weapon holds loaded — 0 (the default) for one fed straight from the bag at each shot
+     * (an Arco), N for one that "precisa ser recarregada" (a Besta: 1, or the Besta de Repetição's 5). A weapon with
+     * a magazine fires only what {@code AbstractWeapon#getLoadedProjectiles()} holds.
+     */
+    default int getMagazineCapacity() {
+        return 0;
+    }
+
+    /** Whether this weapon fires from a magazine that must be reloaded, rather than straight from the bag. */
+    default boolean requiresReload() {
+        return getAmmunitionKind() != null && getMagazineCapacity() > 0;
+    }
+
+    /**
+     * "Tempo de Ação da recarga" — what reloading costs <em>in combat</em> (free outside it, table ruling
+     * 2026-10-12). {@code null} for a weapon that never reloads. The wielder-aware price is {@code
+     * AmmunitionService#getReloadCost}, which also reads {@link #getFavoredReloadCost()}.
+     */
+    default ActionCost getReloadCost() {
+        return null;
+    }
+
+    /**
+     * The reload price this weapon's own Favor sets while its wielder meets the Favor's Requisitos — the Besta de
+     * Repetição's "Tempo de Ação da recarga reduzido para 1PA". {@code null} (the default) when no Favor changes it.
+     */
+    default ActionCost getFavoredReloadCost() {
+        return null;
+    }
+
+    /**
+     * Whether this weapon can make an attack at all — false only for a pure casting focus (an Artefato de
+     * Conjuração printing "-" for Dano: Bola de Crista, Grimório, Varinha). Such a weapon is still drawn, which is how
+     * it helps; {@code AttackDelivery} refuses an attack with it ({@code WEAPON_CANNOT_ATTACK}).
+     */
+    default boolean canAttack() {
+        return true;
+    }
+
+    /**
+     * The item this weapon's fitted enhancements live on — itself, or the copy behind a view such as {@link
+     * AttachedMeleeAttack}. What every host-scoped enhancement check compares against ({@link Item}'s
+     * {@code resolveEnhancement*} family, {@link WeaponEnhancements}), so a view swings with its copy's Obra-Prima.
+     */
+    default Item host() {
+        return this;
+    }
+
+    /**
+     * Whether this weapon counts as one of category — its own, or the one a fitted Aprimoramento adds (Machado
+     * Anexo, Baioneta: "Armas de Ataque à Distância são Machados / Lanças"). What a clause scoped to a kind of
+     * weapon asks ({@link AttackMethod#matches}).
+     */
+    default boolean countsAs(final ItemCategory category) {
+        if (category == null) {
+            return false;
+        }
+        return getCategory() == category || WeaponEnhancements.offensiveImprovements(host()).stream()
+                .anyMatch(improvement -> improvement.getAdditionalCategory() == category);
+    }
+
+    /**
+     * {@link #getMagazineCapacity()} widened by a fitted Pente Alongado — "Quantidade de munições muda pra +3". A
+     * weapon without a magazine (an Arco) has nothing to widen and stays at 0.
+     */
+    default int getEffectiveMagazineCapacity() {
+        int capacity = getMagazineCapacity();
+        if (capacity <= 0) {
+            return capacity;
+        }
+        return capacity + WeaponEnhancements.offensiveImprovements(host()).stream()
+                .mapToInt(OffensiveImprovement::getMagazineCapacityIncrease).sum();
     }
 }

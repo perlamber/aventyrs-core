@@ -69,9 +69,9 @@ class ArmorItemTest {
     @Test
     void armaduraCompletaFavorGrantsRealDamageReductionOnlyAtForca3() {
         assertEquals(2, ArmorItem.ARMADURA_COMPLETA
-                .resolveFavorBonus(ModifierType.DAMAGE_REDUCTION, characterWithStrengthBase(3)));
+                .resolveFavorBonus(ModifierType.DAMAGE_TAKEN_REDUCTION, characterWithStrengthBase(3)));
         assertEquals(0, ArmorItem.ARMADURA_COMPLETA
-                .resolveFavorBonus(ModifierType.DAMAGE_REDUCTION, characterWithStrengthBase(2)));
+                .resolveFavorBonus(ModifierType.DAMAGE_TAKEN_REDUCTION, characterWithStrengthBase(2)));
     }
 
     @Test
@@ -125,7 +125,7 @@ class ArmorItemTest {
 
         assertNull(armor.getFavor());
         assertFalse(armor.grantsFavorTo(character));
-        assertEquals(0, armor.resolveFavorBonus(ModifierType.DAMAGE_REDUCTION, character));
+        assertEquals(0, armor.resolveFavorBonus(ModifierType.DAMAGE_TAKEN_REDUCTION, character));
         assertEquals(List.of(), armor.resolveFavorBonuses(character));
     }
 
@@ -146,9 +146,9 @@ class ArmorItemTest {
     @Test
     void armaduraDeJustaFavorGrantsRealDamageReductionOnlyAtForca4() {
         assertEquals(2, ArmorItem.ARMADURA_DE_JUSTA
-                .resolveFavorBonus(ModifierType.DAMAGE_REDUCTION, characterWithStrengthBase(4)));
+                .resolveFavorBonus(ModifierType.DAMAGE_TAKEN_REDUCTION, characterWithStrengthBase(4)));
         assertEquals(0, ArmorItem.ARMADURA_DE_JUSTA
-                .resolveFavorBonus(ModifierType.DAMAGE_REDUCTION, characterWithStrengthBase(3)));
+                .resolveFavorBonus(ModifierType.DAMAGE_TAKEN_REDUCTION, characterWithStrengthBase(3)));
     }
 
     /**
@@ -163,7 +163,7 @@ class ArmorItemTest {
 
         assertEquals(0, ArmorItem.ARMADURA_DE_JUSTA
                 .resolveFavorBonus(ModifierType.MOVEMENT, character));
-        assertEquals(List.of(new ItemBonus(ModifierType.DAMAGE_REDUCTION, 2)),
+        assertEquals(List.of(new ItemBonus(ModifierType.DAMAGE_TAKEN_REDUCTION, 2)),
                 ArmorItem.ARMADURA_DE_JUSTA.resolveFavorBonuses(character));
         assertTrue(ArmorItem.ARMADURA_DE_JUSTA.getFavor().getDescription()
                 .contains("Movimento Base reduzido à metade"));
@@ -191,9 +191,9 @@ class ArmorItemTest {
         assertEquals(1, armor.getMagicDefenseBonus());
         assertEquals(28, armor.getHardness());
         assertEquals(0, armor.getCastingBonus());
-        assertEquals(1, armor.resolveFavorBonus(ModifierType.DAMAGE_REDUCTION,
+        assertEquals(1, armor.resolveFavorBonus(ModifierType.DAMAGE_TAKEN_REDUCTION,
                 characterWithStrengthBase(3)));
-        assertEquals(0, armor.resolveFavorBonus(ModifierType.DAMAGE_REDUCTION,
+        assertEquals(0, armor.resolveFavorBonus(ModifierType.DAMAGE_TAKEN_REDUCTION,
                 characterWithStrengthBase(2)));
     }
 
@@ -209,9 +209,9 @@ class ArmorItemTest {
         assertEquals(3, armor.getMagicDefenseBonus());
         assertEquals(28, armor.getHardness());
         assertEquals(Skill.DISADVANTAGE_MALUS, armor.getCastingBonus());
-        assertEquals(1, armor.resolveFavorBonus(ModifierType.DAMAGE_REDUCTION,
+        assertEquals(1, armor.resolveFavorBonus(ModifierType.DAMAGE_TAKEN_REDUCTION,
                 characterWithStrengthBase(3)));
-        assertEquals(0, armor.resolveFavorBonus(ModifierType.DAMAGE_REDUCTION,
+        assertEquals(0, armor.resolveFavorBonus(ModifierType.DAMAGE_TAKEN_REDUCTION,
                 characterWithStrengthBase(2)));
     }
 
@@ -233,9 +233,9 @@ class ArmorItemTest {
     void robeCerimonialFavorIsGatedOnGnoseRatherThanForca() {
         ArmorItem armor = ArmorItem.ROBE_CERIMONIAL;
 
-        assertEquals(2, armor.resolveFavorBonus(ModifierType.DAMAGE_REDUCTION,
+        assertEquals(2, armor.resolveFavorBonus(ModifierType.DAMAGE_TAKEN_REDUCTION,
                 characterWithBase(AttributeDomain.GNOSE, 3)));
-        assertEquals(0, armor.resolveFavorBonus(ModifierType.DAMAGE_REDUCTION,
+        assertEquals(0, armor.resolveFavorBonus(ModifierType.DAMAGE_TAKEN_REDUCTION,
                 characterWithBase(AttributeDomain.GNOSE, 2)));
         assertFalse(armor.grantsFavorTo(characterWithStrengthBase(5)));
     }
@@ -252,9 +252,9 @@ class ArmorItemTest {
         assertEquals(5, armor.getMagicDefenseBonus());
         assertEquals(28, armor.getHardness());
         assertEquals(2, armor.getCastingBonus());
-        assertEquals(1, armor.resolveFavorBonus(ModifierType.DAMAGE_REDUCTION,
+        assertEquals(1, armor.resolveFavorBonus(ModifierType.DAMAGE_TAKEN_REDUCTION,
                 characterWithBase(AttributeDomain.GNOSE, 4)));
-        assertEquals(0, armor.resolveFavorBonus(ModifierType.DAMAGE_REDUCTION,
+        assertEquals(0, armor.resolveFavorBonus(ModifierType.DAMAGE_TAKEN_REDUCTION,
                 characterWithBase(AttributeDomain.GNOSE, 3)));
     }
 

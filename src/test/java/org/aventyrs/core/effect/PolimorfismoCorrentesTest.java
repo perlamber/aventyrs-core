@@ -1,5 +1,6 @@
 package org.aventyrs.core.effect;
 
+import org.aventyrs.core.character.Resistance;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
@@ -150,9 +151,9 @@ class PolimorfismoCorrentesTest {
 
         assertTrue(movement.hasMovementMode(target, MovementMode.FLIGHT));
         assertEquals(movement.getMovementBase(target), movement.getMovementBase(target, MovementMode.FLIGHT));
-        assertEquals(rd + DamageService.DEFAULT_DAMAGE_REDUCTION,
+        assertEquals(rd + Resistance.RD.instance(),
                 damageService.getTotalDamageReduction(target, DamageType.FISICO, null));
-        assertEquals(rm + DamageService.DEFAULT_DAMAGE_REDUCTION, damageService.getTotalMagicReduction(target));
+        assertEquals(rm + Resistance.RM.instance(), damageService.getTotalMagicReduction(target));
 
         target.finishTurn();
         target.finishTurn();

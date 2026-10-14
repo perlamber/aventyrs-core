@@ -84,4 +84,10 @@ public class RecurringDice extends TemporaryEffect {
     Object stackingKey() {
         return source;
     }
+
+    /** A recurring damage is harmful and of its descriptor's nature; a recurring heal is not harmful. */
+    @Override
+    public ContinuousNature getContinuousNature() {
+        return kind == Kind.DAMAGE ? new ContinuousNature(descriptor, true) : null;
+    }
 }

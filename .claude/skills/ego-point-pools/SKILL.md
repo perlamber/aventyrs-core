@@ -84,12 +84,12 @@ throwing; affordability is the caller's own `getAvailableEgoPoints(domain) >= n`
 promising points back (`Primor` → `PendingEgoRecovery`) must register `spend.getValue()`, never
 what they asked for.
 
-**Two hooks fire off a deliberate spend**, both resolved by `useEgoPointsForEffect` and both
-scoped to the Vantagem held in the spend's *own* domain: `resolveEgoSpendRecovery` returns a flat
-figure applied to PV/PM/PD (`DETERMINACAO_HEROICA`), and `resolveEgoSpendBlessings` returns
-`Blessing`s granted straight to the spender (`AS_NA_MANGA`'s +2UD Movimento). Blessings are
-applied directly rather than handed back, unlike `resolveInitiativeBlessings`, because who spent
-the points is unambiguous — so `TargetScope` other than `SELF` has no meaning there yet.
+**Two hooks answer a deliberate spend**, both scoped to the Vantagem held in the spend's *own*
+domain: `resolveEgoSpendRecovery` returns a flat figure `useEgoPointsForEffect` applies to PV/PM/PD
+(`DETERMINACAO_HEROICA`), and `resolveEgoSpendMove` returns an `ego.GrantedMove` (`AS_NA_MANGA`'s
+2UD, ignoring Terreno Difícil, provoking no Reações) that `EgoPointsService#getSpendMoves` only
+*reports* — positions are the caller's, so the client offers the move right after the spend.
+*(Before 0.1.6.4 that was `resolveEgoSpendBlessings`, a 1-Rodada `MOVEMENT` bonus; removed.)*
 
 **Using points is a different call site from being drained of them.**
 `EgoPointsService#useEgoPointsForEffect(sheet, domain, type, amount, rolledValue)` is the holder

@@ -287,6 +287,21 @@ public class InteractionResult {
     org.aventyrs.core.scene.AreaOfEffect triggeredAreaOfEffect;
 
     /**
+     * Rodadas this stage keeps its target from flying — {@code effect.Desestabilizar}'s "pousará obrigatoriamente no
+     * próximo Turno dele e será impedido de Voar por 2 Rodadas". Reported, never applied: whether someone is flying
+     * is the caller's {@code EnvironmentalState#flying}, so the caller lands the token and refuses flight for that
+     * long. {@code null} for everything that grounds nobody.
+     */
+    Integer groundedRounds;
+
+    /**
+     * The Arma or Escudo this stage knocked out of its target's hands — {@code effect.Desarmar}'s "o equipamento é
+     * derrubado ao chão". Still owned (table ruling, 2026-10-12): a weapon stays equipped but sheathed, a shield moves
+     * to the inventory. {@code null} for everything that disarms nobody.
+     */
+    org.aventyrs.core.item.Item droppedItem;
+
+    /**
      * The highest Cego 1d6 face that fails this roll ({@code CombatantSheet#getBlindCheckThreshold})
      * — {@code null} when its roller throws none. Reported whether or not the die came with the roll,
      * so a caller knows to throw it.

@@ -92,11 +92,11 @@ class OffensiveMasterpieceTest {
         Character untrained = characterWith(Map.of(AttributeDomain.DEXTERITY, 3), espada);
         assertEquals(1, defenseService.getTotalDefense(untrained, DefenseType.PHYSICAL));
         assertEquals(1, defenseService.getTotalDefense(untrained, DefenseType.MAGIC));
-        assertEquals(0, damageService.getTotalDamageReduction(untrained));
+        assertEquals(0, damageService.getTotalDamageTakenReduction(untrained));
 
         Character qualified = characterWith(
                 Map.of(AttributeDomain.DEXTERITY, 3, AttributeDomain.GNOSE, 3), espada);
-        assertEquals(1, damageService.getTotalDamageReduction(qualified));
+        assertEquals(1, damageService.getTotalDamageTakenReduction(qualified));
     }
 
     @Test

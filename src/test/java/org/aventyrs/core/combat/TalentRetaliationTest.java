@@ -108,7 +108,7 @@ class TalentRetaliationTest {
                 .getOnHitRetaliations().get(0);
 
         assertEquals(1, acid.damage());
-        assertEquals(DamageType.FISICO_ELEMENTAL, acid.descriptor().damageType());
+        assertEquals(DamageType.ELEMENTAL, acid.descriptor().damageType());
         assertEquals(ElementalType.NATURAL, acid.descriptor().elementalType());
     }
 

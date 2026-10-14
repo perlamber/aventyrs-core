@@ -1,5 +1,6 @@
 package org.aventyrs.core.monster.model.brotosdemapinguari;
 
+import org.aventyrs.core.character.Resistance;
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.DamageType;
 import org.aventyrs.core.character.SizeCategory;
@@ -43,7 +44,7 @@ class BrotosDeMapinguariAbilityTest {
         assertEquals(3, both.getCharacter().getEffectiveAttributeTotal(AttributeDomain.VIGOR), "Vigor +2 once");
         assertEquals(3, both.getCharacter().getEffectiveAttributeTotal(AttributeDomain.INSTINCT));
         assertEquals(3, both.getCharacter().getEffectiveAttributeTotal(AttributeDomain.STRENGTH));
-        assertEquals(MonstrousTraits.CRITICAL_RESISTANCE_INSTANCE, both.getTotalCriticalResistance(null), "RC once");
+        assertEquals(Resistance.RC.instance(), both.getTotalCriticalResistance(null), "RC once");
         assertTrue(both.getCriticalEffectImmunities().containsAll(
                 List.of(CriticalEffectType.ATORDOANTE, CriticalEffectType.FERIDA_PROFUNDA, CriticalEffectType.SANGRAMENTO)));
     }
@@ -51,13 +52,13 @@ class BrotosDeMapinguariAbilityTest {
     @Test
     void anatomiaVegetalReportsItsWeaknessesWithoutSizingThem() {
         MonsterSheet broto = spawn(0, lagrimas());
-        DamageDescriptor fire = new DamageDescriptor(DamageType.ELEMENTAL, ElementalType.FOGO);
-        DamageDescriptor ice = new DamageDescriptor(DamageType.ELEMENTAL, ElementalType.GELO);
-        DamageDescriptor natural = new DamageDescriptor(DamageType.ELEMENTAL, ElementalType.NATURAL);
-        assertTrue(broto.isVulnerableToDamage(DamageType.ELEMENTAL, fire));
-        assertTrue(broto.isVulnerableToDamage(DamageType.ELEMENTAL, ice));
-        assertFalse(broto.isVulnerableToDamage(DamageType.ELEMENTAL, natural));
-        assertEquals(10, finalDamage(broto, DamageType.ELEMENTAL, ElementalType.FOGO));
+        DamageDescriptor fire = new DamageDescriptor(DamageType.MAGICO, ElementalType.FOGO);
+        DamageDescriptor ice = new DamageDescriptor(DamageType.MAGICO, ElementalType.GELO);
+        DamageDescriptor natural = new DamageDescriptor(DamageType.MAGICO, ElementalType.NATURAL);
+        assertTrue(broto.isVulnerableToDamage(DamageType.MAGICO, fire));
+        assertTrue(broto.isVulnerableToDamage(DamageType.MAGICO, ice));
+        assertFalse(broto.isVulnerableToDamage(DamageType.MAGICO, natural));
+        assertEquals(10, finalDamage(broto, DamageType.MAGICO, ElementalType.FOGO));
     }
 
     @Test

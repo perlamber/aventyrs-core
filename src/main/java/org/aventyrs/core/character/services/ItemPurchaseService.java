@@ -30,12 +30,12 @@ import org.aventyrs.core.sheet.IllegalOperationException;
 public interface ItemPurchaseService {
 
     /** The least any purchase can cost, in PE — a discount never drives the price below this. */
-    int MINIMUM_PURCHASE_PRICE = 1;
+    int MINIMUM_PURCHASE_PRICE = EquipmentPointPricing.MINIMUM_PRICE;
 
     /**
      * What buying spec from store would cost buyer right now, in PE — the copy's full market
-     * value less every {@code EgoAdvantage#resolveEquipmentPurchaseDiscount()} the buyer holds
-     * ({@code BARGANHISTA}'s -2PE), floored at {@link #MINIMUM_PURCHASE_PRICE}. A pure question:
+     * value less every {@code EgoAdvantage#resolveEquipmentPointDiscount(PURCHASE)} the buyer holds
+     * ({@code BARGANHISTA}'s -2PE, at creation too), floored at {@link #MINIMUM_PURCHASE_PRICE}. A pure question:
      * asking never buys anything.
      *
      * @throws IllegalOperationException ({@code ITEM_NOT_OFFERED}) if store does not carry spec
@@ -58,4 +58,14 @@ public interface ItemPurchaseService {
 
     /** Convenience for a plain catalog item — {@code purchase(store, ItemSpecification.of(template), buyer)}. */
     Item purchase(ItemStore store, ItemTemplate template, CombatantSheet buyer);
+
+    /** What a Pedra do Poder costs this buyer: its Preço with the usual PURCHASE discounts, never below the minimum. */
+    int getPurchasePrice(ItemStore store, org.aventyrs.core.item.PowerStoneSpecification spec, CombatantSheet buyer);
+
+    /**
+     * Buys a Pedra do Poder: refuses one the store does not offer ({@code ITEM_NOT_OFFERED}), spends the PE, and adds
+     * the fresh stone — every Carga full — to the buyer's inventory.
+     */
+    org.aventyrs.core.item.PowerStone purchase(ItemStore store, org.aventyrs.core.item.PowerStoneSpecification spec,
+                                               CombatantSheet buyer);
 }

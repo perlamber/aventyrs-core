@@ -1,5 +1,6 @@
 package org.aventyrs.core.character.services;
 
+import org.aventyrs.core.character.Resistance;
 import java.util.List;
 
 import org.aventyrs.core.character.Character;
@@ -74,7 +75,7 @@ public class CriticalServiceImpl implements CriticalService {
         if (target == null) {
             return 0;
         }
-        return target.getTotalCriticalResistance(sceneContext) / CombatantSheet.CRITICAL_RESISTANCE_INSTANCE
+        return target.getTotalCriticalResistance(sceneContext) / Resistance.RC.instance()
                 + absoluteResistanceStep(target, sceneContext);
     }
 
@@ -151,6 +152,10 @@ public class CriticalServiceImpl implements CriticalService {
             total += character.getEquipment().stream()
                     .mapToInt(item -> item.resolveEnhancementCriticalMarginIncrease(weapon, character))
                     .sum();
+        }
+        // A drawn Artefato de Conjuração's "Margem Crítica Menor das Magias que conjurar" — on the Conjuração roll.
+        if (skillType == SkillType.DOMINIO_DO_MANA) {
+            total += org.aventyrs.core.item.CastingArtifacts.spellCriticalMarginIncrease(character);
         }
         // And a sixth for the held Títulos (Senhor da Briga's natural-weapon and Defesa margins).
         total += character.getAllTitles().stream()

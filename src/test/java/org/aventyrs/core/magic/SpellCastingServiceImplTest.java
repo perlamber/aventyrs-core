@@ -219,7 +219,7 @@ class SpellCastingServiceImplTest {
         return new TestSpell() {
             @Override
             public Optional<SpellDamage> getPrimaryDamage() {
-                return Optional.of(SpellDamage.halfFocusElemental(diceCount, ElementalType.FOGO));
+                return Optional.of(SpellDamage.halfFocusMagicalElemental(diceCount, ElementalType.FOGO));
             }
         };
     }
@@ -246,7 +246,7 @@ class SpellCastingServiceImplTest {
 
         assertEquals(3, resolved.deterministicAmount()); // 7 / 2
         assertEquals(2, resolved.diceCount());
-        assertEquals(DamageType.ELEMENTAL, resolved.damageType());
+        assertEquals(DamageType.MAGICO, resolved.damageType());
         assertEquals(ElementalType.FOGO, resolved.elementalType());
         assertFalse(resolved.focusFullyApplied());
     }

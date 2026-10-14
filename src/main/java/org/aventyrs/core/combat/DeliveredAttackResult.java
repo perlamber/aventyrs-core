@@ -64,6 +64,18 @@ public class DeliveredAttackResult {
     private final Retaliation retaliation;
 
     /**
+     * What the primary defender's worn Espinhosa / Rigidez Refletora do back to this attack — hit or miss — or {@code
+     * null} (core 0.1.6.11). Reported, never dealt: see {@link EquipmentRetaliation#applyTo}.
+     */
+    private final EquipmentRetaliation equipmentRetaliation;
+
+    /**
+     * How many of {@link #projectilesToConsume} a Rigidez Refletora destroyed — never recovered at combat end. Pass it
+     * to {@code AmmunitionService#consume}'s five-argument form.
+     */
+    private final int projectilesDestroyed;
+
+    /**
      * PV the <b>attacker</b> owes for this hit, only a Descanso Verdadeiro recovers — {@code
      * Feat#resolveLockedSelfDamageOnHit}, {@code DuelistaFeat#FORCA_EXCESSIVA}'s "se o fizer e for
      * bem-sucedido você sofre 2 pontos de Dano Físico Primordial". 0 on a miss. Reported, never
@@ -71,6 +83,16 @@ public class DeliveredAttackResult {
      * mitigation ("não podem ser reduzidos"), then locked.
      */
     private final int lockedSelfDamage;
+
+    /**
+     * The projectile this shot fired ({@code DeliveredAttack#getProjectile()}), and how many of it — 1, plus one per
+     * extra projectile a Tiro Duplo/Múltiplo fires. Reported whether or not the shot landed: an arrow loosed is spent.
+     * The caller spends them with {@code AmmunitionService#consume}; {@code null}/0 when nothing was fired or on the
+     * no-roll preview path.
+     */
+    private final org.aventyrs.core.item.ProjectileItem firedProjectile;
+
+    private final int projectilesToConsume;
 
     /**
      * What the defender's Talentos deal back because this attack <b>landed</b> — {@code

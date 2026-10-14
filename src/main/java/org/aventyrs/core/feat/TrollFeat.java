@@ -1,5 +1,6 @@
 package org.aventyrs.core.feat;
 
+import org.aventyrs.core.character.Resistance;
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.race.Troll;
@@ -88,13 +89,13 @@ public enum TrollFeat implements Feat {
                     .build()) {
         @Override
         public int resolveSimultaneousRegenerationLimit(final Character character) {
-            return BASE_REGENERATION_TERM + character.getAllTitles().size();
+            return Resistance.RDS.instances(BASE_REGENERATION_TERM + character.getAllTitles().size());
         }
     },
 
     /**
      * "Enquanto em Regeneração Reativa seu corpo exala esporos… Personagens adjacentes que não
-     * sejam Trolls da Floresta sofrem Dano Físico Elemental: Natural igual 1+ número de Títulos
+     * sejam Trolls da Floresta sofrem Dano Elemental: Natural igual 1+ número de Títulos
      * Aventyr Despertos."
      */
     // The "enquanto em Regeneração Reativa" gate is readable now — CombatantSheet
@@ -108,7 +109,7 @@ public enum TrollFeat implements Feat {
     REGENERACAO_REATIVA_ESPINHOSA(
             "Enquanto em Regeneração Reativa seu corpo exala esporos que inflige dor e danos a "
                     + "quem estiver próximo. Personagens adjacentes que não sejam Trolls da "
-                    + "Floresta, sofrem Dano Físico Elemental: Natural igual 1+ número de Títulos "
+                    + "Floresta, sofrem Dano Elemental: Natural igual 1+ número de Títulos "
                     + "Aventyr Despertos que você possuir (não cumulativo com múltiplas ativações "
                     + "de Regeneração Reativa).",
             FeatRequirements.builder()
@@ -147,7 +148,7 @@ public enum TrollFeat implements Feat {
                     || holder.getAttacksSufferedThisRound() > 0) {
                 return 0;
             }
-            return BASE_REGENERATION_TERM + character.getAllTitles().size();
+            return Resistance.RDS.instances(BASE_REGENERATION_TERM + character.getAllTitles().size());
         }
     },
 

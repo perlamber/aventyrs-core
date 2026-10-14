@@ -20,9 +20,9 @@ class DamageDescriptorTest {
 
     @Test
     void elementalDamageCarriesItsSpecificElement() {
-        DamageDescriptor descriptor = new DamageDescriptor(DamageType.FISICO_ELEMENTAL, ElementalType.GELO);
+        DamageDescriptor descriptor = new DamageDescriptor(DamageType.ELEMENTAL, ElementalType.GELO);
 
-        assertEquals(DamageType.FISICO_ELEMENTAL, descriptor.damageType());
+        assertEquals(DamageType.ELEMENTAL, descriptor.damageType());
         assertEquals(ElementalType.GELO, descriptor.elementalType());
     }
 
@@ -31,10 +31,21 @@ class DamageDescriptorTest {
         assertThrows(IllegalOperationException.class, () -> new DamageDescriptor(DamageType.ELEMENTAL));
     }
 
+    /** "Mágico" is always qualified (2026-10-12 taxonomy): an element (Mágico Elemental) or a sanctity. */
+    @Test
+    void magicalDamageMustBeQualified() {
+        assertThrows(IllegalOperationException.class, () -> new DamageDescriptor(DamageType.MAGICO));
+        assertEquals(ElementalType.FOGO, new DamageDescriptor(DamageType.MAGICO, ElementalType.FOGO).elementalType());
+        assertEquals(DamageSanctity.UMBRAL,
+                new DamageDescriptor(DamageType.MAGICO, null, DamageSanctity.UMBRAL).sanctity());
+    }
+
     @Test
     void nonElementalDamageRejectsAnElement() {
         assertThrows(IllegalOperationException.class,
-                () -> new DamageDescriptor(DamageType.MAGICO, ElementalType.FOGO));
+                () -> new DamageDescriptor(DamageType.FISICO, ElementalType.FOGO));
+        assertThrows(IllegalOperationException.class,
+                () -> new DamageDescriptor(DamageType.QUEDA, ElementalType.FOGO));
     }
 
     @Test

@@ -1,7 +1,9 @@
 package org.aventyrs.core.ego;
 
+import org.aventyrs.core.character.Resistance;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import org.aventyrs.core.action.Manoeuvre;
 import org.aventyrs.core.character.DamageBonus;
 import org.aventyrs.core.character.DamageType;
 import org.aventyrs.core.character.EgoDomain;
@@ -38,13 +40,8 @@ public enum InitiativeAdvantage implements EgoAdvantage {
      * Corpo too, unlike {@code AtaqueADistanciaCompetencyAbility#FRIEZA}'s own dano bonus,
      * since this one needs no {@code attackTarget} to condition on).
      *
-     * <p>TODO: the "Vantagem em... Efeitos de Magia" half of this Vantagem's rules text is
-     * still unimplemented — this core has no "Efeito de Magia roll bonus" concept at all to
-     * attach it to ({@code org.aventyrs.core.magic.SpellCastingService} only orchestrates the
-     * delivery roll + Domínio do Mana roll, and {@code org.aventyrs.core.effect.EffectChainService}
-     * only resolves margin thresholds — neither models a bonus toward some third "effect" roll
-     * the way {@link DamageBonus} models one for dano), unlike the Dano half, which reuses that
-     * already-real mechanism.
+     * <p>The "Efeitos de Magia" half is {@link #resolveSpellEffectBonus} (core 0.1.6.4), on the same two conditions:
+     * +2 toward the Magia's Dano and its Cura, summed by {@code SpellCastingServiceImpl#castSpell}.
      */
     IMPETO("Você recebe Vantagem em suas Rolagens de Perícia nas duas primeiras Rodadas " +
             "de cada Cena de Combate. Se tiver ganho a iniciativa, você também recebe " +
@@ -65,6 +62,15 @@ public enum InitiativeAdvantage implements EgoAdvantage {
             }
             return Optional.empty();
         }
+
+        @Override
+        public Optional<Integer> resolveSpellEffectBonus(final SceneContext sceneContext) {
+            if (sceneContext != null && sceneContext.isWithinFirstCombatRounds(FIRST_ROUNDS_COUNT)
+                    && sceneContext.hasWonInitiative()) {
+                return Optional.of(Skill.ADVANTAGE_BONUS);
+            }
+            return Optional.empty();
+        }
     },
 
     /**
@@ -80,16 +86,20 @@ public enum InitiativeAdvantage implements EgoAdvantage {
      * per-Ponto-de-Ação figure, the +2UD applies to every point its holder spends moving —
      * which is exactly what "o seu Movimento Base ... aumenta em +2UD" states.
      *
-     * <p>TODO: "seus movimentos não permitem Reações de seus inimigos" stays unimplemented —
-     * this core has no movement/positioning system to suppress a Reação from at all (it
-     * doesn't do geometry — see {@code org.aventyrs.core.scene.Range}'s own javadoc), a
-     * different gap than the movement-*amount* half above, which only needed a stat to add UD
-     * to, not a whole Reação-triggering mechanism.
+     * <p>"Seus movimentos não permitem Reações de seus inimigos" is {@link #exemptsFromMovementReactions} (core
+     * 0.1.6.4): every movement in the first {@value #FIRST_ROUNDS_COUNT} Rodadas of a Cena de Combate, initiative won
+     * or not, leaves {@code MovementReactionService#getProvokedReactors} empty — an ordinary move and an Investida
+     * alike, since the clause names "seus movimentos" without a manoeuvre.
      */
     POSICIONAMENTO_ESTRATEGICO("Apenas nas duas primeiras Rodadas de cada Cena de " +
             "Combate, seus movimentos não permitem Reações de seus inimigos. " +
             "Adicionalmente, se você tiver ganho a iniciativa, o seu Movimento Base e o " +
             "de seus aliados aumentam em +2UD nestas Rodadas.") {
+        @Override
+        public boolean exemptsFromMovementReactions(final Manoeuvre manoeuvre, final SceneContext sceneContext) {
+            return sceneContext != null && sceneContext.isWithinFirstCombatRounds(FIRST_ROUNDS_COUNT);
+        }
+
         @Override
         public List<Blessing> resolveInitiativeBlessings() {
             return List.of(new Blessing(ModifierType.MOVEMENT, MOVEMENT_BONUS, FIRST_ROUNDS_COUNT, TargetScope.SELF_AND_ALLIES, name()));
@@ -101,8 +111,8 @@ public enum InitiativeAdvantage implements EgoAdvantage {
      * check, not {@link #POSICIONAMENTO_ESTRATEGICO}'s group-blessing mechanism — both of this
      * Vantagem's clauses are about the holder's own defense, never granted to allies):
      * {@link #resolveAbsoluteDamageReduction} grants RA ({@value
-     * org.aventyrs.core.character.services.DamageService#DEFAULT_DAMAGE_REDUCTION}, this rules
-     * text's own number isn't spelled out — see {@code DamageService.DEFAULT_DAMAGE_REDUCTION}'s
+     * org.aventyrs.core.character.Resistance#RA}, this rules
+     * text's own number isn't spelled out — see {@code Resistance#RA}'s
      * own javadoc for why RD's unspecified-bonus default is reused here) while {@link
      * SceneContext#isWithinFirstCombatRounds} is true, and {@link #resolveHalfDamage} halves
      * damage taken once {@link SceneContext#hasWonInitiative()} is also true — both summed by
@@ -116,7 +126,7 @@ public enum InitiativeAdvantage implements EgoAdvantage {
         @Override
         public int resolveAbsoluteDamageReduction(final SceneContext sceneContext) {
             if (sceneContext != null && sceneContext.isWithinFirstCombatRounds(FIRST_ROUNDS_COUNT)) {
-                return DamageService.DEFAULT_DAMAGE_REDUCTION;
+                return Resistance.RA.instance();
             }
             return 0;
         }

@@ -1,6 +1,6 @@
 package org.aventyrs.core.character.services;
 
-import org.aventyrs.core.ego.EgoAdvantage;
+import org.aventyrs.core.ego.EquipmentPointExpense;
 import org.aventyrs.core.item.Item;
 import org.aventyrs.core.item.ItemForgery;
 import org.aventyrs.core.item.ItemSpecification;
@@ -17,7 +17,7 @@ public class ItemPurchaseServiceImpl implements ItemPurchaseService {
     public int getPurchasePrice(final ItemStore store, final ItemSpecification spec, final CombatantSheet buyer) {
         requireOffered(store, spec);
         int marketValue = ItemForgery.purchased(spec).getPurchasePrice();
-        return Math.max(MINIMUM_PURCHASE_PRICE, marketValue - purchaseDiscount(buyer));
+        return EquipmentPointPricing.discounted(marketValue, buyer.getCharacter(), EquipmentPointExpense.PURCHASE);
     }
 
     @Override
@@ -41,15 +41,28 @@ public class ItemPurchaseServiceImpl implements ItemPurchaseService {
         return purchase(store, ItemSpecification.of(template), buyer);
     }
 
+    @Override
+    public int getPurchasePrice(final ItemStore store, final org.aventyrs.core.item.PowerStoneSpecification spec,
+                                final CombatantSheet buyer) {
+        if (store == null || !store.offers(spec)) {
+            throw new IllegalOperationException(ITEM_NOT_OFFERED);
+        }
+        return EquipmentPointPricing.discounted(spec.getPrice(), buyer.getCharacter(), EquipmentPointExpense.PURCHASE);
+    }
+
+    @Override
+    public org.aventyrs.core.item.PowerStone purchase(final ItemStore store,
+                                                      final org.aventyrs.core.item.PowerStoneSpecification spec,
+                                                      final CombatantSheet buyer) {
+        buyer.spendEquipmentPoints(getPurchasePrice(store, spec, buyer));
+        org.aventyrs.core.item.PowerStone stone = spec.create();
+        buyer.addToInventory(stone);
+        return stone;
+    }
+
     private void requireOffered(final ItemStore store, final ItemSpecification spec) {
         if (store == null || !store.offers(spec)) {
             throw new IllegalOperationException(ITEM_NOT_OFFERED);
         }
-    }
-
-    private int purchaseDiscount(final CombatantSheet buyer) {
-        return buyer.getCharacter().getAllEgoAdvantages().stream()
-                .mapToInt(EgoAdvantage::resolveEquipmentPurchaseDiscount)
-                .sum();
     }
 }

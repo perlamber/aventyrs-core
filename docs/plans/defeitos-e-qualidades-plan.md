@@ -130,7 +130,7 @@ that made every Antecedente Benefício free to wire:
    Dependência. Readings (⚠️ on the constants): Rodadas Ímpares/pares are a Cena de Combate's; the
    vulnerability's extra damage lands on the raw hit; Membro Ausente halves only the permanent Movimento
    Base. **Left TODO** (each needs something bigger): the prosthesis toggle; "maximizadas"; Trava Mental's
-   +1d6; Motivado pelo Desafio; Alma de AEther's negation; Memória Eidética and Dominar Padrões' Competência
+   +1d6; Motivado pelo Desafio; Alma de AEther's negation (built 0.1.6.2); Memória Eidética and Dominar Padrões' Competência (built 0.1.6.3)
    (no in-play Especialização/Competência grant, no session count); Sorrateiro; Resistência Atípica's
    Duração half; Pronto para Ação on a Talento `ActiveAbility`.
 4. **Mid-campaign.** `DefectService#grantDefect` / `#overcome` (3/5/7 EXP, progression lock). — **Done

@@ -15,7 +15,7 @@ import org.aventyrs.core.title.TitleAbilityActivationRequest;
 /**
  * Espinhos Venenos de Gaea's activation (2PA, and a PV cost equal to the activator's Vigor) —
  * "Enquanto ativo os Espinhos Venenos de Gaea causam danos aos personagens que lhe atacarem
- * Corpo-a-Corpo, Vigor pontos de Dano Físico Elemental: Natural", for 2 Rodadas.
+ * Corpo-a-Corpo, Vigor pontos de Dano Elemental: Natural", for 2 Rodadas.
  *
  * <p><b>The thorns are a state, not an event.</b> The activation grants the holder a round-scoped
  * {@link ModifierType#RETALIATION_DAMAGE} {@code Blessing} worth their Vigor, and {@code

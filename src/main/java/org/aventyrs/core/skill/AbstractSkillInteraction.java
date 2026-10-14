@@ -380,6 +380,8 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
                 .mapToInt(feat -> feat.resolveAttributeBonus(attributeDomain, character))
                 .sum();
         bonus += target.getTemporaryBonus(attributeDomain.getBonusModifierType());
+        // A bound Pedra do Poder's Atributo (core 0.1.6.7).
+        bonus += character.getEquipmentAttributeBonus(attributeDomain);
         bonus += sumSkillRollBonusModifiers(character.getAttributeAbilities());
         bonus += sumSkillRollBonusModifiers(skillCompetencyAbilities);
         List<SkillExcellency> unlockedExcellencies = SkillExcellency.unlockedBy(skillType.getExcellencyClass(), graduationValue);
@@ -400,7 +402,13 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
         // and the fear ladder's, which applies only while within reach of the fear's origin.
         bonus += target.getConditionBonus(ModifierType.SKILL_ROLL_BONUS, sceneContext);
         bonus += target.getConditionBonus(skillType.getRollBonusType(), sceneContext);
-        bonus += sumEquipmentRollBonuses(character);
+        bonus += sumEquipmentRollBonuses(character, sceneContext);
+        // The Ataque columns of the weapon this attack is made with — never of the rest of the loadout (core 0.1.6.9).
+        if (skillType.isAttackSkill()) {
+            bonus += org.aventyrs.core.item.WeaponEnhancements.attackRollBonus(attackSource);
+            // A worn Armadura's or Escudo's Ataque columns reach every attack (table ruling, 2026-10-12, core 0.1.6.11).
+            bonus += org.aventyrs.core.item.DefensiveEnhancements.attackRollBonus(character);
+        }
         // Curandeiro's Despertar: "Vantagem nas rolagens de 'Medicina e Cura'".
         bonus += character.getAllTitles().stream()
                 .mapToInt(title -> title.resolveSkillRollBonus(skillType, target))
@@ -530,6 +538,10 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
                     ? DifficultyLevel.reachedByAsExpert(bonus + skillRoll.getTotal())
                     : DifficultyLevel.reachedBy(bonus + skillRoll.getTotal());
             int criticalMarginIncrease = sumCriticalMarginIncrease(target, sceneContext, attackSource, attackTarget);
+            // A Bodkin: "Margem Crítica Menor da arma aumenta em +1 número" — the fired projectile's own widening.
+            if (skillRoll.getProjectile() != null) {
+                criticalMarginIncrease += skillRoll.getProjectile().getHead().getCriticalMarginIncrease();
+            }
             // Resistência a Críticos — the attack target's own RC narrows this roller's Margem
             // Crítica Menor back: its Raça's and its Talentos' standing grants plus any
             // round-scoped Blessing (AnaoFeat#VIGOR_DO_INVERNO), all summed by the target's own
@@ -654,6 +666,9 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
         // Outward-facing: Favorecido em Perícias de Ataque against a Flanqueado/Caído/Imobilizado/
         // Confuso/Cego target, read off the *victim's* own Condições.
         attackRollBonus += attackTarget.getAttackerAttackRollBonus(sceneContext);
+        // Alcance Estendido: "+1 em rolagens de Ataque … [contra] alvos não adjacentes".
+        attackRollBonus += org.aventyrs.core.item.WeaponEnhancements.nonAdjacentBonus(attackSource, attackTarget,
+                sceneContext);
         if (attackRollBonus != 0) {
             result = result.toBuilder().skillRollBonus(result.getSkillRollBonus() + attackRollBonus).build();
         }
@@ -770,11 +785,14 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
                 .sum();
     }
 
-    /** Equipment-held bonuses are data, so they have an explicit pass rather than a modifier scan. */
-    private int sumEquipmentRollBonuses(final Character character) {
+    /**
+     * Equipment-held bonuses are data, so they have an explicit pass rather than a modifier scan. The roll's Scene
+     * reaches a terrain-scoped Aprimoramento (Camuflada, core 0.1.6.11).
+     */
+    private int sumEquipmentRollBonuses(final Character character, final SceneContext sceneContext) {
         return character.getEquipment().stream()
                 .mapToInt(item -> item.resolveFavorBonus(skillType.getRollBonusType(), character)
-                        + item.resolveEnhancementBonus(skillType.getRollBonusType(), skillType, character))
+                        + item.resolveEnhancementBonus(skillType.getRollBonusType(), skillType, character, sceneContext))
                 .sum();
     }
 
@@ -1106,10 +1124,17 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
                                 sceneContext))
                         .sum());
 
+        // The weapon's Danos columns, and Alcance Estendido's +1 once a target is known not to be adjacent.
+        int weapon = addFlat(contributions, DamageContributionSource.WEAPON_ENHANCEMENT,
+                org.aventyrs.core.item.WeaponEnhancements.damageRollBonus(attackSource)
+                        + org.aventyrs.core.item.WeaponEnhancements.nonAdjacentBonus(attackSource, attackTarget, sceneContext));
+        // A worn Armadura's or Escudo's Danos columns, on every attack (core 0.1.6.11).
+        int armour = addFlat(contributions, DamageContributionSource.DEFENSIVE_ENHANCEMENT,
+                org.aventyrs.core.item.DefensiveEnhancements.damageRollBonus(character));
         // A Cavaleiro's "Vantagem em … Dano" (core 0.0.92).
         int subordinate = addFlat(contributions, DamageContributionSource.SUBORDINATE,
                 Skill.ADVANTAGE_BONUS * org.aventyrs.core.subordinate.SubordinateBenefits.count(target, sceneContext, org.aventyrs.core.subordinate.SubordinateBenefit.CAVALEIRO_DAMAGE));
-        int flat = temporary + condition + meiaForca + manoeuvre + title + subordinate;
+        int flat = temporary + condition + meiaForca + manoeuvre + title + subordinate + weapon + armour;
         return new DamageSum(DamageBonus.total(typed, flat), new DamageBonusBreakdown(contributions));
     }
 

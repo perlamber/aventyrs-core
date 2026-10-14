@@ -66,6 +66,12 @@ public class IncomingAttackResult {
     private final Retaliation retaliation;
 
     /**
+     * What the defender's worn Espinhosa / Rigidez Refletora do back to this attack — hit or miss — or {@code null}
+     * (core 0.1.6.11). Reported, never dealt: see {@link EquipmentRetaliation#applyTo}.
+     */
+    private final EquipmentRetaliation equipmentRetaliation;
+
+    /**
      * What the defender's Talentos deal back because this attack <b>landed</b> — {@code
      * Feat#resolveRetaliation}, one {@link Retaliation} per answering Talento. Empty on a miss, on
      * an Ataque à Distância, and without a roll. <b>Reported, never dealt</b>, like {@link

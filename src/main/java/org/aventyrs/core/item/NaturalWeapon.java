@@ -52,7 +52,7 @@ public enum NaturalWeapon implements ItemTemplate, Weapon {
 
     /**
      * Arma de Sopro (Leve/Natural) — "permitem que certos personagens criem e emitam energia
-     * física elemental". Dano 1d6+2, Elemental, Efeito Crítico Cataclismo (17), Alcance
+     * elemental". Dano 1d6+2, Elemental, Efeito Crítico Cataclismo (17), Alcance
      * Cone (Médio) — modeled as {@link Range#DISTANCIA_MEDIA} (this core has no cone footprint;
      * see CLAUDE.md's "Area de Efeito" row) — Requisito Vigor 3.
      *

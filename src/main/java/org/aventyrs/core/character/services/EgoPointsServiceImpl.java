@@ -6,7 +6,6 @@ import org.aventyrs.core.character.EgoDomain;
 import org.aventyrs.core.ego.EgoAdvantage;
 import org.aventyrs.core.ego.SocialClass;
 import org.aventyrs.core.monster.MonsterSheet;
-import org.aventyrs.core.sheet.Blessing;
 import org.aventyrs.core.sheet.CombatantSheet;
 import org.aventyrs.core.sheet.EgoPointSpend;
 import org.aventyrs.core.sheet.EgoPointType;
@@ -171,9 +170,9 @@ public class EgoPointsServiceImpl implements EgoPointsService {
      * the finished spend knows, and a spend that took nothing earns nothing.
      */
     @Override
-    public List<Blessing> getSpendBlessings(final Character character, final EgoPointSpend spend) {
+    public List<org.aventyrs.core.ego.GrantedMove> getSpendMoves(final Character character, final EgoPointSpend spend) {
         return character.getEgoAdvantages(spend.getDomain()).stream()
-                .flatMap(advantage -> advantage.resolveEgoSpendBlessings(spend).stream())
+                .flatMap(advantage -> advantage.resolveEgoSpendMove(spend).stream())
                 .toList();
     }
 
@@ -203,11 +202,6 @@ public class EgoPointsServiceImpl implements EgoPointsService {
             sheet.heal(recovered, HealingSource.egoSpend(sheet.getCharacter().getEgoAdvantage(domain), sheet));
             sheet.recoverMagicPoints(recovered);
             sheet.recoverDeterminationPoints(recovered);
-        }
-        // Granted straight to the spender: who used the points is unambiguous, so there is no
-        // recipient for a caller to resolve — see EgoAdvantage#resolveEgoSpendBlessings.
-        for (Blessing blessing : getSpendBlessings(sheet.getCharacter(), spend)) {
-            sheet.grantTemporaryBonus(blessing.getModifierType(), blessing.getValue(), blessing.getRounds());
         }
         return spend;
     }

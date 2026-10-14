@@ -1,5 +1,6 @@
 package org.aventyrs.core.monster.model.bestaalada;
 
+import org.aventyrs.core.character.Resistance;
 import lombok.Getter;
 import org.aventyrs.core.ability.ActiveAbility;
 import org.aventyrs.core.character.DamageScope;
@@ -182,7 +183,7 @@ public enum BestaAladaAbility implements MonstrousAbility {
         public List<TemporaryEffect> resolveWhileFlyingEffects(final AbilityContext context) {
             List<TemporaryEffect> effects = new ArrayList<>();
             effects.add(standing(ModifierType.DEFESAS, 5, "Defesa Aérea"));
-            effects.add(standing(ModifierType.DAMAGE_TAKEN_REDUCTION, MonstrousTraits.RDS_INSTANCE, "Defesa Aérea"));
+            effects.add(standing(ModifierType.DAMAGE_TAKEN_REDUCTION, Resistance.RDS.instance(), "Defesa Aérea"));
             if (context.isAtLeast(APEX)) {
                 effects.add(new DamageScopeEffect(DamageScopeEffect.Kind.HALVES, DamageScope.ALL, null, "Defesa Aérea"));
             }

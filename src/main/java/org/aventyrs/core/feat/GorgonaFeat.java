@@ -1,5 +1,6 @@
 package org.aventyrs.core.feat;
 
+import org.aventyrs.core.character.Resistance;
 import java.util.List;
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
@@ -166,8 +167,8 @@ public enum GorgonaFeat implements Feat {
      * Críticos." The RD half is real.
      *
      * <p>"RDS e RD" names two different reductions: RD ({@code
-     * DamageService#DEFAULT_DAMAGE_REDUCTION}, one instance's -2, plain physical damage only) and
-     * RDS ({@code DamageService#DAMAGE_TAKEN_REDUCTION_INSTANCE}, one instance's -1, every
+     * Resistance#RD}, one instance's -2, plain physical damage only) and
+     * RDS ({@code Resistance#RDS}, one instance's -1, every
      * non-Primordial hit). Before 0.0.64 the two were one stat and this read as a single grant.
      */
     // All three halves real now: RD unconditionally, and the Resistência a Críticos while in
@@ -186,12 +187,12 @@ public enum GorgonaFeat implements Feat {
                     .build()) {
         @Override
         public int resolveDamageReduction(final Character character) {
-            return DamageService.DEFAULT_DAMAGE_REDUCTION;
+            return Resistance.RD.instance();
         }
 
         @Override
         public int resolveDamageTakenReduction(final Character character) {
-            return DamageService.DAMAGE_TAKEN_REDUCTION_INSTANCE;
+            return Resistance.RDS.instance();
         }
 
         /** "Enquanto em sua Forma Monstruosa você recebe Resistência à Críticos." */
@@ -199,7 +200,7 @@ public enum GorgonaFeat implements Feat {
         public int resolveCriticalResistance(final Character character, final SceneContext sceneContext,
                                               final CombatantSheet holder) {
             return holder != null && holder.isInForm(FormType.MONSTRUOSA)
-                    ? CombatantSheet.CRITICAL_RESISTANCE_INSTANCE : 0;
+                    ? Resistance.RC.instance() : 0;
         }
     },
 
@@ -224,12 +225,12 @@ public enum GorgonaFeat implements Feat {
         /** "Você recebe RDS" with no figure — one instance. */
         @Override
         public int resolveDamageTakenReduction(final Character character) {
-            return DamageService.DAMAGE_TAKEN_REDUCTION_INSTANCE;
+            return Resistance.RDS.instance();
         }
 
         @Override
         public int resolveMagicReduction(final Character character) {
-            return DamageService.DEFAULT_DAMAGE_REDUCTION;
+            return Resistance.RM.instance();
         }
 
         /** "Enquanto em sua forma Feérica você recebe Resistência a Críticos." */
@@ -237,7 +238,7 @@ public enum GorgonaFeat implements Feat {
         public int resolveCriticalResistance(final Character character, final SceneContext sceneContext,
                                               final CombatantSheet holder) {
             return holder != null && holder.isInForm(FormType.FEERICA)
-                    ? CombatantSheet.CRITICAL_RESISTANCE_INSTANCE : 0;
+                    ? Resistance.RC.instance() : 0;
         }
     },
 

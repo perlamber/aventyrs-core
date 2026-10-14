@@ -1,5 +1,6 @@
 package org.aventyrs.core.magic.invocation;
 
+import org.aventyrs.core.character.Resistance;
 import lombok.Getter;
 import lombok.NonNull;
 import org.aventyrs.core.character.Character;
@@ -56,7 +57,7 @@ public final class EnhancedSummonFeat extends AbstractFeat {
     /** Deserto do Oeste: "RDS 2 … +1 para cada". */
     @Override
     public int resolveDamageTakenReduction(final Character character) {
-        return enhancement.damageTakenReduction();
+        return Resistance.RDS.instances(enhancement.damageTakenReduction());
     }
 
     /** Vulcões do Noroeste: "A Margem Crítica Menor dos ataques … é aumentada". */
@@ -67,7 +68,7 @@ public final class EnhancedSummonFeat extends AbstractFeat {
     }
 
     /**
-     * Vulcões do Noroeste: "+1d6 de Dano Físico Elemental: Magma em suas rolagens de Dano Crítico". TODO the die's
+     * Vulcões do Noroeste: "+1d6 de Dano Elemental: Magma em suas rolagens de Dano Crítico". TODO the die's
      * Magma typing: a {@code CriticalDamage} carries no type, so it lands as the hit's own.
      */
     @Override
@@ -127,7 +128,7 @@ public final class EnhancedSummonFeat extends AbstractFeat {
         }
         return enhancement.lightning()
                 ? new DamageDescriptor(DamageType.MAGICO, null, DamageSanctity.SAGRADO)
-                : new DamageDescriptor(DamageType.ELEMENTAL, ElementalType.FOGO);
+                : new DamageDescriptor(DamageType.MAGICO, ElementalType.FOGO);
     }
 
     /** Chamas do Norte: "inimigos imunes a fogo ainda sofrem metade dos danos" — a Fogo hit, immune or not. */
@@ -139,6 +140,6 @@ public final class EnhancedSummonFeat extends AbstractFeat {
     /** Invocação Maior: "Você ou seus aliados, enquanto adjacentes à uma Invocação Maior, recebem RM". */
     @Override
     public int resolveAdjacentAllyMagicReduction(final Character holder) {
-        return enhancement.invocacaoMaior() ? DamageService.DEFAULT_DAMAGE_REDUCTION : 0;
+        return enhancement.invocacaoMaior() ? Resistance.RM.instance() : 0;
     }
 }

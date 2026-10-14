@@ -1,5 +1,6 @@
 package org.aventyrs.core.feat;
 
+import org.aventyrs.core.character.Resistance;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -86,7 +87,7 @@ public enum MonstruosoFeat implements Feat {
     // The Resistência a Críticos is real: an unconditional grant of one instance, summed by
     // CombatantSheet#getTotalCriticalResistance and subtracted from an attacker's Margem Crítica
     // Menor widening. The clause states no figure, so it grants exactly one instance — see
-    // CombatantSheet#CRITICAL_RESISTANCE_INSTANCE.
+    // Resistance#RC.
     // TODO: ignoring an Efeito Crítico is close to expressible but not quite — CriticalEffect
     //  #applicableTo already filters a victim's immunities, but it keys on CriticalEffectType
     //  (which effect) and this clause keys on *severity* (Menor vs Maior), which the filter does
@@ -108,7 +109,7 @@ public enum MonstruosoFeat implements Feat {
 
         @Override
         public int resolveCriticalResistance(final Character character, final SceneContext sceneContext) {
-            return CombatantSheet.CRITICAL_RESISTANCE_INSTANCE;
+            return Resistance.RC.instance();
         }
     },
 
@@ -117,8 +118,9 @@ public enum MonstruosoFeat implements Feat {
     // as on CriticalEffectType, and drops the whole chain of a Menor critical against a holder.
     // Unconditional, needing neither a Scene nor a per-Cena counter — which is exactly why this
     // clause, and not ANATOMIA_INCOMUM's, is the one that fits the widened filter.
-    // TODO: "resistência às Correntes de Efeitos" is a stat this core does not compute —
-    //  EffectChainService resolves whether a Corrente triggers, with nothing to resist it by.
+    // "Resistência às Correntes de Efeitos +2" raises the margin a Corrente must clear, the Resoluto-style reading
+    // DevotoFeat's own +2 uses — Feat#resolveEffectChainResistanceIncrease, read by
+    // EffectChainService#getRequiredMargin on the attack and the spell paths alike (core 0.1.6.4).
     ANATOMIA_UNICA(
             "Você é imune a Efeitos Críticos Menores. Sua resistência às Correntes de Efeitos "
                     + "aumenta em +2.",
@@ -128,6 +130,12 @@ public enum MonstruosoFeat implements Feat {
         @Override
         public boolean ignoresMinorCriticalEffects() {
             return true;
+        }
+
+        @Override
+        public int resolveEffectChainResistanceIncrease(final Character holder,
+                                                        final org.aventyrs.core.scene.InitiativePosition position) {
+            return ANATOMIA_UNICA_EFFECT_CHAIN_RESISTANCE;
         }
     },
 
@@ -223,16 +231,16 @@ public enum MonstruosoFeat implements Feat {
             return defenseType == DefenseType.PHYSICAL ? PELE_RIJA_BONUS : 0;
         }
 
-        /** "+2 em … RDS" — Redução de Danos Sofridos, which also reaches magical hits. */
+        /** "+2 em DF e RDS" — the +2 is the DF's; the RDS is one instance (table ruling, 2026-10-13). */
         @Override
         public int resolveDamageTakenReduction(final Character character) {
-            return PELE_RIJA_BONUS;
+            return Resistance.RDS.instance();
         }
     },
 
     /**
      * "Sempre que for atingido por um ataque Corpo-a-Corpo, o atacante sofre 1 ponto de Dano
-     * Físico Elemental: Natural."
+     * Elemental: Natural."
      */
     // Real through Feat#resolveRetaliation: reported on a landed melee hit, dealt by the caller.
     // The +2 applies when the attacker struck with a Weapon they treat as an Arma Natural
@@ -242,7 +250,7 @@ public enum MonstruosoFeat implements Feat {
     //  read as either.
     SANGUE_ACIDO(
             "Sempre que for atingido por um ataque Corpo-a-Corpo, o atacante sofre 1 ponto de "
-                    + "Dano Físico Elemental: Natural. Este dano aumenta em +2 se o atacante tiver "
+                    + "Dano Elemental: Natural. Este dano aumenta em +2 se o atacante tiver "
                     + "utilizado de Armas Naturais ou Desarmado.",
             FeatRequirements.builder()
                     .requiredCreatureType(CreatureType.MONSTRUOSO)
@@ -255,7 +263,7 @@ public enum MonstruosoFeat implements Feat {
             boolean naturalWeapon = attacker != null && attackSource instanceof Weapon weapon
                     && attacker.treatsAsNaturalWeapon(weapon);
             return new Retaliation(SANGUE_ACIDO_RETALIATION + (naturalWeapon ? SANGUE_ACIDO_NATURAL_WEAPON_BONUS : 0),
-                    new DamageDescriptor(DamageType.FISICO_ELEMENTAL, ElementalType.NATURAL), null, 0);
+                    new DamageDescriptor(DamageType.ELEMENTAL, ElementalType.NATURAL), null, 0);
         }
     },
 
@@ -432,6 +440,9 @@ public enum MonstruosoFeat implements Feat {
 
     private static final int PELE_RIJA_BONUS = 2;
 
+    /** ANATOMIA_UNICA's "Sua resistência às Correntes de Efeitos aumenta em +2". */
+    private static final int ANATOMIA_UNICA_EFFECT_CHAIN_RESISTANCE = 2;
+
     /** FEROCIDADE's "+1 … aumenta cumulativamente em +1 para cada Título Aventyr … Desperto". */
     private static int ferocidadeBonus(final Character character) {
         return FEROCIDADE_BASE_BONUS + character.getAllTitles().size();
@@ -444,7 +455,7 @@ public enum MonstruosoFeat implements Feat {
     /** CERBERO's "bônus racial de +1 no Atributo faltante". */
     private static final int CERBERO_RACIAL_BONUS = 1;
 
-    /** SANGUE_ACIDO's "1 ponto de Dano Físico Elemental: Natural". */
+    /** SANGUE_ACIDO's "1 ponto de Dano Elemental: Natural". */
     private static final int SANGUE_ACIDO_RETALIATION = 1;
 
     /** SANGUE_ACIDO's "aumenta em +2 se o atacante tiver utilizado de Armas Naturais". */
