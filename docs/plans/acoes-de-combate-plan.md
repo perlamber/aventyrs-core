@@ -236,10 +236,12 @@ exclusion ruling).
   item-damage relay like `/hits`.
 - **A foe's Encontrão, and Atacar Objetos against a player**, need a roll-request kind of their own. Today the Narrador
   resolves them with an ATTACK request plus the hazard and condition tools.
-- **Investida in the client** still lands through the Dijkstra `chargeLandings`. It does not yet apply
-  `ChargeService#refusalForLine` (straight line, minimum distance), and its run opens no Reação windows for hostiles
-  other than its target.
 - **Saltar's "danos iguais ou superiores à metade dos PV interrompe o salto"** is not checked when a jump pauses at a
   window. `canStillMove` checks only the Condições.
-- **Uso de Perícia charging 2PA** on a GM check answered in the active combatant's own Turn is not wired. The ruling
-  "no at-will Perícia rolls" stands.
+
+**Settled (2026-10-14):**
+- **Investida** is wired in the client. It lands in a straight, clear line at least the size table's Movimento Base
+  away (`ChargeService#refusalForLine`), and its run opens Reação windows for every hostile but its target. The swing
+  waits for them and is forgone if the run is stopped.
+- **Answering a GM check on one's own Turn charges no PA.** That is the intended behaviour (table ruling, 2026-10-14),
+  not a gap.
