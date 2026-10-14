@@ -21,6 +21,8 @@ import org.aventyrs.core.sheet.CharacterSheet;
 import org.aventyrs.core.sheet.CombatantSheet;
 import org.aventyrs.core.sheet.IllegalOperationException;
 import org.aventyrs.core.sheet.Player;
+import org.aventyrs.core.sheet.PreparedAction;
+import org.aventyrs.core.sheet.PreparedActionKind;
 import org.aventyrs.core.skill.SkillType;
 import org.aventyrs.core.util.TranslatableMessages;
 import org.junit.jupiter.api.BeforeEach;
@@ -29,10 +31,12 @@ import org.junit.jupiter.api.Test;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -198,17 +202,34 @@ class RouteReactionTest {
     @Test
     void aPreparacaoFiresOnceAndLapsesAtTheHoldersNextTurn() {
         CharacterSheet sheet = combatant(true);
-        assertThrows(IllegalOperationException.class,
-                () -> preparation.prepare(sheet, "Golpe", ActionCost.ofActionPoints(3), null));
+        assertEquals(TranslatableMessages.PREPARED_ACTION_TOO_COSTLY,
+                assertThrows(IllegalOperationException.class, () -> preparation.prepare(sheet,
+                        PreparedActionKind.SPELL, "BOLA_DE_FOGO", "Bola de Fogo", ActionCost.ofActionPoints(3), null))
+                        .getMessage());
 
-        preparation.prepare(sheet, "Ataque com a espada", ActionCost.ofActionPoints(2), null);
+        PreparedAction held = preparation.prepare(sheet, PreparedActionKind.ATTACK, "espada", "Ataque com a espada",
+                ActionCost.ofActionPoints(2), null);
+        assertEquals(PreparedActionKind.ATTACK, held.getKind());
+        assertEquals("espada", held.getKey());
         assertTrue(preparation.canFire(sheet, null));
-        preparation.fire(sheet, null);
+        assertSame(held, preparation.fire(sheet, null));
         assertFalse(preparation.canFire(sheet, null));
 
-        preparation.prepare(sheet, "Ataque com a espada", ActionCost.ofActionPoints(2), null);
+        preparation.prepare(sheet, PreparedActionKind.ATTACK, "espada", "Ataque com a espada",
+                ActionCost.ofActionPoints(2), null);
         sheet.startTurn(2);
         assertFalse(preparation.canFire(sheet, null), "lapses as the holder's next Turn begins");
+    }
+
+    @Test
+    void aReactionOrPassiveIsNotPreparableButAFreeActionIs() {
+        CharacterSheet sheet = combatant(true);
+        assertEquals(Optional.of(TranslatableMessages.PREPARED_ACTION_NOT_PREPARABLE),
+                preparation.refusalToPrepare(sheet, ActionCost.REACTION, null));
+        assertEquals(Optional.of(TranslatableMessages.PREPARED_ACTION_NOT_PREPARABLE),
+                preparation.refusalToPrepare(sheet, ActionCost.NONE, null));
+        assertTrue(preparation.refusalToPrepare(sheet, ActionCost.FREE_ACTION, null).isEmpty());
+        assertTrue(preparation.refusalToPrepare(sheet, ActionCost.ofActionPoints(1), null).isEmpty());
     }
 
     /** A client's stand-in carries no weapon; its owner's advertised reach is what threatens. */

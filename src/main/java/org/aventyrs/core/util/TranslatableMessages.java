@@ -661,6 +661,9 @@ public class TranslatableMessages {
     /** Preparação: the named action costs more than 2PA — "cujo Tempo seja igual ou inferior à 2PA". */
     public static final String PREPARED_ACTION_TOO_COSTLY = "PREPARED_ACTION_TOO_COSTLY";
 
+    /** Preparação: the picked action is already a Reação — it has no Turn of its own to be held from. */
+    public static final String PREPARED_ACTION_NOT_PREPARABLE = "PREPARED_ACTION_NOT_PREPARABLE";
+
     /** Firing a Preparação: none is held, or it was already fired or lapsed. */
     public static final String NO_PREPARED_ACTION = "NO_PREPARED_ACTION";
 

@@ -56,7 +56,7 @@ Phases 1–7 were re-planned on 2026-10-14 — see below.
 | Rendido | A voluntary Condição that the controller (or the GM for monsters) declares. It carries the Estado Desprevenido and ends when its holder takes any action. Imobilizar accepts **Rendido or Inconsciente** (PV < 0) targets. |
 | Recuo Defensivo | No step may reduce the hex distance to any enemy within Curta of the start. The end hex must be farther from each of them than the start was. |
 | Asfixia out of combat | A per-character counter. In combat it ticks at the start of the character's Turn. Out of combat the GM ticks "+1 Rodada" from Passar Tempo. Leaving the water or gas resets it. |
-| Preparação | 3PA: name one action of ≤2PA with its choices fixed. Until the holder's next Turn begins, they may fire it once at any moment of another combatant's Turn, using a dedicated extra Reação. The trigger is narrated and not checked; the action is lost if unused. |
+| Preparação | 3PA: pick one real action of ≤2PA (Habilidade, Magia, Ataque, Habilidade de Competência action; never a plain Perícia roll or a Reação). Until the holder's next Turn begins, they may fire it once at any moment of another combatant's Turn, using a dedicated extra Reação. Targets and options are chosen at firing, and PM/PD/PV are paid then (revised 2026-10-14, core 0.1.6.21). The trigger is narrated and not checked: every declared action of another combatant shows in the history panel with a "Reagir" button. The action is lost if unused. |
 | Postura Defensiva | +2 Defesas (+3 while using an Escudo, checked live; Asas Adamantinas count, per the existing ruling) until the holder's **own next Turn begins** ("por 1 Rodada" reading). Re-taken each Turn for 2PA. Not cumulative with itself. |
 | Sacrifício | Once per combat Scene. The ally must be adjacent to the interceptor. The interceptor is hit automatically, the Efeito Crítico Menor applies even without a crit (a Maior stays Maior), and every Corrente fires regardless of the Resistência à Corrente margin. |
 
@@ -240,6 +240,10 @@ exclusion ruling).
   window. `canStillMove` checks only the Condições.
 
 **Settled (2026-10-14):**
+- **Preparação** holds a real action (core 0.1.6.21, `PreparedActionKind` + caller key). The client picks it from the
+  sheet's Habilidades, Magias, Ataques and competency actions. Firing opens that action's usual modal off-Turn, priced
+  by the Preparação's own Reação. Every declared action of another combatant is relayed (`/combatant-actions`) to the
+  history panel with a "Reagir" button.
 - **Investida** is wired in the client. It lands in a straight, clear line at least the size table's Movimento Base
   away (`ChargeService#refusalForLine`), and its run opens Reação windows for every hostile but its target. The swing
   waits for them and is forgone if the run is stopped.
