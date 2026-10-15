@@ -3,7 +3,18 @@ package org.aventyrs.core.monster.model.bestaalada;
 import org.aventyrs.core.character.Resistance;
 import lombok.Getter;
 import org.aventyrs.core.ability.ActiveAbility;
+import org.aventyrs.core.character.DamageDescriptor;
 import org.aventyrs.core.character.DamageScope;
+import org.aventyrs.core.character.DamageType;
+import org.aventyrs.core.magic.ElementalType;
+import org.aventyrs.core.scene.AuraPulse;
+import org.aventyrs.core.scene.AuraReach;
+import org.aventyrs.core.scene.MonsterAura;
+import org.aventyrs.core.scene.Range;
+import org.aventyrs.core.sheet.ConditionType;
+import org.aventyrs.core.effect.CriticalEffectType;
+import org.aventyrs.core.effect.EffectChain;
+import org.aventyrs.core.effect.LancarAoChao;
 import org.aventyrs.core.modifier.ModifierType;
 import org.aventyrs.core.monster.MonsterCategory;
 import org.aventyrs.core.monster.model.AbilityContext;
@@ -16,6 +27,8 @@ import org.aventyrs.core.sheet.ActionCost;
 import org.aventyrs.core.sheet.CombatantSheet;
 import org.aventyrs.core.sheet.DamageScopeEffect;
 import org.aventyrs.core.sheet.SkillDifficultyShift;
+import org.aventyrs.core.sheet.SourcedState;
+import org.aventyrs.core.skill.AttackSource;
 import org.aventyrs.core.sheet.TemporaryEffect;
 import org.aventyrs.core.skill.SkillType;
 
@@ -44,16 +57,16 @@ import static org.aventyrs.core.monster.model.MonstrousTraits.standing;
 public enum BestaAladaAbility implements MonstrousAbility {
 
     /** Deviante Movimento +2; Mergulho Atroz (only in flight) +2d6, landing; Apex Margem +4. */
-    PLANAR_E_PAIRAR("Planar e Pairar", PRESA, 
+    PLANAR_E_PAIRAR("Planar e Pairar", PRESA,
             "Efeito Passivo: Adquire Movimento Base de Voo por 2 Rodadas após correr ou saltar.\n"
-                    + "Efeito Ativo – Mergulho Atroz [3PA, 2PD]: Apenas enquanto voando, este ataque é uma investida e inflige +2d6 pontos de danos. Esta habilidade encerra efeitos de voo atuais. Resfriamento 2.\n"
+                    + "Efeito Ativo – Mergulho Atroz [3PA, 2PD]: Apenas enquanto voando, este ataque (físico) é uma investida e inflige +2d6 pontos de danos. Esta habilidade encerra efeitos de voo atuais. Resfriamento 2.\n"
                     + "Aprimoramentos dos Deviantes\n"
                     + "• Movimento Base +2UD\n"
                     + "Aprimoramentos dos Predadores\n"
                     + "• Mergulho Atroz – Corrente de Efeitos Monstruosa – Empurrão Atroz. Este ataque recebe Atordoante como um Efeito Crítico adicional.\n"
                     + "“Empurrão Atroz – Alvo é empurrado 2UD e então derrubado.”\n"
                     + "Aprimoramentos dos Apex\n"
-                    + "• Mergulho Atroz – Margem Crítica Menor aumentada em +4 números, recebe Atordoante como Efeito Crítico Adicional.") {
+                    + "• Mergulho Atroz – Margem Crítica Menor aumentada em +4 números, recebe Prevenir como Efeito Crítico Adicional.") {
         @Override
         public int resolveModifier(final ModifierType type, final AbilityContext context) {
             return type == ModifierType.MOVEMENT && context.isAtLeast(DEVIANTE) ? 2 : 0;
@@ -70,30 +83,54 @@ public enum BestaAladaAbility implements MonstrousAbility {
                     .cooldownRounds(2)
                     .usableWhen(CombatantSheet::isFlying)
                     .onActivated(sheet -> sheet.setFlying(false))
-                    .effect(bonus(ModifierType.EXTRA_DAMAGE_DICE, 2, 1, "Mergulho Atroz"));
+                    .effect(bonus(ModifierType.EXTRA_DAMAGE_DICE, 2, 1, "Mergulho Atroz"))
+                    .effect(() -> new SourcedState(MERGULHO_ATROZ, 1));
             if (context.isAtLeast(APEX)) {
                 mergulho.effect(bonus(ModifierType.LESSER_CRITICAL_MARGIN, 4, 1, "Mergulho Atroz"));
             }
             return List.of(mergulho.build());
         }
 
+        /** Predador: "Corrente de Efeitos Monstruosa – Empurrão Atroz" — the derrubar half; the 2UD push is the caller's. */
+        @Override
+        public List<EffectChain> resolveAttackEffectChains(final SkillType attackSkill, final AttackSource attackSource,
+                                                           final CombatantSheet holder, final AbilityContext context) {
+            return context.isAtLeast(PREDADOR) && holder.hasEffectFrom(MERGULHO_ATROZ)
+                    ? List.of(new LancarAoChao(holder))
+                    : List.of();
+        }
+
+        /** Predador "recebe Atordoante como um Efeito Crítico adicional", Apex "recebe Prevenir" (20261015). */
+        @Override
+        public List<CriticalEffectType> resolveAdditionalCriticalEffects(final SkillType attackSkill,
+                                                                         final AttackSource attackSource,
+                                                                         final CombatantSheet holder,
+                                                                         final AbilityContext context) {
+            if (!context.isAtLeast(PREDADOR) || !holder.hasEffectFrom(MERGULHO_ATROZ)) {
+                return List.of();
+            }
+            return context.isAtLeast(APEX)
+                    ? List.of(CriticalEffectType.ATORDOANTE, CriticalEffectType.PREVENIR)
+                    : List.of(CriticalEffectType.ATORDOANTE);
+        }
+
         @Override
         public String getUnappliedNote() {
             return "Taking flight for 2 Rodadas after running or jumping (the caller takes off and lands; nothing times "
-                    + "a flight), Empurrão Atroz (no Corrente reaches a target) and the extra Atordoante (an Efeito "
-                    + "Ativo cannot add a Crítico to a later attack). The +2d6 rides every attack that Turn.";
+                    + "a flight), and Empurrão Atroz's 2UD push (its derrubar lands as Lançar ao Chão; the caller "
+                    + "moves the token). The +2d6 rides every attack that Turn.";
         }
     },
 
     /** Flight at Movimento +2; Investida Aérea's +1 GD, +1d6 (Apex +2d6), Deviante +3 Movimento, Predador Margem +4. */
-    DESFILE_DE_SYLPH("Desfile de Sylph", PRESA, 
+    DESFILE_DE_SYLPH("Desfile de Sylph", PRESA,
             "Efeito Passivo: Movimento Base de Voo e Movimento Base +2UD enquanto voando.\n"
                     + "Efeito Ativo – Investida Aérea [3PA, 2PD]: Investida Área é uma investida cujo ataque não interrompe o movimento, permitindo o deslocamento máximo enquanto inflige danos em um alvo em sua trajetória. O Grau de Dificuldade da Perícia de Ataque aumenta em +1 nível, este ataque recebe a corrente de Efeitos Monstruosa – Abduzir. Resfriamento 2.\n"
                     + "“Abduzir – Dano do ataque aumenta em +1d6, o alvo é agarrado e movido juntamente com o Monstro.”\n"
                     + "Aprimoramentos dos Deviantes\n"
                     + "• Investida Aérea – Movimento Base +3UD.\n"
                     + "Aprimoramentos dos Predadores\n"
-                    + "• Investida Aérea – Margem Crítica Menor +4, Efeito Crítico adicional Guilhotina.\n"
+                    + "• Investida Aérea – Margem Crítica Menor +4, recebe Guilhotina como Efeito Crítico adicional.\n"
                     + "Aprimoramentos dos Apex\n"
                     + "• Investida Aérea – Dano +1d6, Tempo de Resfriamento reduzido para 1 Rodada.") {
         @Override
@@ -121,14 +158,26 @@ public enum BestaAladaAbility implements MonstrousAbility {
             if (context.isAtLeast(PREDADOR)) {
                 investida.effect(bonus(ModifierType.LESSER_CRITICAL_MARGIN, 4, 1, "Investida Aérea"));
             }
+            investida.effect(() -> new SourcedState(INVESTIDA_AEREA, 1));
             return List.of(investida.build());
+        }
+
+        /** Predador: "recebe Guilhotina como Efeito Crítico adicional" — on the Investida Aérea. */
+        @Override
+        public List<CriticalEffectType> resolveAdditionalCriticalEffects(final SkillType attackSkill,
+                                                                         final AttackSource attackSource,
+                                                                         final CombatantSheet holder,
+                                                                         final AbilityContext context) {
+            return context.isAtLeast(PREDADOR) && holder.hasEffectFrom(INVESTIDA_AEREA)
+                    ? List.of(CriticalEffectType.GUILHOTINA)
+                    : List.of();
         }
 
         @Override
         public String getUnappliedNote() {
-            return "Abduzir's grab and carry, and the Predador's extra Guilhotina: no Corrente reaches a target and an "
-                    + "Efeito Ativo cannot add a Crítico to a later attack. The GD, dice, Movimento and Margem are "
-                    + "applied for the Turn.";
+            return "Abduzir's grab and carry: a grab goes through GrappleService's hand budget, and nothing moves a "
+                    + "held target with its captor. The GD, dice, Movimento, Margem and Guilhotina are applied for "
+                    + "the Turn.";
         }
     },
 
@@ -277,9 +326,9 @@ public enum BestaAladaAbility implements MonstrousAbility {
     },
 
     /** Forma de Vento: immune to everything not Elemental or Primordial for 2 Rodadas. */
-    PREDILETO_DE_SYLPH("Predileto de Sylph", APEX, 
+    PREDILETO_DE_SYLPH("Predileto de Sylph", APEX,
             "Efeito Passivo: Sempre sob efeito de Furtividade enquanto voando. Ações ofensivas efetuadas pelo Monstro desativam a Furtividade, retornando ao estado furtivo após 2 Rodadas sem novas ações ofensivas.\n"
-                    + "Efeito Ativo – Forma de Vento [3PA, 5PD]: Entra imediatamente em Furtividade. Adicionalmente o corpo do Monstro se torna incorpóreo, se tornando imune à efeitos e danos que não sejam Elementais ou Primordiais. O efeito adicional possui Duração de Concentração +2 Rodadas e Resfriamento 2.\n"
+                    + "Efeito Ativo – Forma de Vento [3PA, 5PD]: Entra imediatamente em Furtividade. Adicionalmente o corpo do Monstro se torna incorpóreo, se tornando imune à efeitos e danos que não sejam Elementais, Profanos ou Primordiais. O efeito adicional possui Duração de Concentração +2 Rodadas e Resfriamento 2.\n"
                     + "Aprimoramento das Abominações\n"
                     + "• Forma de Vento – Tempo de Ação reduzido para 1PA, Custo de Ativação reduzido para 3PD, Tempo de Resfriamento reduzido para 1 Rodada.") {
         @Override
@@ -287,13 +336,15 @@ public enum BestaAladaAbility implements MonstrousAbility {
             boolean abominacao = context.isAtLeast(ABOMINACAO);
             return List.of(MonstrousActiveAbility.builder()
                     .name("Forma de Vento")
-                    .description("Corpo incorpóreo: imune a efeitos e danos que não sejam Elementais ou Primordiais.")
+                    .description("Corpo incorpóreo: imune a efeitos e danos que não sejam Elementais, Profanos ou "
+                            + "Primordiais.")
                     .actionPointCost(ActionCost.ofActionPoints(abominacao ? 1 : 3))
                     .determinationPointCost(abominacao ? 3 : 5)
                     .durationInRounds(FORMA_DE_VENTO_DURATION)
                     .cooldownRounds(abominacao ? 1 : 2)
                     .effect(() -> new DamageScopeEffect(DamageScopeEffect.Kind.IMMUNE,
-                            DamageScope.NON_ELEMENTAL_NON_PRIMORDIAL, FORMA_DE_VENTO_DURATION, "Forma de Vento"))
+                            DamageScope.NON_ELEMENTAL_NON_PROFANE_NON_PRIMORDIAL, FORMA_DE_VENTO_DURATION,
+                            "Forma de Vento"))
                     .build());
         }
 
@@ -306,31 +357,77 @@ public enum BestaAladaAbility implements MonstrousAbility {
     },
 
     /** Ranged physical immunity and the storm are not modelled; Invocar Tempestade's price is. */
-    INVOCAR_DE_TEMPESTADES("Invocar de Tempestades", APEX, 
-            "Efeito Passivo: Uma aura de Ventos Caóticos cerca este Monstro. A Área Circular Curta ao redor é sempre terreno difícil, o efeito aumento para Área Circular Média enquanto o monstro estiver voando. Este monstro é imune a Ataques à Distância físicos.\n"
-                    + "Efeito Ativo - Invocar Tempestade [2PA 3PD]: No ato da Ativação e no início de cada Rodada, Personagens afetados pela aura de Ventos Caóticos são cegados e empurrados 2UD para trás a cada Rodada. Duração 3 Rodadas e Resfriamento 2.\n"
+    INVOCAR_DE_TEMPESTADES("Invocar de Tempestades", APEX,
+            "Efeito Passivo: Invoca a Aura de Ventos Caóticos.\n"
+                    + "“Aura dos Ventos Caóticos - Área Circular Curta se torna Terreno Difícil, este Efeito aumenta para Área Circular Média enquanto o monstro estiver voando. Este monstro é imune a Ataques à Distância físicos.\n"
+                    + "Efeito Ativo - Invocar Tempestade [2PA 3PD]: No ato da Ativação e no início de cada Rodada, Personagens afetados pela aura de Ventos Caóticos recebem são cegados (Condição Cego) e empurrados 2UD para trás a cada Rodada. Duração 3 Rodadas e Resfriamento 2.\n"
                     + "Aprimoramento das Abominações\n"
+                    + "• Aura dos Ventos Caóticos aumenta para Área Circular Longa enquanto o Monstro estiver voando.\n"
                     + "• Invocar Tempestade – Antes de serem empurrados, os personagens afetados pela aura de Ventos Caóticos sofrem 2d6 pontos de Dano Elemental: Vento. No fim de cada Rodada cada personagem na área sofre 2d6 pontos de Dano Elemental: Eletricidade. Danos causados por Invocar Tempestade são reduzidos em -1 para cada UD entre o personagem e o Monstro.") {
         @Override
         public List<ActiveAbility> resolveActiveAbilities(final AbilityContext context) {
             return List.of(MonstrousActiveAbility.builder()
-                    .name("Invocar Tempestade")
-                    .description("Personagens na aura de Ventos Caóticos são cegados e empurrados 2UD a cada Rodada.")
+                    .name(INVOCAR_TEMPESTADE)
+                    .description("Personagens na aura de Ventos Caóticos são cegados (Cego) e empurrados 2UD a cada "
+                            + "Rodada" + (context.isAtLeast(ABOMINACAO)
+                            ? ", sofrendo antes 2d6 de Dano Elemental: Vento (-1 por UD)." : "."))
                     .actionPointCost(ActionCost.ofActionPoints(2))
                     .determinationPointCost(3)
                     .durationInRounds(3)
                     .cooldownRounds(2)
+                    .effect(() -> new SourcedState(INVOCAR_TEMPESTADE, 3))
                     .build());
+        }
+
+        /**
+         * The Aura dos Ventos Caóticos — Terreno Difícil in Área Circular Curta, Média while flying (Abominação Longa) —
+         * and, while Invocar Tempestade runs, its pulse: Cego and a 2UD push (Abominação first 2d6 Vento, -1 per UD).
+         */
+        @Override
+        public List<MonsterAura> resolveAuras(final CombatantSheet holder, final AbilityContext context) {
+            Range radius = !holder.isFlying() ? Range.DISTANCIA_CURTA
+                    : context.isAtLeast(ABOMINACAO) ? Range.DISTANCIA_LONGA : Range.DISTANCIA_MEDIA;
+            MonsterAura.MonsterAuraBuilder aura = MonsterAura.builder()
+                    .source(VENTOS_CAOTICOS)
+                    .radius(radius)
+                    .reach(AuraReach.ALL_OTHERS)
+                    .difficultTerrain(true);
+            if (holder.hasEffectFrom(INVOCAR_TEMPESTADE)) {
+                AuraPulse.AuraPulseBuilder pulse = AuraPulse.builder()
+                        .condition(ConditionType.CEGO)
+                        .conditionRounds(1)
+                        .pushUd(2);
+                if (context.isAtLeast(ABOMINACAO)) {
+                    pulse.dice(2).descriptor(new DamageDescriptor(DamageType.ELEMENTAL, ElementalType.VENTO))
+                            .reductionPerUd(1);
+                }
+                aura.pulse(pulse.build());
+            }
+            return List.of(aura.build());
         }
 
         @Override
         public String getUnappliedNote() {
-            return "Immunity to ranged physical attacks (a hit carries no range), the difficult terrain of the aura and "
-                    + "everything Invocar Tempestade does to others: geometry. Only the price is applied.";
+            return "Immunity to ranged physical attacks (the immunity hook sees no range), Invocar Tempestade's pulse "
+                    + "\"no ato da Ativação\" (it pulses at the holder's Turn starts) and the Abominação's 2d6 "
+                    + "Eletricidade at the end of each Rodada. The aura's Terreno Difícil and push are reported for the "
+                    + "caller's map.";
         }
     };
 
     private static final int FORMA_DE_VENTO_DURATION = 2;
+
+    /** The Aura dos Ventos Caóticos' source. */
+    private static final String VENTOS_CAOTICOS = "Aura dos Ventos Caóticos";
+
+    /** Invocar Tempestade — the Efeito Ativo and the window its pulse runs in. */
+    private static final String INVOCAR_TEMPESTADE = "Invocar Tempestade";
+
+    /** Mergulho Atroz — the Efeito Ativo and the one-Turn window of its attack. */
+    private static final String MERGULHO_ATROZ = "Mergulho Atroz";
+
+    /** Investida Aérea — the Efeito Ativo and the one-Turn window of its attack. */
+    private static final String INVESTIDA_AEREA = "Investida Aérea";
 
     private final String displayName;
     private final MonsterCategory tier;

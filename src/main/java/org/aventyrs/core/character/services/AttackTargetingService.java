@@ -76,4 +76,16 @@ public interface AttackTargetingService {
      */
     Optional<AreaOfEffect> resolveAttackArea(Character attacker, SkillType attackSkill, AttackSource attackSource,
                                              SkillRoll skillRoll);
+
+    /**
+     * {@link #resolveAttackArea(Character, SkillType, AttackSource, SkillRoll)} seeing the attacker's sheet — what a
+     * Habilidade Monstruosa whose area is bought by an Efeito Ativo needs (Lançar Esporos, core 0.1.7.3). {@code
+     * AttackDelivery} asks this one.
+     */
+    default Optional<AreaOfEffect> resolveAttackArea(final CombatantSheet attacker, final SkillType attackSkill,
+                                                     final AttackSource attackSource, final SkillRoll skillRoll) {
+        return resolveAttackArea(attacker.getCharacter(), attackSkill, attackSource, skillRoll)
+                .or(() -> Optional.ofNullable(org.aventyrs.core.monster.MonstrousAbilityGrant
+                        .attackArea(attacker.getCharacter(), attackSkill, attackSource, attacker)));
+    }
 }

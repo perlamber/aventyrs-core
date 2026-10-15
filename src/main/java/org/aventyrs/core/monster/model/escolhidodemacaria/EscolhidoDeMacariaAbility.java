@@ -9,22 +9,37 @@ import org.aventyrs.core.character.DamageSanctity;
 import org.aventyrs.core.character.DamageScope;
 import org.aventyrs.core.character.DamageType;
 import org.aventyrs.core.character.Resistance;
+import org.aventyrs.core.effect.CriticalEffectType;
+import org.aventyrs.core.effect.EffectChain;
+import org.aventyrs.core.effect.monstrous.MarcaDaEscuridao;
+import org.aventyrs.core.effect.monstrous.MonstrousCondition;
+import org.aventyrs.core.effect.monstrous.SangriaProfana;
+import org.aventyrs.core.effect.monstrous.Sanguenomancia;
 import org.aventyrs.core.magic.ElementalType;
 import org.aventyrs.core.modifier.ModifierType;
 import org.aventyrs.core.monster.MonsterCategory;
 import org.aventyrs.core.monster.model.AbilityContext;
+import org.aventyrs.core.monster.model.ActivationTrigger;
 import org.aventyrs.core.monster.model.ImplementationStatus;
 import org.aventyrs.core.monster.model.MonsterModel;
 import org.aventyrs.core.monster.model.MonsterSummoning;
 import org.aventyrs.core.monster.model.MonstrousAbility;
 import org.aventyrs.core.monster.model.MonstrousActiveAbility;
 import org.aventyrs.core.monster.model.MonstrousTraits;
+import org.aventyrs.core.scene.AuraPulse;
+import org.aventyrs.core.scene.AuraReach;
+import org.aventyrs.core.scene.MonsterAura;
+import org.aventyrs.core.scene.Range;
 import org.aventyrs.core.sheet.ActionCost;
+import org.aventyrs.core.sheet.CombatantSheet;
 import org.aventyrs.core.sheet.DamageScopeEffect;
+import org.aventyrs.core.sheet.SourcedState;
+import org.aventyrs.core.sheet.TemporaryBonus;
 import org.aventyrs.core.sheet.LifeSteal;
 import org.aventyrs.core.sheet.Regeneration;
 import org.aventyrs.core.sheet.SkillDifficultyShift;
 import org.aventyrs.core.sheet.TemporaryEffect;
+import org.aventyrs.core.skill.AttackSource;
 import org.aventyrs.core.skill.SkillType;
 
 import java.util.ArrayList;
@@ -57,54 +72,73 @@ import static org.aventyrs.core.monster.model.MonstrousTraits.bonus;
 @Getter
 public enum EscolhidoDeMacariaAbility implements MonstrousAbility {
 
-    /** Força and Instinto +2, RDS; Sanguenomancia Inata's Roubo de Vida 2 and +1 Vigor for 3 Rodadas. */
-    RENASCIDO("Renascido", PRESA, 
-            "Efeito Passivo: Anatomia de Morto-vivo. Você é um morto-vivo senciente, consciente de sua condição e sua Centelha ainda brilha. Recebe Bônus Racial de +2 em Força e Instinto e RDS.\n"
-                    + "Efeito Ativo – Sanguenomancia Inata [3PA, 3PD]: Este é um Ataque Mágico desferido Corpo-a-Corpo utilizado para roubar a vitalidade dos vivos e se alimentar. Este ataque não inflige danos, mas o alvo sofre Redutor Temporário de -1 em Vigor e o Monstro recebe Bônus Temporário de +1 em Vigor (Efeito de Doença, não cumulativo), então recebe Roubo de Vida 2 por 3 Rodadas. Pontos de Vigor perdidos desta forma são recuperados após 1 Descanso Verdadeiro. Resfriamento 3.\n"
+    /**
+     * Renascido Monstruoso (20261015): Força and Instinto +2, RDS and Roubo de Vida 2 for 3 Rodadas after any Macária
+     * Efeito Ativo or Título Habilidade, renewing; Sanguenomancia Inata's melee Mágico attack takes Vigor (-1/-2/-3)
+     * from the target and gives the monster +1 (Apex +2).
+     */
+    RENASCIDO("Renascido Monstruoso", PRESA,
+            "Efeito Passivo: Anatomia de Morto-vivo. Você é um morto-vivo senciente, consciente de sua condição e sua Centelha ainda brilha. Após ativar qualquer Habilidade Monstruosa do Modelo Escolhido de Macária ou Habilidade de Título Aventyr recebe Bônus Racial de +2 em Força e Instinto, RDS e Roubo de Vida 2 por 3 Rodadas (Efeitos não cumulativos, novas instâncias renovam a Duração do Efeito).\n"
+                    + "Efeito Ativo – Sanguenomancia Inata [3PA, 3PD]: Este é um Ataque (Mágico) desferido Corpo-a-Corpo utilizado para roubar a vitalidade dos vivos e se alimentar. Este ataque não inflige danos, mas o alvo sofre Redutor Temporário de -1 em Vigor e o Monstro recebe Bônus Temporário de +1 em Vigor (Efeito de Doença, não cumulativo), pontos de Vigor perdidos desta forma são recuperados cada após 1 Descanso. Resfriamento 3.\n"
                     + "Aprimoramento dos Deviantes\n"
                     + "• Desperta um Título Aventyr e uma Especialização\n"
                     + "Aprimoramento dos Predadores\n"
-                    + "• Desperta 3 Habilidades de Título\n"
+                    + "• Sanguenomancia Inata – O Redutor em Vigor aumenta para -2 (mínimo Vigor 1).\n"
+                    + "• Desperta 2 Habilidades de Título.\n"
                     + "Aprimoramento dos Apex\n"
-                    + "• Desperta uma Especialização, 1 Habilidade de Título e 1 Suprema") {
+                    + "• Sanguenomancia Inata – Redutores em Vigor aumenta para -3 (mínimo Vigor 1), Bônus em Vigor aumentam para +2.\n"
+                    + "• Desperta uma 1 Habilidade de Título e 1 Suprema.") {
         @Override
-        public Map<AttributeDomain, Integer> resolveRacialAttributeBonuses(final AbilityContext context) {
-            return Map.of(AttributeDomain.STRENGTH, 2, AttributeDomain.INSTINCT, 2);
-        }
-
-        @Override
-        public int resolveModifier(final ModifierType type, final AbilityContext context) {
-            return type == ModifierType.DAMAGE_TAKEN_REDUCTION ? Resistance.RDS.instance() : 0;
+        public List<TemporaryEffect> resolveActivationTriggeredEffects(final ActivationTrigger trigger,
+                                                                       final AbilityContext context) {
+            if (!trigger.titleAbility() && trigger.model() != MonsterModel.ESCOLHIDO_DE_MACARIA) {
+                return List.of();
+            }
+            return List.of(
+                    new TemporaryBonus(ModifierType.STRENGTH_BONUS, 2, RENASCIDO_ROUNDS, RENASCIDO_SOURCE),
+                    new TemporaryBonus(ModifierType.INSTINCT_BONUS, 2, RENASCIDO_ROUNDS, RENASCIDO_SOURCE),
+                    new TemporaryBonus(ModifierType.DAMAGE_TAKEN_REDUCTION, Resistance.RDS.instance(),
+                            RENASCIDO_ROUNDS, RENASCIDO_SOURCE),
+                    new LifeSteal(2, Optional.of(RENASCIDO_ROUNDS), RENASCIDO_SOURCE));
         }
 
         @Override
         public List<ActiveAbility> resolveActiveAbilities(final AbilityContext context) {
+            int gain = context.isAtLeast(APEX) ? 2 : 1;
             return List.of(MonstrousActiveAbility.builder()
                     .name("Sanguenomancia Inata")
-                    .description("Rouba a vitalidade do alvo: Bônus Temporário de +1 em Vigor e Roubo de Vida 2 por "
-                            + SANGUENOMANCIA_ROUNDS + " Rodadas.")
+                    .description("Ataque (Mágico) Corpo-a-Corpo sem dano: o alvo sofre -" + sanguenomanciaLoss(context)
+                            + " em Vigor (Doença, até 1 Descanso) e o Monstro recebe +" + gain + " em Vigor.")
                     .actionPointCost(ActionCost.ofActionPoints(3))
                     .determinationPointCost(3)
                     .durationInRounds(SANGUENOMANCIA_ROUNDS)
                     .cooldownRounds(3)
-                    .effect(bonus(ModifierType.VIGOR_BONUS, 1, SANGUENOMANCIA_ROUNDS, "Sanguenomancia Inata"))
-                    .effect(() -> new LifeSteal(2, Optional.of(SANGUENOMANCIA_ROUNDS)))
+                    .effect(bonus(ModifierType.VIGOR_BONUS, gain, SANGUENOMANCIA_ROUNDS, "Sanguenomancia Inata"))
+                    .effect(() -> new SourcedState(SANGUENOMANCIA_WINDOW, 1))
                     .build());
         }
 
         @Override
+        public List<EffectChain> resolveAttackEffectChains(final SkillType attackSkill, final AttackSource attackSource,
+                                                           final CombatantSheet holder, final AbilityContext context) {
+            return holder.hasEffectFrom(SANGUENOMANCIA_WINDOW)
+                    ? List.of(new Sanguenomancia(sanguenomanciaLoss(context)))
+                    : List.of();
+        }
+
+        @Override
         public String getUnappliedNote() {
-            return "Sanguenomancia Inata's Ataque Mágico and the target's -1 Vigor (a Doença on someone else, recovered "
-                    + "by a Descanso Verdadeiro) are the caller's; its own +1 Vigor is read as lasting the 3 Rodadas of "
-                    + "its Roubo de Vida. The Deviante/Predador/Apex Despertares (Título, Especialização, Habilidades, "
-                    + "Suprema) are the Narrador's to give the sheet.";
+            return "Sanguenomancia Inata's \"não inflige danos\" is the caller's (its hit carries the Corrente; the "
+                    + "caller deals no damage); the monster's own +Vigor is read as lasting 3 Rodadas, the text naming "
+                    + "none. The Deviante/Predador/Apex Despertares (Título, Especialização, Habilidades, Suprema) are "
+                    + "the Narrador's to give the sheet.";
         }
     },
 
     /** Vigor +2, Roubo de Vida 1/3/4; Instinto Predatório Mortis' +2 Iniciativa and PA (Apex Margem +3). */
-    CARRASCO_MORIMBUNDO("Carrasco Morimbundo", PRESA, 
+    CARRASCO_MORIMBUNDO("Carrasco Morimbundo", PRESA,
             "Efeito Passivo: Esqueletos, Zumbis, Carniçais e outras formas de mortos sem vontade própria são tipos de Carrascos Morimbundos, são resistentes e vorazes, recebem Bônus Racial de +2 em Vigor, Autocontrole 0 (não sofrem efeitos negativos por autocontrole zero) e recebem Roubo de Vida 1.\n"
-                    + "Efeito Ativo – Instinto Predatório Mortis [1PA e 2PD]: Bônus de +2 em Iniciativa e Pontos de Ação por 2 Rodadas. Esta Habilidade é utilizada apenas para atacar e devorar inimigos vivos, enquanto ativa o Carrasco Morimbundo ignora alvos que possuam Anatomia de Morto-Vivo e Anatomia de Objeto.\n"
+                    + "Efeito Ativo – Instinto Predatório Mortis [1PA e 2PD]: Bônus de +2 em Iniciativa e Pontos de Ação por 2 Rodadas. Esta Habilidade é utilizada apenas para atacar e devorar inimigos vivos, enquanto ativa o Carrasco Morimbundo ignora alvos que possuam Anatomia de Morto-Vivo e Anatomia de Objeto. Refrigeração 2.\n"
                     + "Aprimoramento dos Deviantes\n"
                     + "• Roubo de Vida aumenta para 3.\n"
                     + "Aprimoramento dos Predadores\n"
@@ -131,6 +165,7 @@ public enum EscolhidoDeMacariaAbility implements MonstrousAbility {
                     .actionPointCost(ActionCost.ofActionPoints(1))
                     .determinationPointCost(2)
                     .durationInRounds(INSTINTO_ROUNDS)
+                    .cooldownRounds(2)
                     .effect(bonus(ModifierType.INITIATIVE, 2, INSTINTO_ROUNDS, "Instinto Predatório Mortis"))
                     .effect(bonus(ModifierType.ACTION_POINTS, 2, INSTINTO_ROUNDS, "Instinto Predatório Mortis"));
             if (context.isAtLeast(APEX)) {
@@ -151,9 +186,9 @@ public enum EscolhidoDeMacariaAbility implements MonstrousAbility {
     },
 
     /** Procissão dos Desencarnados invokes Carrascos Moribundos (reported); Predador Carisma +2. */
-    SENHOR_DOS_MORTOS("Senhor dos Mortos", DEVIANTE, 
+    SENHOR_DOS_MORTOS("Senhor dos Mortos", DEVIANTE,
             "Efeito Passivo: Pode se comunicar, comandar e criar mortos-vivos que não esteja sobre o comando de outro Senhor dos Mortos ou de um Necromante (Título Aventyr). Este é um efeito de Aura e afeta quaisquer mortos-vivos em Área de Efeito Circular Curta. Apenas Mortos-Vivos que sejam de categoria inferior ao do Senhor dos Mortos e que não sejam Renascidos são afetados por este efeito (Efeito de Encantamento). A quantidade de mortos-vivos controlados ou invocados pelo Senhor dos Mortos não pode superar seu Valor de Carisma.\n"
-                    + "Efeito Ativo – Procissão dos Desencarnados [3PA, 4PD]: Invoca um Carrasco Moribundo Presa para auxiliar por Concentração + 5 Rodadas. Refrigeração 1.\n"
+                    + "Efeito Ativo – Procissão dos Desencarnados [3PA, 4PD]: Invoca um Carrasco Moribundo Presa para auxiliar. Duração igual à Concentração + 5 Rodadas, Refrigeração 1.\n"
                     + "Aprimoramento dos Predadores\n"
                     + "• Carisma +2\n"
                     + "• Procissão dos Desencarnados - invoca Carrascos Moribundos Deviantes.\n"
@@ -195,15 +230,15 @@ public enum EscolhidoDeMacariaAbility implements MonstrousAbility {
     },
 
     /** Incorpóreo, Margem Crítica +1, Predador flight; Garras Espectrais' price (Apex 5PD, 4 Rodadas). */
-    ESPECTRAL("Espectral", DEVIANTE, 
+    ESPECTRAL("Espectral", DEVIANTE,
             "Efeito Passivo: Incorpóreo, seus ataques são mágicos e tem a Margem Crítica Menor aumentada em +1 número.\n"
                     + "“Incorpóreo – Este monstro não possui um corpo, estando preso a plano material por uma forte força de vontade ou magias profanas. A ausência de um corpo torna imune a danos, exceto quando causados por Armas de Prata, fontes Primordiais, Elementais e Mágicas. Pode ignorar barreiras e terrenos difíceis em seus movimentos.”\n"
-                    + "Efeito Ativo – Garras Espectrais [2PA, 4PD]: Dano aumentado em +1d6, recebem Sangramento como Efeito Crítico adicional e recebe a Corrente de Efeitos Monstruosa – Sangria Profana. Este efeito tem Duração de 2 Rodadas e Resfriamento 2.\n"
+                    + "Efeito Ativo – Garras Espectrais [2PA, 4PD]: Dano aumentado em +1d6, recebem Sangramento como Efeito Crítico adicional e recebe a Corrente de Efeitos Monstruosa – Sangria Profana. Este efeito tem Duração de 3 Rodadas e Resfriamento 2.\n"
                     + "“Sangria Profana – Alvo perde 2PV e 1PD a cada Turno por Vigor Rodadas, este é um efeito de Sangramento. Espectrais recebem Roubo de Determinação 2 contra alvos afetados pela Sangria Profana.”\n"
                     + "Aprimoramento dos Predadores\n"
                     + "• Recebe Movimento Base de Voo e pode trespassar espaços ocupados por outros personagens\n"
                     + "Aprimoramento dos Apex\n"
-                    + "• Garras Espectrais – Custo de Ativação aumentado para 5PD, Duração aumentada para 4 Rodadas.") {
+                    + "• Garras Espectrais – Custo de Ativação aumentado para 5PD, Duração aumentada para 5 Rodadas.") {
         @Override
         public boolean isImmuneToDamage(final DamageType type, final DamageDescriptor descriptor,
                                         final AbilityContext context) {
@@ -225,23 +260,42 @@ public enum EscolhidoDeMacariaAbility implements MonstrousAbility {
         @Override
         public List<ActiveAbility> resolveActiveAbilities(final AbilityContext context) {
             boolean apex = context.isAtLeast(APEX);
+            int duration = apex ? 5 : 3;
             return List.of(MonstrousActiveAbility.builder()
-                    .name("Garras Espectrais")
+                    .name(GARRAS_ESPECTRAIS)
                     .description("Dano +1d6, Sangramento como Efeito Crítico adicional e a Corrente Sangria Profana por "
-                            + (apex ? 4 : 2) + " Rodadas.")
+                            + duration + " Rodadas.")
                     .actionPointCost(ActionCost.ofActionPoints(2))
                     .determinationPointCost(apex ? 5 : 4)
-                    .durationInRounds(apex ? 4 : 2)
+                    .durationInRounds(duration)
                     .cooldownRounds(2)
+                    .effect(bonus(ModifierType.EXTRA_DAMAGE_DICE, 1, duration, GARRAS_ESPECTRAIS))
+                    .effect(() -> new SourcedState(GARRAS_ESPECTRAIS, duration))
                     .build());
+        }
+
+        /** Sangria Profana while Garras Espectrais runs; the Roubo de Determinação 2 against the bleeding, always. */
+        @Override
+        public List<EffectChain> resolveAttackEffectChains(final SkillType attackSkill, final AttackSource attackSource,
+                                                           final CombatantSheet holder, final AbilityContext context) {
+            return holder.hasEffectFrom(GARRAS_ESPECTRAIS)
+                    ? List.of(new SangriaProfana(), SangriaProfana.roubo(holder))
+                    : List.of(SangriaProfana.roubo(holder));
+        }
+
+        @Override
+        public List<CriticalEffectType> resolveAdditionalCriticalEffects(final SkillType attackSkill,
+                                                                         final AttackSource attackSource,
+                                                                         final CombatantSheet holder,
+                                                                         final AbilityContext context) {
+            return holder.hasEffectFrom(GARRAS_ESPECTRAIS) ? List.of(CriticalEffectType.SANGRAMENTO) : List.of();
         }
 
         @Override
         public String getUnappliedNote() {
-            return "Armas de Prata piercing Incorpóreo (no silver weapons), \"seus ataques são mágicos\" (no attack "
-                    + "retyping for a foe), ignoring barriers and terrain, trespassing others' spaces, and Garras "
-                    + "Espectrais' +1d6, Sangramento and Sangria Profana (an Efeito Ativo lands on its holder). Only "
-                    + "Garras' price, Duração and Resfriamento are carried.";
+            return "Armas de Prata piercing Incorpóreo (the immunity hook cannot see the weapon), \"seus ataques são "
+                    + "mágicos\" (no element or nature to retype them to), ignoring barriers and terrain, and "
+                    + "trespassing others' spaces. Garras Espectrais' +1d6 rides every attack while it runs.";
         }
     },
 
@@ -307,15 +361,15 @@ public enum EscolhidoDeMacariaAbility implements MonstrousAbility {
     },
 
     /** RA, RD and RM; Marca da Escuridão's +1 nível on attacks. */
-    ANUNCIADOR_DA_ESCURIDAO("Anunciador da Escuridão", PREDADOR, 
+    ANUNCIADOR_DA_ESCURIDAO("Anunciador da Escuridão", PREDADOR,
             "Efeito Passivo: Recebe RA, RD e RM, propaga a aura Presença do Ceifeiro.\n"
                     + "“Presença do Ceifeiro – Inimigos vivos em Distância Curta sofrem 1d6 pontos de Dano Mágico Profano, o Monstro recupera uma quantidade de PV igual ao dano causado (efeito de Roubo de Vida).”\n"
-                    + "Efeito Ativo – Marca da Escuridão [2PA, 4PD]: Ataques tem o GD aumentado em + 1 nível e recebem a Corrente de Efeitos Monstruosa – Marca da Escuridão.\n"
+                    + "Efeito Ativo – Marca da Escuridão [3PA, 4PD]: Ataque Corpo-a-Corpo (Mágico), possui GD aumentado em + 1 nível e recebe a Corrente de Efeitos Monstruosa – Marca da Escuridão. Refrigeração 2.\n"
                     + "“Marca da Escuridão - Alvo é Amaldiçoado e sofre 3d6 pontos de Dano Mágico Profano no início da próxima Rodada, se este ataque reduzir o PV do alvo à zero ou menos ele morrerá imediatamente, o Monstro recebe Roubo de Vida adicional igual ao Vigor do alvo por 2 Rodadas. Efeito não cumulativo.”\n"
                     + "Aprimoramento dos Apex\n"
-                    + "• Marca da Escuridão - Alvos mortos pela Marca da Escuridão se levantam como Renascidos ao controle do Monstro após 2 Rodadas. Efeito de Possessão com Duração de 2 Rodadas.\n"
+                    + "• Marca da Escuridão - Alvos mortos pela Marca da Escuridão se levantam como Renascidos Deviantes ao controle do Monstro após 2 Rodadas. Efeito de Possessão com Duração de 2 Rodadas.\n"
                     + "Aprimoramento das Abominações\n"
-                    + "• Marca da Escuridão – Duração indeterminada. Efeitos que removem Maldições ou Possessão removem a marca da Escuridão.") {
+                    + "• Marca da Escuridão – Permite efetuar 2 ataques Corpo-a-Corpo.") {
         @Override
         public int resolveModifier(final ModifierType type, final AbilityContext context) {
             return switch (type) {
@@ -329,85 +383,159 @@ public enum EscolhidoDeMacariaAbility implements MonstrousAbility {
         @Override
         public List<ActiveAbility> resolveActiveAbilities(final AbilityContext context) {
             return List.of(MonstrousActiveAbility.builder()
-                    .name("Marca da Escuridão")
-                    .description("Ataques têm o GD aumentado em +1 nível e recebem a Corrente Marca da Escuridão.")
-                    .actionPointCost(ActionCost.ofActionPoints(2))
+                    .name(MARCA_DA_ESCURIDAO)
+                    .description("Ataque Corpo-a-Corpo (Mágico) com GD +1 nível que recebe a Corrente Marca da Escuridão"
+                            + (context.isAtLeast(ABOMINACAO) ? "; permite efetuar 2 ataques." : "."))
+                    .actionPointCost(ActionCost.ofActionPoints(3))
                     .determinationPointCost(4)
                     .durationInRounds(MARCA_ROUNDS)
-                    .effect(() -> new SkillDifficultyShift(MonstrousTraits.attackAndDefenseSkills().stream()
-                            .filter(SkillType::isAttackSkill).collect(java.util.stream.Collectors.toSet()),
-                            1, MARCA_ROUNDS, "Marca da Escuridão"))
+                    .cooldownRounds(2)
+                    .effect(() -> new SkillDifficultyShift(Set.of(SkillType.ATAQUE_CORPO_A_CORPO), 1, MARCA_ROUNDS,
+                            MARCA_DA_ESCURIDAO))
+                    .effect(() -> new SourcedState(MARCA_DA_ESCURIDAO, MARCA_ROUNDS))
+                    .build());
+        }
+
+        @Override
+        public List<EffectChain> resolveAttackEffectChains(final SkillType attackSkill, final AttackSource attackSource,
+                                                           final CombatantSheet holder, final AbilityContext context) {
+            return holder.hasEffectFrom(MARCA_DA_ESCURIDAO) ? List.of(new MarcaDaEscuridao(holder)) : List.of();
+        }
+
+        /** Presença do Ceifeiro: 1d6 Mágico Profano to the living enemies in Distância Curta, healing the monster. */
+        @Override
+        public List<MonsterAura> resolveAuras(final CombatantSheet holder, final AbilityContext context) {
+            return List.of(MonsterAura.builder()
+                    .source("Presença do Ceifeiro")
+                    .radius(Range.DISTANCIA_CURTA)
+                    .reach(AuraReach.LIVING_ENEMIES)
+                    .pulse(AuraPulse.builder()
+                            .dice(1)
+                            .descriptor(new DamageDescriptor(DamageType.MAGICO, null, DamageSanctity.PROFANO))
+                            .lifeSteal(true)
+                            .build())
                     .build());
         }
 
         @Override
         public String getUnappliedNote() {
-            return "The Presença do Ceifeiro aura (1d6 Profano to the living in Distância Curta, healing the monster — "
-                    + "area damage is the caller's), Marca da Escuridão's Corrente (Amaldiçoado, 3d6 Profano next Rodada, "
-                    + "death and Roubo de Vida; Apex rising as Renascidos; Abominação indefinite). No Duração is stated "
-                    + "for the +1 nível; 1 Rodada is read.";
+            return "Marca da Escuridão's \"se este ataque "
+                    + "reduzir o PV do alvo à zero ou menos ele morrerá imediatamente\", the Apex raising of the dead as "
+                    + "Renascidos Deviantes, and the Abominação's 2 attacks (reported) are the caller's.";
         }
     },
 
     /** Cuspidor de Pragas: 2 Deviante Carrascos every odd Rodada in combat (UndeadInvocationService); Praga Zumbi's price. */
-    CUSPIDOR_DE_PRAGAS("Cuspidor de Pragas", APEX, 
+    CUSPIDOR_DE_PRAGAS("Cuspidor de Pragas", APEX,
             "Efeito Passivo: Enquanto em combate, a Cada Rodada Ímpar dois Carrascos Moribundos do tipo Deviante são invocados para auxiliar o Monstro. Quando a Cena de Combate termina ou o Cuspidor de Pragas é destruído os mortos invocados são destruídos.\n"
-                    + "Efeito Ativo – Praga Zumbi [3PA, 3PD]: Um Alvo Único Distante – Distância Muito Curta é afetado pela Praga Zumbi.\n"
+                    + "Efeito Ativo – Praga Zumbi [3PA, 3PD]: Ataque à Distância (Mágico), Alvo Único Distante – Distância Muito Curta. Alvos afetados recebem a Doença Praga Zumbi.\n"
                     + "“Praga Zumbi – Alvo recebe o Estado Doente e sofre Redutor de 1 ponto de Vigor a cada Rodada, esta Doença pode ser Propagar. Personagens que tenham o PV reduzido à zero ou menos morrem imediatamente, 2 Rodadas depois levantam-se como Carrascos Moribundos do tipo Deviante sob o controle do Cuspidor de Pragas. Duração 3 Rodadas e Resfriamento 2.”\n"
                     + "Aprimoramento das Abominações\n"
                     + "• Praga Zumbi – Alvos recebem a Condição Silêncio.") {
         @Override
         public List<ActiveAbility> resolveActiveAbilities(final AbilityContext context) {
             return List.of(MonstrousActiveAbility.builder()
-                    .name("Praga Zumbi")
-                    .description("Um Alvo Único em Distância Muito Curta recebe a Praga Zumbi por 3 Rodadas.")
+                    .name(PRAGA_ZUMBI)
+                    .description("Ataque à Distância (Mágico), Alvo Único em Distância Muito Curta: o alvo recebe a "
+                            + "Praga Zumbi por 3 Rodadas" + (context.isAtLeast(ABOMINACAO) ? " e a Condição Silêncio." : "."))
                     .actionPointCost(ActionCost.ofActionPoints(3))
                     .determinationPointCost(3)
-                    .durationInRounds(3)
+                    .durationInRounds(1)
                     .cooldownRounds(2)
+                    .effect(() -> new SourcedState(PRAGA_ZUMBI, 1))
                     .build());
+        }
+
+        @Override
+        public List<EffectChain> resolveAttackEffectChains(final SkillType attackSkill, final AttackSource attackSource,
+                                                           final CombatantSheet holder, final AbilityContext context) {
+            return holder.hasEffectFrom(PRAGA_ZUMBI)
+                    ? List.of(MonstrousCondition.pragaZumbi(holder, context.isAtLeast(ABOMINACAO)))
+                    : List.of();
         }
 
         @Override
         public String getUnappliedNote() {
             return "Its spawning is placed by UndeadInvocationService#startPlagueSpitting (the caller starts it when "
-                    + "combat begins). Praga Zumbi lands on its target (Doente, -1 Vigor a Rodada, propagation; the dead "
-                    + "rising as Deviante Carrascos after 2 Rodadas; Abominação Silêncio) — the caller's.";
+                    + "combat begins). Praga Zumbi's Doença and Silêncio land through the attack made in its window; its "
+                    + "-1 Vigor a Rodada and the dead rising as Deviante Carrascos after 2 Rodadas are the caller's.";
         }
     },
 
     /** Títere's own immunity to damage for 1 Rodada. */
-    MESTRE_DAS_MARIONETES("Mestre das Marionetes", APEX, 
+    MESTRE_DAS_MARIONETES("Mestre das Marionetes", APEX,
             "Efeito Passivo- Emite a Aura de Mestre das Marionetes.\n"
-                    + "“Mestre das Marionetes – Emite uma Aura com Área de Efeito - Circular Curta. Personagem vivos em seu interior perdem 1 ponto Temporário de Autocontrole a cada 2 Rodadas. Personagens que tenham Autocontrole zero no interior da Aura são Possuídos.\n"
-                    + "Efeito Ativo – Títere [4PA, 4PD]: O Monstro se torna imune a danos e um Alvo Único Distante – Distância Muito Curta é Possuído por 1 Rodada. Resfriamento 3.\n"
+                    + "“Mestre das Marionetes – Área de Efeito - Circular Curta. Personagem vivos em sua Área de Efeito perdem 1 ponto Temporário de Autocontrole a cada 2 Rodadas. Personagens com Autocontrole zero no interior da Aura são Possuídos por 2 Rodadas. Após a possessão entram em Torpor. Pontos de Autocontrole perdidos por Mestre das Marionetes são recuperados individualmente a cada Efeito de Descanso.”\n"
+                    + "Efeito Ativo – Títere [4PA, 4PD]: O Monstro se torna imune a danos por 1 Rodada, então desfere um Ataque à Distância (Mágico), Alvo Único Distante – Distância Muito Curta, personagens afetados são Possuídos por 2 Rodada. Resfriamento 3.\n"
                     + "Aprimoramento das Abominações\n"
                     + "• Mestre das Marionetes – Área de Efeito aumenta para Distância Média.\n"
-                    + "• Títere – Alcance aumenta para Distância Curta.") {
+                    + "• Títere – Alcance aumenta para Distância Curta. Resfriamento muda para 2 Rodadas.") {
         @Override
         public List<ActiveAbility> resolveActiveAbilities(final AbilityContext context) {
             return List.of(MonstrousActiveAbility.builder()
-                    .name("Títere")
-                    .description("O Monstro se torna imune a danos e um Alvo Único em Distância "
-                            + (context.isAtLeast(ABOMINACAO) ? "Curta" : "Muito Curta") + " é Possuído por 1 Rodada.")
+                    .name(TITERE)
+                    .description("O Monstro se torna imune a danos por 1 Rodada, então desfere um Ataque à Distância "
+                            + "(Mágico) em Distância " + (context.isAtLeast(ABOMINACAO) ? "Curta" : "Muito Curta")
+                            + ": o alvo é Possuído por 2 Rodadas.")
                     .actionPointCost(ActionCost.ofActionPoints(4))
                     .determinationPointCost(4)
                     .durationInRounds(1)
-                    .cooldownRounds(3)
-                    .effect(() -> new DamageScopeEffect(DamageScopeEffect.Kind.IMMUNE, DamageScope.ALL, 1, "Títere"))
+                    .cooldownRounds(context.isAtLeast(ABOMINACAO) ? 2 : 3)
+                    .effect(() -> new DamageScopeEffect(DamageScopeEffect.Kind.IMMUNE, DamageScope.ALL, 1, TITERE))
+                    .effect(() -> new SourcedState(TITERE, 1))
+                    .build());
+        }
+
+        @Override
+        public List<EffectChain> resolveAttackEffectChains(final SkillType attackSkill, final AttackSource attackSource,
+                                                           final CombatantSheet holder, final AbilityContext context) {
+            return holder.hasEffectFrom(TITERE) ? List.of(MonstrousCondition.titere(holder)) : List.of();
+        }
+
+        /**
+         * The Aura de Mestre das Marionetes — Circular Curta (Abominação Média): the living inside lose 1 temporary
+         * Autocontrole every 2 Rodadas, recovered by a Descanso, and one at zero is Possuído for 2 Rodadas.
+         */
+        @Override
+        public List<MonsterAura> resolveAuras(final CombatantSheet holder, final AbilityContext context) {
+            return List.of(MonsterAura.builder()
+                    .source("Mestre das Marionetes")
+                    .radius(context.isAtLeast(ABOMINACAO) ? Range.DISTANCIA_MEDIA : Range.DISTANCIA_CURTA)
+                    .reach(AuraReach.LIVING_OTHERS)
+                    .pulse(AuraPulse.builder()
+                            .autocontroleLoss(1)
+                            .everyNRounds(2)
+                            .possessAtZeroAutocontrole(true)
+                            .conditionRounds(2)
+                            .build())
                     .build());
         }
 
         @Override
         public String getUnappliedNote() {
-            return "The Aura (living characters losing 1 Autocontrole every 2 Rodadas, possessed at zero — area and "
-                    + "Ego loss on others) and Títere's possession of its target. Títere's own immunity is read as "
-                    + "lasting the possession's 1 Rodada.";
+            return "Control of the possessed and the Torpor after the possession are the caller's; a lost Autocontrole "
+                    + "point comes back at any Descanso (all at once, not one per Descanso). Títere's Possessão lands "
+                    + "through the attack made in its window.";
         }
     };
 
-    /** Sanguenomancia Inata's "Roubo de Vida 2 por 3 Rodadas". */
+    /** How long Sanguenomancia Inata's own +Vigor lasts — ⚠️ the text names no Duração; the previous revision's 3. */
     public static final int SANGUENOMANCIA_ROUNDS = 3;
+
+    /** Renascido Monstruoso's "por 3 Rodadas", and the source its buff renews by. */
+    public static final int RENASCIDO_ROUNDS = 3;
+    public static final String RENASCIDO_SOURCE = "Renascido Monstruoso";
+
+    private static final String SANGUENOMANCIA_WINDOW = "Sanguenomancia Inata (ataque)";
+    private static final String GARRAS_ESPECTRAIS = "Garras Espectrais";
+    private static final String MARCA_DA_ESCURIDAO = "Marca da Escuridão";
+    private static final String PRAGA_ZUMBI = "Praga Zumbi";
+    private static final String TITERE = "Títere";
+
+    /** Sanguenomancia Inata's "Redutor Temporário de -1 em Vigor" — Predador -2, Apex -3. */
+    static int sanguenomanciaLoss(final AbilityContext context) {
+        return context.isAtLeast(APEX) ? 3 : context.isAtLeast(PREDADOR) ? 2 : 1;
+    }
 
     /** Instinto Predatório Mortis' "por 2 Rodadas". */
     public static final int INSTINTO_ROUNDS = 2;

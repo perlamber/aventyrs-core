@@ -6,6 +6,7 @@ import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.DamageDescriptor;
 import org.aventyrs.core.character.DamageType;
 import org.aventyrs.core.effect.CriticalEffectType;
+import org.aventyrs.core.effect.EffectChain;
 import org.aventyrs.core.feat.Feat;
 import org.aventyrs.core.feat.FeatCategory;
 import org.aventyrs.core.item.NaturalWeapon;
@@ -13,9 +14,11 @@ import org.aventyrs.core.magic.ElementalType;
 import org.aventyrs.core.magic.Spell;
 import org.aventyrs.core.modifier.ModifierType;
 import org.aventyrs.core.monster.MonsterCategory;
+import org.aventyrs.core.sheet.CombatantSheet;
 import org.aventyrs.core.sheet.ConditionType;
 import org.aventyrs.core.sheet.TemporaryEffect;
 import org.aventyrs.core.skill.SkillType;
+import org.aventyrs.core.skill.AttackSource;
 
 import java.util.List;
 import java.util.Map;
@@ -158,6 +161,89 @@ public interface MonstrousAbility {
     /** "Investidas sempre acertam o alvo". Reported, not enforced. */
     default boolean chargesAlwaysHit(final AbilityContext context) {
         return false;
+    }
+
+    /**
+     * What the holder gains for having just activated something — Renascido Monstruoso's 3-Rodada buff "Após ativar
+     * qualquer Habilidade Monstruosa do Modelo Escolhido de Macária ou Habilidade de Título Aventyr". Applied by {@code
+     * MonstrousAbilityGrant#onActivation}/{@code #onTitleActivation}, which {@code ActiveAbilityService#activate} and a
+     * Título activation call once the activation has gone through.
+     */
+    default List<TemporaryEffect> resolveActivationTriggeredEffects(final ActivationTrigger trigger,
+                                                                    final AbilityContext context) {
+        return List.of();
+    }
+
+    /**
+     * The auras this Habilidade has holder emit right now (core 0.1.7.4) — a passive one always, an emitted one while
+     * its Efeito Ativo's state runs. See {@code scene.MonsterAura}.
+     */
+    default List<org.aventyrs.core.scene.MonsterAura> resolveAuras(final CombatantSheet holder,
+                                                                   final AbilityContext context) {
+        return List.of();
+    }
+
+    // ---- The holder's attacks (core 0.1.7.2) -----------------------------------------------------------
+
+    /**
+     * The Correntes de Efeitos the holder's attack carries — "Ataques deste Monstro recebem a Corrente de Efeito
+     * Monstruosa – …". Read by {@code AttackDelivery}/{@code AttackEffectsPreview} for any attacker, through {@code
+     * MonstrousAbilityGrant#attackEffectChains}. A Corrente bought by an Efeito Ativo ("Neste Turno as Perícias de
+     * Ataque recebem…") answers only while its {@code SourcedState} runs on holder.
+     */
+    default List<EffectChain> resolveAttackEffectChains(final SkillType attackSkill, final AttackSource attackSource,
+                                                        final CombatantSheet holder, final AbilityContext context) {
+        return List.of();
+    }
+
+    /** Raises the holder's own Resistência à Correntes de Efeitos — "Resistência à Correntes de Efeitos aumenta em +2". */
+    default int resolveEffectChainResistanceIncrease(final CombatantSheet holder, final AbilityContext context) {
+        return 0;
+    }
+
+    /** Lowers the Resistência of the holder's targets — "reduzem a Resistência à Correntes de Efeitos de seus alvos". */
+    default int resolveTargetEffectChainResistanceReduction(final CombatantSheet holder,
+                                                            final AbilityContext context) {
+        return 0;
+    }
+
+    /**
+     * What the holder's attack deals in place of its own type — "Danos causados por este Monstro são Elementais em
+     * substituição aos seus tipos" — or {@code null}. Reported on {@code InteractionResult#getRetypedDamage()} like a
+     * Talento's, after every Talento has had its say.
+     */
+    default DamageDescriptor resolveAttackDamageRetype(final SkillType attackSkill, final AttackSource attackSource,
+                                                       final CombatantSheet holder, final AbilityContext context) {
+        return null;
+    }
+
+    /**
+     * The nature an elemental retype takes on — Ascenção's "Danos Elementais se tornam Profanos/Sagrados em
+     * substituição aos seus tipos" — or {@code null}. Laid over whatever {@link #resolveAttackDamageRetype} the holder's
+     * Habilidades produce, when that retype names an element.
+     */
+    default org.aventyrs.core.character.DamageSanctity resolveElementalDamageSanctity(final AbilityContext context) {
+        return null;
+    }
+
+    /**
+     * The Área de Efeito the holder's attack is entitled to — "Ataques recebem Área de Efeito – Explosão" — or {@code
+     * null}. Asked by {@code AttackTargetingService#resolveAttackArea} after the attacker's Talentos. holder is
+     * {@code null} on a Character-only path, where an area an Efeito Ativo buys cannot be seen.
+     */
+    default org.aventyrs.core.scene.AreaOfEffect resolveAttackArea(final SkillType attackSkill,
+                                                                   final AttackSource attackSource,
+                                                                   final CombatantSheet holder,
+                                                                   final AbilityContext context) {
+        return null;
+    }
+
+    /** Efeitos Críticos the holder's critical hit adds — "recebem Cataclismo como Efeito Crítico adicional". */
+    default List<CriticalEffectType> resolveAdditionalCriticalEffects(final SkillType attackSkill,
+                                                                      final AttackSource attackSource,
+                                                                      final CombatantSheet holder,
+                                                                      final AbilityContext context) {
+        return List.of();
     }
 
     // ---- Anatomy -----------------------------------------------------------------------------------

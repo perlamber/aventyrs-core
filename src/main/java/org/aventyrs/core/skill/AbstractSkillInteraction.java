@@ -513,6 +513,8 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
                             skillRoll))
                     .filter(java.util.Objects::nonNull)
                     .findFirst()
+                    .or(() -> Optional.ofNullable(org.aventyrs.core.monster.MonstrousAbilityGrant
+                            .attackDamageRetype(target, skillType, attackSource)))
                     .ifPresent(result::retypedDamage);
             DamageSum damage = sumDamageBonus(target, sceneContext, null, attackSource, targetCount, skillRoll);
             damage.bonus().ifPresent(damageBonus ->

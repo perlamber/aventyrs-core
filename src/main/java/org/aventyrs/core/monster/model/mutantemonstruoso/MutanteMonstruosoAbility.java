@@ -18,6 +18,8 @@ import org.aventyrs.core.monster.model.MonstrousAbility;
 import org.aventyrs.core.monster.model.MonstrousActiveAbility;
 import org.aventyrs.core.monster.model.MonstrousTraits;
 import org.aventyrs.core.sheet.ActionCost;
+import org.aventyrs.core.sheet.CombatantSheet;
+import org.aventyrs.core.sheet.SourcedState;
 import org.aventyrs.core.sheet.DamageScopeEffect;
 import org.aventyrs.core.sheet.RecurringDice;
 import org.aventyrs.core.sheet.Regeneration;
@@ -86,14 +88,28 @@ public enum MutanteMonstruosoAbility implements MonstrousAbility {
             if (context.isAtLeast(DEVIANTE)) {
                 active.effect(bonus(ModifierType.DEFESAS, 3, duration, "Fisiologia Estranha"));
             }
+            // Apex: "Fisiologia Estranha – Imunidade à … Correntes de Efeitos" — while the active runs.
+            active.effect(() -> new SourcedState("Fisiologia Estranha", duration));
             return List.of(active.build());
+        }
+
+        /**
+         * The passive "Resistência à Correntes de Efeitos aumenta em +2"; at Apex, while the Efeito Ativo runs, no
+         * Corrente lands at all — an unreachable margin.
+         */
+        @Override
+        public int resolveEffectChainResistanceIncrease(final CombatantSheet holder, final AbilityContext context) {
+            if (context.isAtLeast(APEX) && holder.hasEffectFrom("Fisiologia Estranha")) {
+                return EFFECT_CHAIN_IMMUNITY;
+            }
+            return FISIOLOGIA_RESISTANCE;
         }
 
         @Override
         public String getUnappliedNote() {
-            return "The +2 Resistência à Correntes de Efeitos (it has no number). The Apex immunity to Críticos Menores "
-                    + "and Correntes is an Aprimoramento of the Efeito Ativo; it is applied as standing, since an "
-                    + "immunity cannot be granted for a Duração, and the Correntes half has nothing to refuse.";
+            return "The Apex immunity to Críticos Menores is an Aprimoramento of the Efeito Ativo; it is applied as "
+                    + "standing, since a critical immunity cannot be granted for a Duração. Its Correntes half does "
+                    + "follow the active.";
         }
     },
 
@@ -194,13 +210,13 @@ public enum MutanteMonstruosoAbility implements MonstrousAbility {
     },
 
     /** Predador Defesas +2. The reach and Bote Inesperado's doubled reach are geometry. */
-    ELASTICIDADE("Elasticidade", DEVIANTE, 
+    ELASTICIDADE("Elasticidade", DEVIANTE,
             "Efeito Passivo: Armas Naturais recebem Alcance como aprimoramento de Obra-Prima.\n"
                     + "Aprimoramento dos Predadores\n"
                     + "• Defesas +2\n"
-                    + "• Efeito Ativo – Bote Inesperado [+1PA, 1PD]: Como parte da ativação desta Habilidade o Monstro deverá fazer um ataque corpo-a-corpo, o Alcance deste ataque é dobrado. Resfriamento 1.\n"
+                    + "Efeito Ativo – Bote Inesperado [+1PA, 1PD]: Como parte da ativação desta Habilidade o Monstro deverá fazer um ataque corpo-a-corpo (Físico), o Alcance deste ataque é dobrado. Resfriamento 1.\n"
                     + "Aprimoramento dos Apex\n"
-                    + "• Efeito Ativo – Bote Inesperado: Recebe a Corrente de Efeitos Monstruosa – Abdução.\n"
+                    + "Efeito Ativo – Bote Inesperado: Recebe a Corrente de Efeitos Monstruosa – Abdução.\n"
                     + "“Abdução – Alvo é agarrado, então realocado para um ponto adjacente ao Monstro. O Monstro recebe Bônus de +3 em Defesas por 1 Rodada.”") {
         @Override
         public int resolveModifier(final ModifierType type, final AbilityContext context) {
@@ -229,15 +245,15 @@ public enum MutanteMonstruosoAbility implements MonstrousAbility {
     },
 
     /** Size ±1 for good, Tamanho Variável ±2 (Apex ±3) for 3 Rodadas (Abominação 5); Apex Força and PV; Abominação two Atributos. */
-    TAMANHO_VARIAVEL("Tamanho Variável", PREDADOR, 
+    TAMANHO_VARIAVEL("Tamanho Variável", PREDADOR,
             "Efeito Passivo: A Categoria de Tamanho desse monstro é permanentemente aumentada ou reduzida em 1 nível.\n"
                     + "Efeito Ativo – Tamanho Variável [1PA, 1PD]: Pode temporariamente aumentar ou reduzir Categoria de Tamanho em 2 níveis. Duração de 3 Rodadas, Resfriamento 2.\n"
                     + "Aprimoramentos dos Apex\n"
                     + "• Bônus Racial de Força +4 e Multiplicador de PV +1.\n"
-                    + "• Efeito Ativo – Tamanho Variável: Aumento ou redução da Categoria de Tamanho muda para 3 níveis.\n"
+                    + "Efeito Ativo – Tamanho Variável: Aumento ou redução da Categoria de Tamanho muda para 3 níveis.\n"
                     + "Aprimoramentos das Abominações\n"
-                    + "• Bônus Racial de +2 em dois Atributo à escolha, exceto Força.\n"
-                    + "• Efeito Ativo – Tamanho Variável: Duração aumenta para 5 Rodadas.") {
+                    + "• Bônus Racial de +2 em dois Atributos à escolha, exceto Força.\n"
+                    + "Efeito Ativo – Tamanho Variável: Duração aumenta para 5 Rodadas.") {
         @Override
         public List<ChoiceSpec> getChoiceSpecs(final MonsterCategory category) {
             if (category.isAtLeast(ABOMINACAO)) {
@@ -284,14 +300,14 @@ public enum MutanteMonstruosoAbility implements MonstrousAbility {
     },
 
     /** Furtividade GD +1 nível (Abominação +2), Apex +4 on it. Moving and attacking while hidden are not gated here. */
-    CAMUFLAGEM_PERFEITA("Camuflagem Perfeita", PREDADOR, 
+    CAMUFLAGEM_PERFEITA("Camuflagem Perfeita", PREDADOR,
             "Efeito Passivo: GD de Furtividade aumenta em +1 nível.\n"
                     + "Efeito Ativo – Camuflagem Perfeita [3PA, 3PD]: Pode efetuar Furtividade mesmo à vista de outros personagens. Resfriamento 2.\n"
                     + "Aprimoramentos dos Apex\n"
                     + "• Bônus de +4 em Furtividade.\n"
                     + "• Camuflagem Perfeita - Pode se mover durante a Furtividade, GD reduzida em -1 nível após se mover.\n"
                     + "Aprimoramentos das Abominações\n"
-                    + "• GD de Furtividade aumenta em +1 nível\n"
+                    + "• GD de Furtividade aumenta em +2 níveis\n"
                     + "• Camuflagem Perfeita - Pode atacar durante a Furtividade, GD reduzida em -2 níveis após atacar.") {
         @Override
         public int resolveSkillLevelShift(final SkillType skill, final AttributeDomain governingAttribute,
@@ -327,12 +343,12 @@ public enum MutanteMonstruosoAbility implements MonstrousAbility {
     },
 
     /** RDS; 1d6 over 2 Rodadas after being hurt (Abominação stacking to 3); Adaptação Milagrosa's 3d6 heal (Abominação RA and RC). */
-    ADAPTACAO_MILAGROSA("Adaptação Milagrosa", APEX, 
+    ADAPTACAO_MILAGROSA("Adaptação Milagrosa", APEX,
             "Efeito Passiva: RDS. Após sofrer danos recupera 1d6PV durante 2 Rodadas (não cumulativo).\n"
-                    + "Efeito Ativo – Adaptação Milagrosa [3PA, 6PD]: Recupera 3d6PV. Após sofrer danos se torna imune a mesma fonte de dano ao longo da Duração da Adaptação Milagrosa. Resfriamento 4, Duração 4 Rodadas.\n"
+                    + "Efeito Ativo – Adaptação Milagrosa [3PA, 5PD]: Recupera 3d6PV. Após sofrer danos se torna imune a mesma fonte de dano ao longo da Duração da Adaptação Milagrosa. Resfriamento 4, Duração 4 Rodadas.\n"
                     + "“São fontes de danos as Armas, Armadilhas, Doenças, Habilidades, Magias, Maldições, Venenos, além de efeitos mundanos, como quedas, esmagamentos etc.”\n"
                     + "Aprimoramentos das Abominações\n"
-                    + "• Recuperação de vida pós danos se torna cumulativa, até 3 vezes, mas a Duração não se renova até o fim do Efeito Primário.\n"
+                    + "• Recuperação de vida pós danos se torna cumulativa, até 3 vezes, Duração reduzida para 1 Rodada.\n"
                     + "• Adaptação Milagrosa – recebe RA, Resistência à Críticos e Resistência à Corrente de Efeitos +2 enquanto ativo.") {
         @Override
         public int resolveModifier(final ModifierType type, final AbilityContext context) {
@@ -341,8 +357,10 @@ public enum MutanteMonstruosoAbility implements MonstrousAbility {
 
         @Override
         public List<TemporaryEffect> resolveDamageTakenEffects(final int finalDamage, final AbilityContext context) {
-            int limit = context.isAtLeast(ABOMINACAO) ? 3 : 1;
-            return List.of(RecurringDice.healing(Dice.of(1), 2, "Adaptação Milagrosa", limit));
+            // Abominação: "cumulativa, até 3 vezes, Duração reduzida para 1 Rodada".
+            boolean abominacao = context.isAtLeast(ABOMINACAO);
+            return List.of(RecurringDice.healing(Dice.of(1), abominacao ? 1 : 2, "Adaptação Milagrosa",
+                    abominacao ? 3 : 1));
         }
 
         @Override
@@ -351,7 +369,7 @@ public enum MutanteMonstruosoAbility implements MonstrousAbility {
                     .name("Adaptação Milagrosa")
                     .description("Recupera 3d6PV.")
                     .actionPointCost(ActionCost.ofActionPoints(3))
-                    .determinationPointCost(6)
+                    .determinationPointCost(5)
                     .durationInRounds(ADAPTACAO_DURATION)
                     .cooldownRounds(4)
                     .dice(Dice.of(3))
@@ -365,11 +383,16 @@ public enum MutanteMonstruosoAbility implements MonstrousAbility {
             return List.of(active.build());
         }
 
+        /** Abominação: "Resistência à Corrente de Efeitos +2 enquanto ativo". */
+        @Override
+        public int resolveEffectChainResistanceIncrease(final CombatantSheet holder, final AbilityContext context) {
+            return context.isAtLeast(ABOMINACAO) && holder.hasEffectFrom("Adaptação Milagrosa") ? 2 : 0;
+        }
+
         @Override
         public String getUnappliedNote() {
             return "Immunity to a damage source already suffered: a hit carries no source (Arma, Magia, Veneno …) to "
-                    + "compare against. At Abominação the stacked regeneration renews its Duração, and the +2 "
-                    + "Resistência à Correntes has no number.";
+                    + "compare against. At Abominação each stacked 1-Rodada regeneration is its own instance, up to 3.";
         }
     },
 
@@ -413,6 +436,12 @@ public enum MutanteMonstruosoAbility implements MonstrousAbility {
     public static final String SHRINK = "SHRINK";
 
     private static final int ADAPTACAO_DURATION = 4;
+
+    /** Fisiologia Estranha: "a Resistência à Correntes de Efeitos aumenta em +2". */
+    private static final int FISIOLOGIA_RESISTANCE = 2;
+
+    /** "Imunidade à … Correntes de Efeitos": a margin no roll clears. */
+    private static final int EFFECT_CHAIN_IMMUNITY = 1000;
 
     private final String displayName;
     private final MonsterCategory tier;

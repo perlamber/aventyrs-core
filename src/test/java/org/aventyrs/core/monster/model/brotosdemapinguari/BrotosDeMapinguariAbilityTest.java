@@ -15,6 +15,15 @@ import org.aventyrs.core.monster.model.MonstrousTraits;
 import org.aventyrs.core.character.DamageDescriptor;
 import org.aventyrs.core.sheet.Condition;
 import org.aventyrs.core.sheet.ConditionType;
+import org.aventyrs.core.character.services.AttackTargetingServiceImpl;
+import org.aventyrs.core.effect.monstrous.AutocontroleLoss;
+import org.aventyrs.core.effect.monstrous.RouboDeBonusBase;
+import org.aventyrs.core.effect.monstrous.VenenoPrimaveril;
+import org.aventyrs.core.modifier.ModifierType;
+import org.aventyrs.core.monster.MonstrousAbilityGrant;
+import org.aventyrs.core.scene.AreaOfEffect;
+import org.aventyrs.core.scene.Range;
+import org.aventyrs.core.skill.SkillType;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -120,17 +129,52 @@ class BrotosDeMapinguariAbilityTest {
     }
 
     @Test
-    void dadivaDeGaeaHealsEveryRodadaAndCleanses() {
+    void dadivaDeGaeaMaiorCleansesAndStealsBonusBase() {
         MonsterSheet broto = spawn(46, MonstrousAbilitySelection.of(BrotosDeMapinguariAbility.DADIVA_DE_GAEA));
-        broto.applyCondition(new Condition(ConditionType.ABALADO, 2));
-        assertFalse(broto.hasCondition(ConditionType.ABALADO, null));
-        broto.applyDamage(30);
-        broto.tickTemporaryEffects();
-        assertTrue(broto.getDamageTaken() < 30);
+        // The heal and the Medo/Possessão immunity are the aura's now (MonsterAuraSceneTest).
+        assertEquals(1, broto.resolveMonsterAuras().size());
 
         broto.applyCondition(new Condition(ConditionType.DOENTE, 3));
-        activeAbilities.activate(broto.getCharacter(), broto, held(broto, "Dádiva de Gaea"), 1);
+        broto.applyCondition(new Condition(ConditionType.ENVENENADO, 3));
+        activeAbilities.activate(broto.getCharacter(), broto, held(broto, "Dádiva de Gaea Maior"), 1);
         assertFalse(broto.hasCondition(ConditionType.DOENTE, null));
-        assertEquals(1, broto.getTotalLifeSteal());
+        assertFalse(broto.hasCondition(ConditionType.ENVENENADO, null));
+        assertEquals(2, broto.getTotalLifeSteal());
+        assertTrue(MonstrousAbilityGrant.attackEffectChains(broto, SkillType.ATAQUE_CORPO_A_CORPO, null).stream()
+                .anyMatch(RouboDeBonusBase.class::isInstance));
+    }
+
+    @Test
+    void carnivoriasWindowCarriesTheAutocontroleLossAndFromDevianteOferendaMaldita() {
+        MonsterSheet deviante = spawn(12, MonstrousAbilitySelection.of(BrotosDeMapinguariAbility.NASCIDO_DO_SANGUE_DE_LACERTO,
+                ElementalType.GELO.name()));
+        assertTrue(MonstrousAbilityGrant.attackEffectChains(deviante, SkillType.ATAQUE_CORPO_A_CORPO, null).isEmpty());
+        activeAbilities.activate(deviante.getCharacter(), deviante, held(deviante, "Carnivoria"), 1, List.of(5));
+        assertTrue(MonstrousAbilityGrant.attackEffectChains(deviante, SkillType.ATAQUE_CORPO_A_CORPO, null).stream()
+                .anyMatch(AutocontroleLoss.class::isInstance));
+        assertEquals(List.of(CriticalEffectType.OFERENDA_MALDITA),
+                MonstrousAbilityGrant.additionalCriticalEffects(deviante, SkillType.ATAQUE_CORPO_A_CORPO, null));
+    }
+
+    @Test
+    void lancarEsporosIsACircularAttackThatPoisonsAndThenEveryAttackStealsFromThePoisoned() {
+        MonsterSheet broto = spawn(12, MonstrousAbilitySelection.of(BrotosDeMapinguariAbility.PRIMAVERIL));
+        AttackTargetingServiceImpl targeting = new AttackTargetingServiceImpl();
+        assertTrue(targeting.resolveAttackArea(broto, SkillType.ATAQUE_A_DISTANCIA, null, null).isEmpty());
+        activeAbilities.activate(broto.getCharacter(), broto, held(broto, "Lançar Esporos"), 1);
+        assertEquals(java.util.Optional.of(AreaOfEffect.circle(Range.DISTANCIA_CURTA)),
+                targeting.resolveAttackArea(broto, SkillType.ATAQUE_A_DISTANCIA, null, null));
+
+        MonsterSheet victim = spawn(0, MonstrousAbilitySelection.of(org.aventyrs.core.monster.model.cireneia.CireneiaAbility.ATRIBUTOS_APRIMORADOS));
+        int lifeMultiplier = victim.getTemporaryBonus(ModifierType.LIFE_MULTIPLIER);
+        new VenenoPrimaveril(2).applyTo(victim);
+        assertEquals(lifeMultiplier - 1, victim.getTemporaryBonus(ModifierType.LIFE_MULTIPLIER));
+        assertEquals(-1, victim.getTemporaryBonus(ModifierType.DETERMINATION_MULTIPLIER));
+        new VenenoPrimaveril(2).applyTo(victim);
+        assertEquals(lifeMultiplier - 1, victim.getTemporaryBonus(ModifierType.LIFE_MULTIPLIER), "renews, never stacks");
+
+        // Another Broto is never infected.
+        new VenenoPrimaveril(2).applyTo(broto);
+        assertEquals(0, broto.getTemporaryBonus(ModifierType.DETERMINATION_MULTIPLIER));
     }
 }

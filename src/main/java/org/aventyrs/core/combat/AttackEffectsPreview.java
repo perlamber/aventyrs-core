@@ -61,6 +61,8 @@ public record AttackEffectsPreview(List<CriticalEffectType> criticalEffects,
         if (holder instanceof MonsterSheet foe) {
             chains.addAll(foe.getAttackEffectChains());
         }
+        chains.addAll(org.aventyrs.core.monster.MonstrousAbilityGrant.attackEffectChains(holder, attackSkill,
+                attackSource));
         // The weapon's own Aprimoramentos' Correntes (core 0.1.6.9); no roller — nothing is thrown in a preview.
         chains.addAll(org.aventyrs.core.item.WeaponEnhancements.effectChains(attackSource, holder, null));
         List<Effect> criticalChains = new ArrayList<>();

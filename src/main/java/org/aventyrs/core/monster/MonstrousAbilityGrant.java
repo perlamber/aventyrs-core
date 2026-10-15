@@ -7,7 +7,9 @@ import org.aventyrs.core.ability.AttributeAbility;
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.DamageDescriptor;
 import org.aventyrs.core.character.DamageType;
+import org.aventyrs.core.character.Character;
 import org.aventyrs.core.effect.CriticalEffectType;
+import org.aventyrs.core.effect.EffectChain;
 import org.aventyrs.core.item.NaturalWeapon;
 import org.aventyrs.core.magic.ElementalType;
 import org.aventyrs.core.modifier.Modifier;
@@ -15,12 +17,16 @@ import org.aventyrs.core.modifier.ModifierType;
 import org.aventyrs.core.monster.model.AbilityContext;
 import org.aventyrs.core.monster.model.MonstrousAbility;
 import org.aventyrs.core.scene.SceneContext;
+import org.aventyrs.core.sheet.CombatantSheet;
 import org.aventyrs.core.sheet.ConditionType;
 import org.aventyrs.core.sheet.TemporaryEffect;
+import org.aventyrs.core.skill.AttackSource;
 import org.aventyrs.core.skill.SkillType;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Stream;
 
 /**
  * A held {@link MonstrousAbility}, resolved against its holder's {@link AbilityContext} and dressed
@@ -221,6 +227,133 @@ public class MonstrousAbilityGrant implements AttributeAbility {
     @Override
     public List<TemporaryEffect> resolveWhileFlyingEffects() {
         return ability.resolveWhileFlyingEffects(context);
+    }
+
+    // ---- The holder's attacks (core 0.1.7.2) ---------------------------------------------------------
+
+    /**
+     * Every Habilidade Monstruosa character holds. A live scene foe is a plain {@code CharacterSheet} built from its
+     * blueprint, never a {@code MonsterSheet}, so the attack hooks are read here, off the Character, for any attacker.
+     */
+    public static Stream<MonstrousAbilityGrant> heldBy(final Character character) {
+        return character == null ? Stream.empty() : character.getAttributeAbilities().stream()
+                .filter(MonstrousAbilityGrant.class::isInstance)
+                .map(MonstrousAbilityGrant.class::cast);
+    }
+
+    /**
+     * holder has just activated activated — applies what each held Habilidade grants for it ({@link
+     * MonstrousAbility#resolveActivationTriggeredEffects}). An Efeito Ativo is traced to its Modelo by name among the
+     * holder's own Habilidades.
+     */
+    public static void onActivation(final CombatantSheet holder, final org.aventyrs.core.ability.ActiveAbility activated) {
+        if (holder == null || !(activated instanceof org.aventyrs.core.monster.model.MonstrousActiveAbility active)) {
+            return;
+        }
+        heldBy(holder.getCharacter())
+                .filter(grant -> grant.ability.resolveActiveAbilities(grant.context).stream()
+                        .anyMatch(own -> own instanceof org.aventyrs.core.monster.model.MonstrousActiveAbility mine
+                                && mine.getName().equals(active.getName())))
+                .map(grant -> grant.ability.getModel())
+                .findFirst()
+                .ifPresent(model -> trigger(holder,
+                        org.aventyrs.core.monster.model.ActivationTrigger.monstrous(model)));
+    }
+
+    /** holder has just activated a Título Aventyr Habilidade — see {@link #onActivation}. */
+    public static void onTitleActivation(final CombatantSheet holder) {
+        if (holder != null) {
+            trigger(holder, org.aventyrs.core.monster.model.ActivationTrigger.title());
+        }
+    }
+
+    private static void trigger(final CombatantSheet holder,
+                                final org.aventyrs.core.monster.model.ActivationTrigger trigger) {
+        heldBy(holder.getCharacter())
+                .flatMap(grant -> grant.ability.resolveActivationTriggeredEffects(trigger, grant.context).stream())
+                .toList()
+                .forEach(holder::applyEffect);
+    }
+
+    /** Every aura holder's Habilidades have it emit right now — {@link MonstrousAbility#resolveAuras}. */
+    public static List<org.aventyrs.core.scene.MonsterAura> auras(final CombatantSheet holder) {
+        return holder == null ? List.of() : heldBy(holder.getCharacter())
+                .flatMap(grant -> grant.ability.resolveAuras(holder, grant.context).stream())
+                .toList();
+    }
+
+    /** The Correntes every held Habilidade puts on holder's attack — {@link MonstrousAbility#resolveAttackEffectChains}. */
+    public static List<EffectChain> attackEffectChains(final CombatantSheet holder, final SkillType attackSkill,
+                                                       final AttackSource attackSource) {
+        return holder == null ? List.of() : heldBy(holder.getCharacter())
+                .flatMap(grant -> grant.ability.resolveAttackEffectChains(attackSkill, attackSource, holder,
+                        grant.context).stream())
+                .toList();
+    }
+
+    /** The holder's own Resistência à Correntes de Efeitos raise. */
+    public static int effectChainResistanceIncrease(final CombatantSheet holder) {
+        return holder == null ? 0 : heldBy(holder.getCharacter())
+                .mapToInt(grant -> grant.ability.resolveEffectChainResistanceIncrease(holder, grant.context))
+                .sum();
+    }
+
+    /** How far the holder lowers its targets' Resistência à Correntes de Efeitos. */
+    public static int targetEffectChainResistanceReduction(final CombatantSheet holder) {
+        return holder == null ? 0 : heldBy(holder.getCharacter())
+                .mapToInt(grant -> grant.ability.resolveTargetEffectChainResistanceReduction(holder, grant.context))
+                .sum();
+    }
+
+    /**
+     * The first held Habilidade that retypes holder's attack, or {@code null} — with Ascenção's Profano/Sagrado laid
+     * over it when it names an element ({@link MonstrousAbility#resolveElementalDamageSanctity}).
+     */
+    public static DamageDescriptor attackDamageRetype(final CombatantSheet holder, final SkillType attackSkill,
+                                                      final AttackSource attackSource) {
+        if (holder == null) {
+            return null;
+        }
+        DamageDescriptor retype = heldBy(holder.getCharacter())
+                .map(grant -> grant.ability.resolveAttackDamageRetype(attackSkill, attackSource, holder,
+                        grant.context))
+                .filter(Objects::nonNull)
+                .findFirst()
+                .orElse(null);
+        if (retype == null || retype.elementalType() == null) {
+            return retype;
+        }
+        return heldBy(holder.getCharacter())
+                .map(grant -> grant.ability.resolveElementalDamageSanctity(grant.context))
+                .filter(Objects::nonNull)
+                .findFirst()
+                .map(sanctity -> new DamageDescriptor(retype.damageType(), retype.elementalType(), sanctity))
+                .orElse(retype);
+    }
+
+    /**
+     * The first Área de Efeito a held Habilidade grants character's attack, or {@code null}. holder is its sheet, or
+     * {@code null} on a Character-only path — an area bought by an Efeito Ativo then stays unseen.
+     */
+    public static org.aventyrs.core.scene.AreaOfEffect attackArea(final Character character,
+                                                                  final SkillType attackSkill,
+                                                                  final AttackSource attackSource,
+                                                                  final CombatantSheet holder) {
+        return heldBy(character)
+                .map(grant -> grant.ability.resolveAttackArea(attackSkill, attackSource, holder, grant.context))
+                .filter(Objects::nonNull)
+                .findFirst()
+                .orElse(null);
+    }
+
+    /** The Efeitos Críticos every held Habilidade adds to holder's critical hit. */
+    public static List<CriticalEffectType> additionalCriticalEffects(final CombatantSheet holder,
+                                                                     final SkillType attackSkill,
+                                                                     final AttackSource attackSource) {
+        return holder == null ? List.of() : heldBy(holder.getCharacter())
+                .flatMap(grant -> grant.ability.resolveAdditionalCriticalEffects(attackSkill, attackSource, holder,
+                        grant.context).stream())
+                .toList();
     }
 
     /**

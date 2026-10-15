@@ -43,6 +43,9 @@ public class AttackTargetingServiceImpl implements AttackTargetingService {
         return attacker.getFeats().stream()
                 .map(feat -> feat.resolveAttackArea(attacker, attackSkill, attackSource, skillRoll))
                 .filter(java.util.Objects::nonNull)
-                .findFirst();
+                .findFirst()
+                // A Habilidade Monstruosa's — Armamento Elemental's Deviante Explosão (core 0.1.7.3).
+                .or(() -> Optional.ofNullable(org.aventyrs.core.monster.MonstrousAbilityGrant
+                        .attackArea(attacker, attackSkill, attackSource, null)));
     }
 }

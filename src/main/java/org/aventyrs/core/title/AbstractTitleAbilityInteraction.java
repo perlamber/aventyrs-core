@@ -182,6 +182,8 @@ public abstract class AbstractTitleAbilityInteraction implements Interaction<Com
         }
         activator.recordAbilityActivation(ability);
         optIns.forEach(activator::recordAbilityActivation);
+        // Renascido Monstruoso: "Após ativar … Habilidade de Título Aventyr" (core 0.1.7.3).
+        org.aventyrs.core.monster.MonstrousAbilityGrant.onTitleActivation(activator);
         int optInActionPointReduction = optIns.stream()
                 .mapToInt(feat -> feat.resolveTitleActivationActionPointReduction(ability, activator, request.getActivatedFeats()))
                 .sum();

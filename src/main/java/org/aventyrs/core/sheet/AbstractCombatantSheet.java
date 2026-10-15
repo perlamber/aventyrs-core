@@ -2306,6 +2306,14 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
         charges.clear();
         settleEgoLoans();
         dealtDamageThisScene = false;
+        // "Apenas uma vez por Cena" Efeitos Ativos are usable again — on any sheet, since a live scene foe is a plain
+        // CharacterSheet (core 0.1.7.2; used to be MonsterSheet#beginScene only).
+        for (org.aventyrs.core.ability.ActiveAbility ability : getCharacter().getActiveAbilities()) {
+            if (ability instanceof org.aventyrs.core.monster.model.MonstrousActiveAbility monstrous
+                    && monstrous.isOncePerScene()) {
+                startCooldown(ability, 0);
+            }
+        }
     }
 
     /**
@@ -3523,6 +3531,7 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
     @Override
     public boolean isImmuneToCondition(final ConditionType conditionType) {
         return isCenaImmune(conditionType)
+                || temporaryEffects.stream().anyMatch(effect -> effect instanceof ConditionWard ward && ward.wards(conditionType))
                 || undeadAnatomy && org.aventyrs.core.monster.UndeadAnatomy.CONDITION_IMMUNITIES.contains(conditionType)
                 || getCharacter().getAttributeAbilities().stream().anyMatch(ability -> ability.isImmuneToCondition(conditionType));
     }
@@ -3587,6 +3596,9 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
             return;
         }
         temporaryEffects.removeIf(effect -> (effect instanceof TemporaryBonus bonus && source.equals(bonus.getSource()))
+                || (effect instanceof SourcedState state && source.equals(state.getSource()))
+                || (effect instanceof SustainedState sustained && source.equals(sustained.getSource()))
+                || (effect instanceof LifeSteal steal && source.equals(steal.getSource()))
                 || (effect instanceof DamageScopeEffect scoped && source.equals(scoped.getSource()))
                 || (effect instanceof RecurringDice dice && source.equals(dice.getSource()))
                 || (effect instanceof SkillDifficultyShift shift && source.equals(shift.getSource())));
@@ -3596,7 +3608,8 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
     public boolean hasEffectFrom(final String source) {
         return source != null && temporaryEffects.stream()
                 .anyMatch(effect -> (effect instanceof TemporaryBonus bonus && source.equals(bonus.getSource())
-                        || effect instanceof SourcedState state && source.equals(state.getSource()))
+                        || effect instanceof SourcedState state && source.equals(state.getSource())
+                        || effect instanceof SustainedState sustained && source.equals(sustained.getSource()))
                         && !effect.isExpired());
     }
 

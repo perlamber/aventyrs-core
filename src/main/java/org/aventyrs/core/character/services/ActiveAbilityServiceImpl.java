@@ -156,6 +156,8 @@ public class ActiveAbilityServiceImpl implements ActiveAbilityService {
         if (actionCost.kind() == ActionCost.Kind.REACTION) {
             characterSheet.spendReaction();
         }
+        // What a Habilidade Monstruosa grants for an activation — Renascido Monstruoso (core 0.1.7.3).
+        org.aventyrs.core.monster.MonstrousAbilityGrant.onActivation(characterSheet, ability);
     }
 
     /**

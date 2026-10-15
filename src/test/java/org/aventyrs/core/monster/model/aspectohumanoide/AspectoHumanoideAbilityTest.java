@@ -1,5 +1,13 @@
 package org.aventyrs.core.monster.model.aspectohumanoide;
 
+import org.aventyrs.core.character.EgoDomain;
+import org.aventyrs.core.effect.EffectChainServiceImpl;
+import org.aventyrs.core.effect.monstrous.AutocontroleLoss;
+import org.aventyrs.core.effect.monstrous.Possessao;
+import org.aventyrs.core.effect.monstrous.TerrorDaFormaVerdadeira;
+import org.aventyrs.core.monster.MonstrousAbilityGrant;
+import org.aventyrs.core.scene.InitiativePosition;
+import org.aventyrs.core.sheet.ConditionType;
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.services.ActiveAbilityServiceImpl;
 import org.aventyrs.core.character.services.InitiativeServiceImpl;
@@ -95,7 +103,9 @@ class AspectoHumanoideAbilityTest {
         DifficultyLevel attack = sheet.getSkillDifficulty(SkillType.ATAQUE_CORPO_A_CORPO).level();
         new ActiveAbilityServiceImpl().activate(sheet.getCharacter(), sheet, held(sheet, "Forma Verdadeira"), 1);
 
-        assertEquals(dex + 2, sheet.getCharacter().getEffectiveAttributeTotal(AttributeDomain.DEXTERITY, sheet));
+        assertEquals(dex + 3, sheet.getCharacter().getEffectiveAttributeTotal(AttributeDomain.DEXTERITY, sheet));
+        assertEquals(List.of(TerrorDaFormaVerdadeira.class), MonstrousAbilityGrant.attackEffectChains(sheet,
+                SkillType.ATAQUE_CORPO_A_CORPO, null).stream().map(Object::getClass).toList());
         assertEquals(2, sheet.getTemporaryBonus(ModifierType.DAMAGE_REDUCTION));
         assertEquals(2, sheet.getTotalCriticalResistance(null));
         assertEquals(attack.harder(1), sheet.getSkillDifficulty(SkillType.ATAQUE_CORPO_A_CORPO).level());
@@ -105,5 +115,50 @@ class AspectoHumanoideAbilityTest {
         sheet.removeEffectsFrom(AspectoHumanoideAbility.FORMA_VERDADEIRA_SOURCE);
         assertEquals(dex, sheet.getCharacter().getEffectiveAttributeTotal(AttributeDomain.DEXTERITY, sheet));
         assertEquals(attack, sheet.getSkillDifficulty(SkillType.ATAQUE_CORPO_A_CORPO).level());
+    }
+
+    @Test
+    void formaVerdadeiraRaisesItsOwnResistanceByThreeAndCutsItsTargetsByFour() {
+        MonsterSheet sheet = spawn(46, MonstrousAbilitySelection.of(AspectoHumanoideAbility.FORMA_VERDADEIRA));
+        MonsterSheet target = spawn(0, MonstrousAbilitySelection.of(AspectoHumanoideAbility.CORPO_HUMANOIDE));
+        EffectChainServiceImpl chains = new EffectChainServiceImpl();
+        int own = chains.getRequiredMargin(target, InitiativePosition.UNKNOWN, sheet, InitiativePosition.UNKNOWN);
+        int against = chains.getRequiredMargin(sheet, InitiativePosition.UNKNOWN, target, InitiativePosition.UNKNOWN);
+        new ActiveAbilityServiceImpl().activate(sheet.getCharacter(), sheet, held(sheet, "Forma Verdadeira"), 1);
+        assertEquals(own + 3, chains.getRequiredMargin(target, InitiativePosition.UNKNOWN, sheet, InitiativePosition.UNKNOWN));
+        assertEquals(Math.max(0, against - 4),
+                chains.getRequiredMargin(sheet, InitiativePosition.UNKNOWN, target, InitiativePosition.UNKNOWN));
+    }
+
+    @Test
+    void terrorFrightensThenProgressesToApavoradoWithAnExtraRodada() {
+        MonsterSheet monster = spawn(46, MonstrousAbilitySelection.of(AspectoHumanoideAbility.FORMA_VERDADEIRA));
+        MonsterSheet target = spawn(0, MonstrousAbilitySelection.of(AspectoHumanoideAbility.CORPO_HUMANOIDE));
+        new TerrorDaFormaVerdadeira(monster).applyTo(target);
+        assertTrue(target.getHeldConditions().stream().anyMatch(c -> c.getType() == ConditionType.ASSUSTADO
+                && c.getRemainingRounds() == 2));
+        new TerrorDaFormaVerdadeira(monster).applyTo(target);
+        assertTrue(target.getHeldConditions().stream().anyMatch(c -> c.getType() == ConditionType.APAVORADO
+                && c.getRemainingRounds() == 3));
+        assertFalse(target.getHeldConditions().stream().anyMatch(c -> c.getType() == ConditionType.ASSUSTADO));
+    }
+
+    @Test
+    void possessaosAttacksWeakenTheSpiritAndItsWindowCarriesThePossession() {
+        MonsterSheet monster = spawn(26, MonstrousAbilitySelection.of(AspectoHumanoideAbility.POSSESSAO));
+        assertEquals(List.of(AutocontroleLoss.class), MonstrousAbilityGrant.attackEffectChains(monster,
+                SkillType.ATAQUE_A_DISTANCIA, null).stream().map(Object::getClass).toList());
+        new ActiveAbilityServiceImpl().activate(monster.getCharacter(), monster, held(monster, "Possessão"), 1);
+        assertTrue(MonstrousAbilityGrant.attackEffectChains(monster, SkillType.ATAQUE_A_DISTANCIA, null).stream()
+                .anyMatch(Possessao.class::isInstance));
+    }
+
+    @Test
+    void enfraquecerOEspiritoLowersTheTargetsTemporaryAutocontroleUntilALongRest() {
+        MonsterSheet target = spawn(0, MonstrousAbilitySelection.of(AspectoHumanoideAbility.CORPO_HUMANOIDE));
+        int before = target.getTemporaryEgoPoints(EgoDomain.AUTOCONTROLE);
+        AutocontroleLoss.enfraquecerOEspirito().applyTo(target);
+        AutocontroleLoss.enfraquecerOEspirito().applyTo(target);
+        assertEquals(Math.max(0, before - 2), target.getTemporaryEgoPoints(EgoDomain.AUTOCONTROLE));
     }
 }
