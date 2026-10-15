@@ -1,6 +1,6 @@
 # Undead invocations (REANIMAR tree) + Escolhido de Macária — implementation plan
 
-**Status: Phases 0–6 built (core 0.1.6.22–0.1.6.27, API, client on 0.1.6.27); not yet played live.** Core 0.1.6.27 was added during Phase 6: the anatomy now lives on every sheet (`MonsterSheet#transferAnatomyTo`) because the client acts for summons and foes through `CharacterSheet`s. Open: Invocar Abantesma cast alone; Servo Cadavérico's raise count is local only; the client's Foco check counts only invocations this client runs. Started 2026-10-14.
+**Status: Phases 0–6 built and walked live (core 0.1.7 = 0.1.6.22–0.1.6.27, API, client).** Core 0.1.6.27 was added during Phase 6: the anatomy now lives on every sheet (`MonsterSheet#transferAnatomyTo`) because the client acts for summons and foes through `CharacterSheet`s. Open: Invocar Abantesma cast alone; Servo Cadavérico's raise count is local only; the client's Foco check counts only invocations this client runs. Started 2026-10-14.
 
 ## Context
 
@@ -158,3 +158,28 @@ New `monster.UndeadAnatomy` (constants + helpers), applied wherever a sheet `isU
 - Client: unit tests for corpse targeting and summon restore; then `run` skill — cast Reanimar on a dead foe, kill the
   Zumbi, raise it again until the 4th refusal; Festim over the Foco cap shows hostile undead; GM builds an Escolhido de
   Macária monster and uses Procissão.
+
+## Live walkthrough (2026-10-14)
+
+Driven headless through the real client (`UndeadWalkthroughLiveTest`, opt-in with `AVENTYRS_LIVE=true`), against a
+live API on core 0.1.7 with the dev data:
+- Reanimar raised four Zumbis in a row, each from the last one's corpse, and each killed through the damage modal.
+  Every Zumbi left its body and the raise count carried. The fifth attempt was refused by the client ("um corpo
+  reanimado quatro vezes não") and by the server (HTTP 409).
+- Festim dos Mortos at Foco 2: a Carniçal on the cast and a Zumbi on the first Rodada, both controlled. The third riser
+  (a Zumbi) came up uncontrolled, in its own hostile group, waiting for the next Rodada. All three left with the
+  sarcophagus.
+
+Bugs it found, now fixed:
+- **client** — `SkillCompetencyAbilityCatalog#idFor` cast every competency ability to `Enum`, so selecting any summon
+  (its `ZumbiAbility` / `NatureSummonAbility` is an instance) crashed the Perícias panel.
+- **API** — a fallen corpse-raised undead sends its dismissal and its status frame together. `MonsterSheetService`'s
+  whole-document saves let the status frame erase the corpse mark. Status, Sangramentos, Subordinados and the corpse
+  mark are now field-level `$set`s.
+- **client** — picking a controlled character the client had just released (a fallen undead) left no active sheet;
+  the picker is now rebuilt instead.
+- **client** — Festim dos Mortos had its area switched off and core refused the cast ("alvo inválido"). It now keeps
+  its area, centred on the caster's hex (⚠️ reading of "um ponto adjacente ao conjurador").
+
+Note: Festim is Florescente (GD 32/36), so the walkthrough's Festim half used Domínio do Mana 30.
+
