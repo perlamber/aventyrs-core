@@ -20,6 +20,11 @@ creature presents *because it never rolls*: a GD per Perícia and two Defesas.
 | `SummonedMonsterTemplate` | An **invocação** — its numbers follow its Conjurador, not a Grau de Poder | its own class in `monster.summon`, e.g. `Zumbi` |
 | `AbstractMonsterTemplate` | A **fixed stat block** outside the creation rules, or a hand-built test foe | `@Builder` of authored DF/DM/GDs |
 
+**Conjured monsters** (core 0.1.7.5): `monster.generator.MonsterGenerator#generate(ConjurePreset, gp, kind, name, seed)`
+builds a legal single-Modelo blueprint from one `ConjurePreset` per Modelo. It is deterministic per seed and uses
+`MonsterRules`' budgets. The API's scene conjure endpoint calls it. Change a preset's numbers there, never the
+generator's walk.
+
 `SampleMonster` holds legal worked blueprints (a Presa and a Predador). The old five
 `GenericMonster` archetypes now live **in test sources only** (same package), because dozens of
 combat tests use them as known DF/DM targets — don't move them back to main.
