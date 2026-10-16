@@ -157,4 +157,11 @@ public class SpellCastingResult {
      */
     @lombok.Builder.Default
     private final java.util.List<org.aventyrs.core.effect.EffectChain> grantedEffectChains = java.util.List.of();
+
+    /**
+     * What the cast version invokes (core 0.1.7.6), or {@code null} for a Magia that invokes nothing — the caller turns
+     * it into an order with {@code SpellInvocationService#plan} once the Conjuração succeeds. Its extra PM is already in
+     * {@link #manaCost}.
+     */
+    private final org.aventyrs.core.magic.invocation.SpellInvocation invocation;
 }

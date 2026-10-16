@@ -76,6 +76,8 @@ import static org.aventyrs.core.util.TranslatableMessages.INVALID_SPELL_ALTERNAT
  * @param additionalTargetManaCost PM per additional target
  * @param casterAffected   whether a caster-centred area reaches the caster; {@code null} inherits
  * @param ward             the protection this version leaves — never inherited
+ * @param bodyChange       the body change this version applies — never inherited
+ * @param invocation       what this version invokes; {@code null} inherits (core 0.1.7.6)
  */
 @Builder
 public record SpellAlternateEffect(
@@ -98,7 +100,8 @@ public record SpellAlternateEffect(
         Integer additionalTargetManaCost,
         Boolean casterAffected,
         SpellWard ward,
-        SpellBodyChange bodyChange) {
+        SpellBodyChange bodyChange,
+        org.aventyrs.core.magic.invocation.SpellInvocation invocation) {
 
     public SpellAlternateEffect {
         if (name == null || name.isBlank()) {

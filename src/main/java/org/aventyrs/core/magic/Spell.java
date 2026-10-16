@@ -319,6 +319,15 @@ public interface Spell extends AttackSource {
         return Optional.empty();
     }
 
+    /**
+     * What a cast of this version invokes (core 0.1.7.6) — the creature, spawner or Subordinado {@code
+     * SpellInvocationService#plan} turns it into — or empty for a Magia that invokes nothing. An Efeito Alternativo
+     * names its own when it invokes something else, and otherwise inherits its parent's.
+     */
+    default Optional<org.aventyrs.core.magic.invocation.SpellInvocation> getInvocation() {
+        return Optional.empty();
+    }
+
     /** {@link #getMaxAdditionalTargets()} for "criaturas adicionais" with no stated cap. */
     int UNBOUNDED_ADDITIONAL_TARGETS = Integer.MAX_VALUE;
 

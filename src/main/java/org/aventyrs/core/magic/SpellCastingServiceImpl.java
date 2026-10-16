@@ -38,6 +38,10 @@ public class SpellCastingServiceImpl implements SpellCastingService {
     /** The floor a reduced Tempo de Ativação stops at. */
     private static final int MINIMUM_ACTION_POINTS = 1;
 
+    /** Prices an invocation's extra PM — stateless, so one is shared. */
+    private static final org.aventyrs.core.magic.invocation.SpellInvocationService INVOCATIONS =
+            new org.aventyrs.core.magic.invocation.SpellInvocationServiceImpl();
+
     private final Interaction<CombatantSheet> dominioDoManaInteraction;
     private final AbstractSkillInteraction dominioDoManaContextInteraction;
     private final SpellDurationService spellDurationService;
@@ -181,6 +185,7 @@ public class SpellCastingServiceImpl implements SpellCastingService {
                 .castingTargetValue(castingTargetValue(request, spell, authoredDifficulty == null ? null
                         : authoredDifficulty.easier(castingDifficultyReduction)))
                 .castVersion(spell)
+                .invocation(spell.getInvocation().orElse(null))
                 .activationTime(activationTime)
                 .durationInRounds(durationInRounds.isPresent() ? durationInRounds.getAsInt() : null)
                 .areaSpellEffect(areaSpellEffect)
@@ -392,7 +397,11 @@ public class SpellCastingServiceImpl implements SpellCastingService {
         int reduced = cost <= 0 || reduction <= 0 ? cost : Math.max(MINIMUM_REDUCED_MANA_COST, cost - reduction);
         // Corrente Abençoada: "Para cada criatura adicional é necessário o uso de +3PM".
         return reduced + request.getAdditionalTargets().size() * spell.getAdditionalTargetManaCost()
-                + extraMana(spell, request);
+                + extraMana(spell, request)
+                // Predador Regional's +1PM, Canção de Flora's per animal, Açougueiro's +5PM (core 0.1.7.6).
+                + spell.getInvocation()
+                        .map(invocation -> INVOCATIONS.extraManaCost(invocation, caster, request.getInvocationChoices()))
+                        .orElse(0);
     }
 
     /** The extra PM a cast spends to lengthen its Duração — 0 unless the version allows it (Serra-Pernas). */

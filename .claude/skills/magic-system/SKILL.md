@@ -279,8 +279,8 @@ Effect plugs into `receiveInteraction` with zero other code touched, and `Abstra
   `SpellEffectKind` carries a `Supplier<SpellEffectBuilder>` per category — the same
   one-constant-carries-its-own-lookup idiom `SkillType` uses for `interactionFactory` — and the
   factory is the thin facade over it that `SkillInteractionFactory` is over `newInteraction()`.
-  **Adding `OFFENSIVE`/`INVOCATION` is a builder class plus a supplier; `SpellCastingServiceImpl`
-  needs no edit.** Each builder reads **one authored column** and answers empty otherwise, which is
+  **Adding `OFFENSIVE` is a builder class plus a supplier; `SpellCastingServiceImpl`
+  needs no edit.** `INVOCATION` stays builder-less by design — see the invocation bullet below. Each builder reads **one authored column** and answers empty otherwise, which is
   what keeps this keyed on data rather than on a registry of effect types.
 - ⚠️ **There is no "which effect" selector, and there must not be one.** A Magia and its Efeito
   Alternativo are two separate `Spell`s carrying separate effect columns, so choosing the version
@@ -328,8 +328,19 @@ Effect plugs into `receiveInteraction` with zero other code touched, and `Abstra
   `SpellCastingService#resolveEffectChain(Spell, SpellEffectContext, DiceRoller)`, and every timed
   effect lasts `SpellEffectContext#roundsFor` — the cast's resolved Duração when the caller passes
   it (`withDurationInRounds`), so Talento/item increases and extra PM reach the landing.
-- **Still inert:** `OffensiveEffect` for damage and Malefícios (both halves already exist) and
-  `InvocationEffect` (`Spell` has no `MonsterTemplate` column). `CORPO_FECHADO`'s Malefício
+- **An invocation is a column, not an effect (core 0.1.7.6).** A summon is a new Scene participant,
+  not an `Interaction` on a sheet, so `INVOCATION` builds nothing. Instead the Magia names a
+  `magic.invocation.SpellInvocation` (`SpellData`/`SpellAlternateEffect#invocation`, an alternate
+  inheriting its parent's when it names none; read through `Spell#getInvocation()`), carrying its
+  `Shape` (SUMMON/SPAWNER/SUBORDINATE), `Target` (BESIDE_CASTER/CORPSE/ANIMAL), whether it counts
+  toward the `SummonLimit` and which standing kinds it replaces. `castSpell` reports it
+  (`SpellCastingResult#getInvocation`) and prices its extra PM (`SpellCastRequest#invocationChoices`
+  for Canção de Flora's counts); `SpellInvocationService#plan` turns a landed cast into an
+  `InvocationOrder` (`Summons` of `SummonOrder`s, a `Spawner`, or a `Subordination` then
+  `#subordinate`) over the unchanged `NatureInvocationService`/`UndeadInvocationService`. **A new
+  invocation Magia is a constant plus a `plan` case** — no caller recognises a Magia by its enum.
+  Invocar Abantesma names none yet.
+- **Still inert:** `OffensiveEffect` for damage and Malefícios (both halves already exist). `CORPO_FECHADO`'s Malefício
   *immunity* half needs per-condition immunity, which does not exist. The Regeneração tree is
   unblocked but unwired — `SpellHealing` would need a recurring figure beside the instant one.
 

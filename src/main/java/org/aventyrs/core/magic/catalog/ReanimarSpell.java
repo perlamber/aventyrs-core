@@ -10,6 +10,7 @@ import org.aventyrs.core.magic.SpellData;
 import org.aventyrs.core.magic.SpellDuration;
 import org.aventyrs.core.magic.SpellTargeting;
 import org.aventyrs.core.magic.SpellTree;
+import org.aventyrs.core.magic.invocation.SpellInvocation;
 import org.aventyrs.core.scene.AreaOfEffect;
 import org.aventyrs.core.scene.Range;
 import org.aventyrs.core.skill.DifficultyLevel;
@@ -24,7 +25,8 @@ import org.aventyrs.core.skill.SkillType;
  * {@code monster.summon.Zumbi}, {@code Carnical} and {@code Abantesma} are the stat blocks, each with the manual's
  * Anatomia de Morto-Vivo; {@code magic.invocation.UndeadInvocationService} turns a cast into them — Reanimar and Criar
  * Carniçal from a corpse ({@code RaiseDeadService}), Servo Cadavérico as a Subordinado, Festim dos Mortos as a spawner
- * ({@code FestimDosMortos}). As with the nature tree, the caller picks which method a cast calls.
+ * ({@code FestimDosMortos}). As with the nature tree, each Magia names its {@code magic.invocation.SpellInvocation}
+ * (core 0.1.7.6) and {@code SpellInvocationService#plan} picks the method; Invocar Abantesma names none yet.
  *
  * <p>Both of the catalog's <b>blank {@code Efeito Crítico:} lines</b> are in this tree, on its two
  * shallowest rungs.
@@ -84,9 +86,11 @@ public enum ReanimarSpell implements AuthoredSpell {
                     + "é reanimado como um Subordinado do tipo Cavaleiro ou Torre. Conjurar a magia desta forma lhe "
                     + "concede a Corrente de Efeitos – Escudeiro Cadavérico: O morto-vivo gerado conta como um "
                     + "Subordinado Prodigioso nas 2 primeiras Rodadas de Efeito desta magia.")
-            .alternateEffect(SpellAlternateEffect.named("Servo Cadavérico"))
+            .alternateEffect(SpellAlternateEffect.builder().name("Servo Cadavérico")
+                    .invocation(SpellInvocation.SERVO_CADAVERICO).build())
             .duration(SpellDuration.concentracaoMais(2))
             .targeting(SpellTargeting.TOQUE)
+            .invocation(SpellInvocation.ZUMBI)
             .build()),
 
     /**
@@ -147,10 +151,12 @@ public enum ReanimarSpell implements AuthoredSpell {
                     + "menos. "
                     + "Os PM adicionais utilizados para conjurar essa magia são recuperados apenas se este "
                     + "Morto-Vivo for destruído e somente após você passar por um Descanso Longo.")
-            .alternateEffect(SpellAlternateEffect.named("Açougueiro"))
+            .alternateEffect(SpellAlternateEffect.builder().name("Açougueiro")
+                    .invocation(SpellInvocation.ACOUGUEIRO).build())
             .criticalEffectType(CriticalEffectType.POTENCIALIZAR)
             .duration(SpellDuration.concentracaoMais(2))
             .targeting(SpellTargeting.TOQUE)
+            .invocation(SpellInvocation.CARNICAL)
             .build()),
 
     /**
@@ -271,11 +277,13 @@ public enum ReanimarSpell implements AuthoredSpell {
                     + "profano. A cada Rodada, adicionalmente à criatura invocada aleatoriamente, um zumbi será "
                     + "invocado. Você não possui controle de nenhum morto-vivo invocado desta forma e eles sempre "
                     + "atacar o personagem vivo mais próximo do jazigo.")
-            .alternateEffect(SpellAlternateEffect.named("Horda Faminta"))
+            .alternateEffect(SpellAlternateEffect.builder().name("Horda Faminta")
+                    .invocation(SpellInvocation.HORDA_FAMINTA).build())
             .criticalEffectType(CriticalEffectType.PREVENIR)
             .duration(SpellDuration.rodadas(3))
             .targeting(SpellTargeting.areaDeEfeito(Range.ADJACENTE,
                     AreaOfEffect.circle(Range.DISTANCIA_MUITO_CURTA)))
+            .invocation(SpellInvocation.FESTIM)
             .build());
 
     private final SpellData data;

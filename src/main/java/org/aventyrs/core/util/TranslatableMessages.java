@@ -212,6 +212,12 @@ public class TranslatableMessages {
     /** Cativar Animal makes a Cavaleiro or a Torre — another grade was asked for. */
     public static final String CAPTIVATE_GRADE_NOT_ALLOWED = "CAPTIVATE_GRADE_NOT_ALLOWED";
 
+    /** An invocation Magia that touches a body or an animal was cast with no target (core 0.1.7.6). */
+    public static final String INVOCATION_TARGET_REQUIRED = "INVOCATION_TARGET_REQUIRED";
+
+    /** {@code SpellInvocationService#subordinate} was asked of an invocation that makes no Subordinado (core 0.1.7.6). */
+    public static final String INVOCATION_NOT_SUBORDINATE = "INVOCATION_NOT_SUBORDINATE";
+
     /** "Um mesmo animal não pode ser alvo deste efeito uma segunda vez sem que antes passe por um Descanso." */
     public static final String CAPTIVATE_NEEDS_REST = "CAPTIVATE_NEEDS_REST";
 
