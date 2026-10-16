@@ -5,6 +5,9 @@ import org.aventyrs.core.monster.model.almaelemental.AlmaElementalAbility;
 import org.aventyrs.core.monster.model.cireneia.CireneiaAbility;
 import org.junit.jupiter.api.Test;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -28,6 +31,26 @@ class MonsterModelTest {
                 assertFalse(ability.getDescription().isBlank(), ability.name());
             }
         }
+    }
+
+    /**
+     * Each Habilidade's description is hand-copied from {@code docs/rules/criacao-de-monstros.txt}; this keeps
+     * the two in step when the manual is revised. Bullets and whitespace are ignored — the .txt import drops
+     * the former and reflows the latter.
+     */
+    @Test
+    void everyDescriptionIsVerbatimInTheRulesText() throws IOException {
+        String rules = normalise(Files.readString(Path.of("docs/rules/criacao-de-monstros.txt")));
+        for (MonsterModel model : MonsterModel.values()) {
+            for (MonstrousAbility ability : model.getAbilities()) {
+                assertTrue(rules.contains(normalise(ability.getDescription())),
+                        model.name() + "." + ability.name() + " drifted from the rules text");
+            }
+        }
+    }
+
+    private static String normalise(final String text) {
+        return text.replace('\u00a0', ' ').replace("\u200b", "").replace("•", "").replaceAll("\\s+", " ").trim();
     }
 
     @Test

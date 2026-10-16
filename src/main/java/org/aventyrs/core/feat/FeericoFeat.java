@@ -11,7 +11,16 @@ import org.aventyrs.core.ability.ActiveAbility;
 import org.aventyrs.core.character.SizeCategory;
 import org.aventyrs.core.magic.BranchLevel;
 import org.aventyrs.core.magic.MimetizedSpell;
+import org.aventyrs.core.character.Alignment;
+import org.aventyrs.core.character.Dice;
+import org.aventyrs.core.character.FlightActivation;
 import org.aventyrs.core.race.Aviano;
+import org.aventyrs.core.race.Fada;
+import org.aventyrs.core.race.Furia;
+import org.aventyrs.core.scene.Range;
+import org.aventyrs.core.sheet.ActionCost;
+import org.aventyrs.core.sheet.CharacterSheet;
+import java.util.Set;
 import org.aventyrs.core.race.Bestial;
 import org.aventyrs.core.race.CreatureType;
 import org.aventyrs.core.race.Satiro;
@@ -32,18 +41,22 @@ import org.aventyrs.core.sheet.CombatantSheet;
  * and {@link #SIRENIDEO} additionally grant a <b>fixed-Atributo +1</b> through {@code
  * Feat#resolveAttributeBonus} (Carisma, Vigor) — that half is now real too, the same as every
  * {@code BestialFeat} Herança. {@link #LUPERCAL} additionally sets its holder's Categoria de
- * Tamanho outright ({@code Feat#resolveSizeCategoryOverride}), as {@link #PIXIE} does; both stay
- * half-implemented only for their target-Tendência-scoped GD reduction, which {@link #FAUNO}
- * shares.
+ * Tamanho outright ({@code Feat#resolveSizeCategoryOverride}), as {@link #PIXIE} does, and both
+ * Sátiro lineages ease their rolls against a target of one Tendência ({@code
+ * SceneContext#getOpposedCharacter()}'s band).
+ *
+ * <p><b>The Efeito de Voo is real</b> (core 0.1.7.8): {@link #ASAS} and {@link #PIXIE} price their
+ * flight through {@code Feat#resolveFlightActivation}, {@link #BENCAO_DE_FLORA} adjusts it, and
+ * {@code FlightService} spends it. {@link #DRIADE} is the one constant left unbuilt.
  *
  * <p><b>This tree is why {@code FeatRequirements#requiredCreatureType} exists.</b> "Apenas
  * personagens de raça Feérica" spans Fada, Fúria, Sátiro, Nascido da Floresta and Górgona — five
  * classes with no common supertype — so {@code requiredRace} cannot express it. {@link
  * CreatureType#FEERICO} can, in one clause.
  *
- * <p>Where the text narrows further to two named races ("apenas Fadas e Fúrias", {@link #PIXIE}
- * and {@link #SIRENIDEO}), the gate stays at {@code FEERICO} and is therefore <b>looser than
- * written</b> — the direction every unexpressible clause in this catalog errs in.
+ * <p>Where the text narrows further to named races ("apenas Fadas e Fúrias", {@link #PIXIE} and
+ * {@link #SIRENIDEO}; "Fadas, Fúrias e Sátiros", {@link #ESPIRITO_DA_FLORESTA}) the gate names them,
+ * as one {@code anyOf} branch per Raça.
  */
 public enum FeericoFeat implements Feat {
 
@@ -53,17 +66,12 @@ public enum FeericoFeat implements Feat {
      */
     // The Movimento Base de Voo is real, and so is the +2UD: ⚠️ "enquanto voando seu Movimento Base
     // aumenta em +2UD" is read as the flight axis (the Movimento used while flying), not as land
-    // Movimento, since this core does not know when the holder is flying except through the
-    // caller's EnvironmentalState.
-    // TODO: flying as a timed state — the 3PD/3PM cost, its per-Título reduction and the 1d6 +
-    //  metade do Vigor Duração — is not modelled.
-    // The disjunctive Pré-requisito is real now — "apenas Avianos e Bestiais, OU personagens
-    // recém-criados de raça Feérica" — as three FeatRequirements#anyOf branches, so an Aviano or
-    // Bestial is no longer wrongly refused.
-    // TODO: the Feérico branch is still missing its "recém-criados" half. Feat
-    //  #isAcquirableOnlyAtCreation is all-or-nothing, so it cannot restrict one anyOf branch
-    //  without also closing the Aviano/Bestial ones. The branch stays open to any Feérico —
-    //  looser than written, in the direction this catalog always errs.
+    // Movimento.
+    // The Efeito de Voo is real (Feat#resolveFlightActivation): 3PD — 3PM for a Feérico — less 1
+    // per Título, 1d6 + metade do Vigor Rodadas, landing safely as it lapses.
+    // The disjunctive Pré-requisito is real in full: "apenas Avianos e Bestiais" is the data
+    // (two anyOf branches), and "ou personagens recém-criados de raça Feérica" is the starting-slot
+    // branch (Feat#isEligibleAtCreation), so a Feérico takes it only at creation.
     ASAS(
             "Você tem asas e possui Movimento Base de Voo. Enquanto voando seu Movimento Base "
                     + "aumenta em +2UD. Iniciar uma ação de voo em situações estressantes, como as "
@@ -73,9 +81,6 @@ public enum FeericoFeat implements Feat {
             FeatRequirements.builder()
                     .alternative(FeatRequirements.builder().requiredRace(Aviano.class).build())
                     .alternative(FeatRequirements.builder().requiredRace(Bestial.class).build())
-                    .alternative(FeatRequirements.builder()
-                            .requiredCreatureType(CreatureType.FEERICO)
-                            .build())
                     .build()) {
         @Override
         public boolean grantsMovementMode(final MovementMode mode, final Character character,
@@ -87,24 +92,57 @@ public enum FeericoFeat implements Feat {
         public int resolveModeMovementIncrease(final MovementMode mode, final Character character) {
             return mode == MovementMode.FLIGHT ? ASAS_FLIGHT_BONUS : 0;
         }
+
+        /** "… ou personagens recém-criados de raça Feérica." */
+        @Override
+        public boolean isEligibleAtCreation(final Character character, final CharacterSheet sheet) {
+            return isEligible(character, sheet) || Feat.meetsRequirements(FEERICO_ONLY, character, sheet);
+        }
+
+        /**
+         * "Exige o uso de 3PD, Feéricos usam 3PM. Este Custo é reduzido em 1 para cada Título Aventyr
+         * que o personagem possua. A Duração do Efeito de Voo é igual à 1d6+Metade do Vigor Rodadas."
+         * ⚠️ No Tempo de Ativação is stated, so none is charged. "Feéricos" is any Feérico prerequisite
+         * type (a Pequenino of Linhagem de Flora too).
+         */
+        @Override
+        public Optional<FlightActivation> resolveFlightActivation(final Character character,
+                                                                  final CombatantSheet holder) {
+            int cost = ASAS_FLIGHT_COST - character.getAllTitles().size();
+            boolean feerico = character.getPrerequisiteCreatureTypes().contains(CreatureType.FEERICO);
+            return Optional.of(new FlightActivation("Asas", ActionCost.NONE, feerico ? 0 : cost, feerico ? cost : 0,
+                    Dice.of(1, holder.getAttributeTotal(AttributeDomain.VIGOR) / 2)));
+        }
     },
 
-    /** "O Custo de Ativação do Efeito de Voo é reduzido em -1PM." */
-    // TODO: adjusts the Custo and Duração of a flight effect. The generic activation transaction
-    //  exists now (ActiveAbilityService#activate), but flight itself is an unmodelled distance
-    //  sub-stat with no effect to have a Custo or Duração — see Aviano's Braços Alados.
+    /**
+     * "O Custo de Ativação do Efeito de Voo é reduzido em -1PM. A Duração de seu Efeito de Voo muda
+     * para 2d6+Metade do Foco Rodadas." Both halves are real, on every Efeito de Voo its holder
+     * starts ({@code FlightService#getFlightActivations}); the −1PM never takes a cost below 0.
+     */
     BENCAO_DE_FLORA(
             "O Custo de Ativação do Efeito de Voo é reduzido em -1PM. A Duração de seu Efeito de "
                     + "Voo muda para 2d6+Metade do Foco Rodadas.",
             FeatRequirements.builder()
                     .requiredCreatureType(CreatureType.FEERICO)
                     .requiredFeat(ASAS)
-                    .build()),
+                    .build()) {
+        @Override
+        public int resolveFlightMagicPointReduction(final Character character) {
+            return BENCAO_DE_FLORA_PM_REDUCTION;
+        }
+
+        @Override
+        public Dice resolveFlightDurationOverride(final Character character, final CombatantSheet holder) {
+            return Dice.of(2, holder.getAttributeTotal(AttributeDomain.FOCUS) / 2);
+        }
+    },
 
     /**
      * "Você pode, com auxílio de um ritual, transferir sua essência vital para uma árvore."
      */
-    // TODO: the densest single clause of the Feérico tree, and none of it is expressible. It
+    // TODO: deliberately left unbuilt (table decision, 2026-10-16) — the densest single clause of
+    //  the Feérico tree. It
     //  needs an age concept (não envelhece; envelhecem metade do tempo ao desconectar), a
     //  disease classification, a bound external object with its own location and PV, a
     //  kilometre-denominated distance (this core has Range bands within a Scene and nothing
@@ -131,19 +169,25 @@ public enum FeericoFeat implements Feat {
      */
     // The Categoria de Tamanho set is real, through Feat#resolveSizeCategoryOverride.
     // "Movimento Base de Voo 8UD" is real, an absolute figure (Feat#resolveMovementBaseOverride).
-    // TODO: flying as a timed state — the 2PM cost and the 2d6 + metade do Carisma Duração — is
-    //  not modelled.
-    // TODO: gated at FEERICO where the text says "apenas Fadas e Fúrias" — looser than written,
-    //  see the class javadoc. The exclusion runs one way only, exactly as the rules text writes
-    //  it: Sirenídeo forbids Pixie, Pixie forbids nothing.
+    // The Efeito de Voo is real (Feat#resolveFlightActivation): 2PM ao Tempo de Ação Livre,
+    // 2d6 + metade do Carisma Rodadas + 3 per Título Desperto, then "retornam ao solo lentamente".
+    // "Apenas Fadas e Fúrias" is real (one anyOf branch per Raça). The exclusion runs one way only,
+    // exactly as the rules text writes it: Sirenídeo forbids Pixie, Pixie forbids nothing.
     PIXIE(
             "Sua categoria de tamanho muda para -3, você tem asas e Movimento Base de Voo 8UD. "
                     + "Voar em Cenas estressantes, como Combates, exige o uso de 2PM ao Tempo de "
                     + "Ação Livre, a capacidade de voo poderá ser usada por 2d6+Metade do Carisma "
                     + "Rodadas, +3 Rodadas para cada Título Aventyr Desperto que possuir.",
-            FeatRequirements.builder()
-                    .requiredCreatureType(CreatureType.FEERICO)
-                    .build()) {
+            fadasEFurias().build()) {
+        @Override
+        public Optional<FlightActivation> resolveFlightActivation(final Character character,
+                                                                  final CombatantSheet holder) {
+            int bonus = holder.getAttributeTotal(AttributeDomain.CHARISMA) / 2
+                    + PIXIE_FLIGHT_ROUNDS_PER_TITLE * character.getAllTitles().size();
+            return Optional.of(new FlightActivation("Pixie", ActionCost.FREE_ACTION, 0, PIXIE_FLIGHT_COST,
+                    Dice.of(2, bonus)));
+        }
+
         @Override
         public Integer resolveMovementBaseOverride(final MovementMode mode, final Character character) {
             return mode == MovementMode.FLIGHT ? PIXIE_FLIGHT_MOVEMENT : null;
@@ -166,13 +210,13 @@ public enum FeericoFeat implements Feat {
      * Both halves are real — the Carisma +1 through {@link Feat#resolveAttributeBonus}, the
      * Vantagem through {@link Feat#resolveSkillRollBonus}.
      */
-    // TODO: "do sexo feminino" is unenforced — Character#getSexo() exists and is nullable, but
-    //  FeatRequirements has no clause for it and one constant is short of the bar for adding one.
+    // "Do sexo feminino" is real: FeatRequirements#requiredSexo, which an unrecorded Sexo fails.
     NINFA(
             "Você recebe Bônus de +1 Racial em Carisma e vantagem em rolagens de 'Empatia "
                     + "Selvagem'.",
             FeatRequirements.builder()
                     .requiredCreatureType(CreatureType.FEERICO)
+                    .requiredSexo(Character.Sexo.FEMININO)
                     .requiredAwakenedTitles(1)
                     .build()) {
         @Override
@@ -193,13 +237,14 @@ public enum FeericoFeat implements Feat {
      */
     // Real: every Broto of every Árvore Natural, mimetized at 2PD (getGrantedMimetizedSpells,
     // derived live) — "mesmo que você não conheça as magias e não cumpra com seus pré-requisitos",
-    // which is exactly what a MimetizedSpell is.
+    // which is exactly what a MimetizedSpell is. "Apenas Fadas, Fúrias e Sátiros" names the three
+    // Raças; the Título comes from the Talento's TALENTOS RACIAIS AVENTYRS heading.
     ESPIRITO_DA_FLORESTA(
             "Você pode Mimetizar Magias Naturais, do tipo Broto, ao custo de 2PD. Esta ação pode "
                     + "ser efetuada mesmo que você não conheça as magias e não cumpra com seus "
                     + "pré-requisitos.",
-            FeatRequirements.builder()
-                    .requiredCreatureType(CreatureType.FEERICO)
+            fadasEFurias()
+                    .alternative(FeatRequirements.builder().requiredRace(Satiro.class).build())
                     .requiredAwakenedTitles(1)
                     .build()) {
         @Override
@@ -216,9 +261,9 @@ public enum FeericoFeat implements Feat {
      * "Sempre que outros personagens conjurarem magias em Distância Curta você irá identificá-los
      * automaticamente."
      */
-    // TODO: an automatic detection with no roll and no state — nothing observes another
-    //  combatant casting (this codebase has no event or observer mechanism anywhere), and
-    //  "identificá-los" has no knowledge state to record into.
+    // Real as a sense (Feat#resolveSpellcastingSenseRange): the caller, which sees every cast,
+    // tells the holder who cast what within Distância Curta and marks a caster hidden from them as
+    // detected (table ruling, 2026-10-16: "identificá-los" = notice + reveal).
     SENTIR_O_FLUXO_DE_MANA(
             "Você é capaz de sentir mudanças no Mana ao seu redor, sempre que outros personagens "
                     + "conjurarem magias em Distância Curta você irá identificá-los "
@@ -228,7 +273,12 @@ public enum FeericoFeat implements Feat {
                     .requiredSkillType(SkillType.DOMINIO_DO_MANA)
                     .requiredSkillGraduation(1)
                     .requiredAwakenedTitles(1)
-                    .build()),
+                    .build()) {
+        @Override
+        public Range resolveSpellcastingSenseRange(final Character character) {
+            return Range.DISTANCIA_CURTA;
+        }
+    },
 
     /**
      * "Temporariamente você pode mudar sua forma física, se transformando em um Anciente, uma
@@ -248,10 +298,8 @@ public enum FeericoFeat implements Feat {
     // "Abandonando seus traços raciais" is real: RacialTraitSuppression.ALL while the Forma
     // holds. Only the Race term of each trait goes, and the Habilidade/Atributo halves carry the
     // same sheet-reach limit noted above (the Perícia-roll path, not PV/PM/Conjuração).
-    // TODO: "Nascidos da Floresta permanecem +2 Rodadas" is a per-race Duração branch
-    //  FormaActiveAbility keeps room for (its Duração is resolved, not constant) but does not yet
-    //  take — NascidoDaFloresta is a Race, and the ability sees the Character, so this one is
-    //  cheap once someone wants it.
+    // "Nascidos da Floresta permanecem nesta forma por +2 Rodadas" is real — FormaActiveAbility's
+    // per-holder extra Rodadas, which the Uplift bonuses and the FormEffect both last.
     ANCIENTEFORME(
             "Temporariamente você pode mudar sua forma física, se transformando em um Anciente, "
                     + "uma árvore viva, abandonando seus traços raciais. Transformar-se em um "
@@ -270,7 +318,9 @@ public enum FeericoFeat implements Feat {
                         // "suas Defesas e Multiplicador de PV, Categoria de Tamanho aumentam em
                         // +2, enquanto seu Carisma e Foco aumentam em +1" — per Título Desperto.
                         new FormaActiveAbility.Uplift(2, 2, 1,
-                                List.of(AttributeDomain.CHARISMA, AttributeDomain.FOCUS)));
+                                List.of(AttributeDomain.CHARISMA, AttributeDomain.FOCUS)),
+                        holder -> holder.getRace() instanceof org.aventyrs.core.race.NascidoDaFloresta
+                                ? NASCIDO_DA_FLORESTA_EXTRA_ROUNDS : 0);
 
         @Override
         public Optional<ActiveAbility> resolveActiveAbility() {
@@ -312,18 +362,23 @@ public enum FeericoFeat implements Feat {
      */
     // Both movement figures are real, as absolute ones (Feat#resolveMovementBaseOverride):
     // Natação 6UD, and land Movimento set to 2UD before every bonus.
-    // TODO: breathing underwater has no state to toggle (gap catalog, "Fadiga/asfixia").
-    // TODO: gated at FEERICO where the text says "apenas Fadas e Fúrias" — see the class javadoc.
+    // "Você possui guelras e pode respirar dentro e fora d'agua" is real
+    // (Feat#allowsUnderwaterBreathing, read by AsphyxiaService's caller).
+    // "Apenas Fadas e Fúrias" is real (one anyOf branch per Raça).
     SIRENIDEO(
             "A parte inferior de teu corpo, no lugar das pernas, é similar ao de uma criatura "
                     + "marinha. Você possui guelras e pode respirar dentro e fora d'agua, possui "
                     + "também Movimento Base de Natação 6UD, mas em terra seu Movimento Base é "
                     + "reduzido para apenas 2UD. Personagens com este Talento recebem Bônus Racial "
                     + "de +1 em Vigor e Vantagem nas rolagens de Artes.",
-            FeatRequirements.builder()
-                    .requiredCreatureType(CreatureType.FEERICO)
+            fadasEFurias()
                     .forbiddenFeat(PIXIE)
                     .build()) {
+        @Override
+        public boolean allowsUnderwaterBreathing(final Character character) {
+            return true;
+        }
+
         @Override
         public Integer resolveMovementBaseOverride(final MovementMode mode, final Character character) {
             return switch (mode) {
@@ -376,12 +431,11 @@ public enum FeericoFeat implements Feat {
      * "Recebe Monstruoso com um tipo de criatura adicional, também recebe Vantagem em suas
      * rolagens de Furtividade e Persuasão." The Vantagem is real.
      */
-    // TODO: "Monstruoso com um tipo de criatura adicional" needs an acquisition-time choice of
-    //  which additional CreatureType to grant. Character prerequisite types can now be extended
-    //  by a held Feat (Alma Feérica), but this text neither names the type nor limits the choice.
-    // TODO: the GD half is scoped to the *target's* Tendência, and resolveDifficultyReduction
-    //  carries no target — the roll's opponent is not a parameter of a GD reduction anywhere in
-    //  this core. Alignment is typed, but the roll hook still has no target sheet to inspect.
+    // ⚠️ "Recebe Monstruoso com um tipo de criatura adicional" is read as "Monstruoso as an
+    // additional creature type" — a prerequisite type, the way Alma Feérica grants Feérico
+    // (Feat#getGrantedPrerequisiteCreatureTypes), so a Fauno may take Talentos Monstruosos.
+    // The GD half is real: SceneContext#getOpposedCharacter()'s Tendência band, GOOD.
+    // "Que não possuam o Talento Lupercal" is real both ways (forbiddenFeat on each).
     FAUNO(
             "Você tem o corpo coberto de pelos e maior número de feições caprinas. Recebe "
                     + "Monstruoso com um tipo de criatura adicional, também recebe Vantagem em "
@@ -397,11 +451,28 @@ public enum FeericoFeat implements Feat {
             return true;
         }
 
+        /** "Que não possuam o Talento Lupercal" — a forward reference, so resolved on demand. */
+        @Override
+        public FeatRequirements getFeatRequirements() {
+            return super.getFeatRequirements().toBuilder().forbiddenFeat(LUPERCAL).build();
+        }
+
+        @Override
+        public Set<CreatureType> getGrantedPrerequisiteCreatureTypes(final Character character) {
+            return Set.of(CreatureType.MONSTRUOSO);
+        }
+
         @Override
         public int resolveSkillRollBonus(final SkillType skillType, final SceneContext sceneContext,
                                           final SkillTrait requestedAbility, final Character character) {
             return skillType == SkillType.FURTIVIDADE || skillType == SkillType.PERSUASAO
                     ? Skill.ADVANTAGE_BONUS : 0;
+        }
+
+        @Override
+        public int resolveDifficultyReduction(final SkillType skillType, final Character character,
+                                              final SceneContext sceneContext) {
+            return againstTendencia(skillType, sceneContext, Alignment.GOOD);
         }
     },
 
@@ -412,13 +483,14 @@ public enum FeericoFeat implements Feat {
     // The Categoria de Tamanho set is real, through Feat#resolveSizeCategoryOverride — stated as
     // ZERO, the value the clause names, not as the +1 step from a Sátiro's own MINUS_ONE it
     // happens to equal (the same care GnomoFeat#DUENDE takes).
-    // TODO: the GD half is target-Tendência-scoped, same blocker as FAUNO's.
+    // The GD half is real: SceneContext#getOpposedCharacter()'s Tendência band, EVIL.
     LUPERCAL(
             "Sua Categoria de Tamanho muda para 0, também recebe Vantagem em suas rolagens de "
                     + "Artes e Atenção. O GD de suas rolagens de Artes, Atenção e Persuasão "
                     + "efetuadas contra Personagens de Tendência Maligna é reduzido em -1.",
             FeatRequirements.builder()
                     .requiredRace(Satiro.class)
+                    .forbiddenFeat(FAUNO)
                     .build()) {
         /** "Apenas … recém-criados" — only a starting Talento slot can take it. */
         @Override
@@ -432,12 +504,62 @@ public enum FeericoFeat implements Feat {
         }
 
         @Override
+        public int resolveDifficultyReduction(final SkillType skillType, final Character character,
+                                              final SceneContext sceneContext) {
+            return againstTendencia(skillType, sceneContext, Alignment.EVIL);
+        }
+
+        @Override
         public int resolveSkillRollBonus(final SkillType skillType, final SceneContext sceneContext,
                                           final SkillTrait requestedAbility, final Character character) {
             return skillType == SkillType.ARTES || skillType == SkillType.ATTENTION
                     ? Skill.ADVANTAGE_BONUS : 0;
         }
     };
+
+    /** ASAS' "exige o uso de 3PD, Feéricos usam 3PM". */
+    private static final int ASAS_FLIGHT_COST = 3;
+
+    /** ASAS' Feérico branch: "personagens recém-criados de raça Feérica". */
+    private static final FeatRequirements FEERICO_ONLY = FeatRequirements.builder()
+            .requiredCreatureType(CreatureType.FEERICO)
+            .build();
+
+    /** BENCAO_DE_FLORA's "reduzido em -1PM". */
+    private static final int BENCAO_DE_FLORA_PM_REDUCTION = 1;
+
+    /** PIXIE's "exige o uso de 2PM". */
+    private static final int PIXIE_FLIGHT_COST = 2;
+
+    /** PIXIE's "+3 Rodadas para cada Título Aventyr Desperto". */
+    private static final int PIXIE_FLIGHT_ROUNDS_PER_TITLE = 3;
+
+    /** ANCIENTEFORME's "Nascidos da Floresta permanecem nesta forma por +2 Rodadas". */
+    private static final int NASCIDO_DA_FLORESTA_EXTRA_ROUNDS = 2;
+
+    /** FAUNO's and LUPERCAL's "reduzido em -1" — one nível. */
+    private static final int TENDENCIA_DIFFICULTY_REDUCTION = 1;
+
+    /**
+     * "O GD de suas rolagens de Artes, Atenção e Persuasão efetuadas contra Personagens de Tendência
+     * …" — the opposed combatant's band; no opponent in the context reads as "not met".
+     */
+    private static int againstTendencia(final SkillType skillType, final SceneContext sceneContext,
+                                        final Alignment band) {
+        if (skillType != SkillType.ARTES && skillType != SkillType.ATTENTION && skillType != SkillType.PERSUASAO
+                || sceneContext == null || sceneContext.getOpposedCharacter() == null) {
+            return 0;
+        }
+        return sceneContext.getOpposedCharacter().getCharacter().getAlignmentBand() == band
+                ? TENDENCIA_DIFFICULTY_REDUCTION : 0;
+    }
+
+    /** "Apenas Fadas e Fúrias" — one anyOf branch per Raça, to extend or build on. */
+    private static FeatRequirements.FeatRequirementsBuilder fadasEFurias() {
+        return FeatRequirements.builder()
+                .alternative(FeatRequirements.builder().requiredRace(Fada.class).build())
+                .alternative(FeatRequirements.builder().requiredRace(Furia.class).build());
+    }
 
     /** The "+1 Bônus Racial" NINFA and SIRENIDEO each grant for their fixed Atributo. */
     private static final int FEERICO_ATTRIBUTE_BONUS = 1;

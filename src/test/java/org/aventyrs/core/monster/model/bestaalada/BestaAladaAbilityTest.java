@@ -11,7 +11,14 @@ import org.aventyrs.core.monster.MonsterSheet;
 import org.aventyrs.core.monster.MonstrousAbilitySelection;
 import org.aventyrs.core.sheet.IllegalOperationException;
 import org.aventyrs.core.skill.SkillType;
+import org.aventyrs.core.character.DamageDescriptor;
+import org.aventyrs.core.character.DamageSanctity;
+import org.aventyrs.core.effect.CriticalEffectType;
+import org.aventyrs.core.effect.LancarAoChao;
+import org.aventyrs.core.monster.MonstrousAbilityGrant;
 import org.junit.jupiter.api.Test;
+
+import java.util.List;
 
 import static org.aventyrs.core.monster.model.MonsterTestKit.finalDamage;
 import static org.aventyrs.core.monster.model.MonsterTestKit.held;
@@ -100,12 +107,34 @@ class BestaAladaAbilityTest {
     }
 
     @Test
-    void formaDeVentoIsImmuneToAllButElementalAndPrimordial() {
+    void formaDeVentoIsImmuneToAllButElementalProfaneAndPrimordial() {
         MonsterSheet sheet = spawn(46, MonstrousAbilitySelection.of(BestaAladaAbility.PREDILETO_DE_SYLPH));
         activeAbilities.activate(sheet.getCharacter(), sheet, held(sheet, "Forma de Vento"), 1);
         assertEquals(0, finalDamage(sheet, DamageType.FISICO, null));
         assertEquals(0, finalDamage(sheet, DamageType.MAGICO, null));
         assertEquals(10, finalDamage(sheet, DamageType.MAGICO, ElementalType.VENTO));
         assertEquals(10, finalDamage(sheet, DamageType.PRIMORDIAL, null));
+        // 20261015: "… Elementais, Profanos ou Primordiais".
+        assertEquals(10, new org.aventyrs.core.character.services.DamageServiceImpl().calculateFinalDamage(sheet, null,
+                new DamageDescriptor(DamageType.MAGICO, null, DamageSanctity.PROFANO), null, 10, false));
+    }
+
+    @Test
+    void mergulhoAtrozAddsAtordoanteAndEmpurraoAtrozFromPredadorAndPrevenirAtApex() {
+        MonsterSheet apex = spawn(46, MonstrousAbilitySelection.of(BestaAladaAbility.PLANAR_E_PAIRAR));
+        apex.setFlying(true);
+        activeAbilities.activate(apex.getCharacter(), apex, held(apex, "Mergulho Atroz"), 1);
+        assertEquals(List.of(CriticalEffectType.ATORDOANTE, CriticalEffectType.PREVENIR),
+                MonstrousAbilityGrant.additionalCriticalEffects(apex, SkillType.ATAQUE_CORPO_A_CORPO, null));
+        assertTrue(MonstrousAbilityGrant.attackEffectChains(apex, SkillType.ATAQUE_CORPO_A_CORPO, null).stream()
+                .anyMatch(LancarAoChao.class::isInstance));
+    }
+
+    @Test
+    void investidaAereaAddsGuilhotinaFromPredador() {
+        MonsterSheet predador = spawn(26, MonstrousAbilitySelection.of(BestaAladaAbility.DESFILE_DE_SYLPH));
+        activeAbilities.activate(predador.getCharacter(), predador, held(predador, "Investida Aérea"), 1);
+        assertEquals(List.of(CriticalEffectType.GUILHOTINA),
+                MonstrousAbilityGrant.additionalCriticalEffects(predador, SkillType.ATAQUE_CORPO_A_CORPO, null));
     }
 }

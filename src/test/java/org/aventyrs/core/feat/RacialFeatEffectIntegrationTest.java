@@ -1166,7 +1166,7 @@ class RacialFeatEffectIntegrationTest {
     @Test
     void ninfaGrantsVantagemOnEmpatiaSelvagemAndItsCarismaBonusReachesEveryCarismaRoll()
             throws IllegalOperationException {
-        Character fada = character().race(new Fada()).build();
+        Character fada = character().race(new Fada()).sexo(Character.Sexo.FEMININO).build();
         fada.grantTitle(new Santo(List.of(), List.of()), TitleSlot.PRIMARY);
         CharacterSheet sheet = CharacterSheet.of(fada, new Player());
         int empatiaBefore = rollBonusIn(sheet, SkillType.EMPATIA_SELVAGEM, null);
@@ -1190,7 +1190,7 @@ class RacialFeatEffectIntegrationTest {
      */
     @Test
     void ninfaAndSirenideoEachRaiseTheirOwnFixedAtributo() throws IllegalOperationException {
-        Character fada = character().race(new Fada()).build();
+        Character fada = character().race(new Fada()).sexo(Character.Sexo.FEMININO).build();
         fada.grantTitle(new Santo(List.of(), List.of()), TitleSlot.PRIMARY);
         int carismaBefore = fada.getEffectiveAttributeTotal(AttributeDomain.CHARISMA);
         int vigorBefore = fada.getEffectiveAttributeTotal(AttributeDomain.VIGOR);
@@ -1223,17 +1223,18 @@ class RacialFeatEffectIntegrationTest {
 
     /**
      * "Apenas personagens de raça Feérica" spans five race classes with no common supertype,
-     * which is why {@code requiredCreatureType} exists.
+     * which is why {@code requiredCreatureType} exists. Ninfa also asks "do sexo feminino", so every
+     * candidate here is female.
      */
     @Test
     void feericoTalentosGateOnCreatureTypeRatherThanOnOneRaceClass() {
         assertTrue(FeericoFeat.NINFA.isEligible(feericoWithTitle(new Fada())));
-        assertTrue(FeericoFeat.NINFA.isEligible(feericoWithTitle(new Satiro())));
+        assertTrue(FeericoFeat.NINFA.isEligible(feericoWithTitle(new Gorgona())));
         assertFalse(FeericoFeat.NINFA.isEligible(feericoWithTitle(new Human())));
     }
 
     private static Character feericoWithTitle(final Race race) {
-        Character character = character().race(race).build();
+        Character character = character().race(race).sexo(Character.Sexo.FEMININO).build();
         character.grantTitle(new Santo(List.of(), List.of()), TitleSlot.PRIMARY);
         return character;
     }

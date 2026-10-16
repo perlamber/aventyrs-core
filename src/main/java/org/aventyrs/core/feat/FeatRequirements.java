@@ -179,6 +179,9 @@ import java.util.Set;
  * @param maximumCentelhas          when set, the holder may possess at most this many Centelhas
  *                                  ({@code Character#getCentelhas()}) — "Não possuir uma ou mais
  *                                  Centelhas" is {@code Character.CENTELHAS - 1}.
+ * @param requiredSexo              when set, the holder's {@code Character#getSexo()} must be this —
+ *                                  Ninfa's "do sexo feminino" (core 0.1.7.8). An unrecorded Sexo
+ *                                  fails it: this clause is the whole of what the Talento asks.
  * @param anyOf                     nested requirement groups of which <b>at least one</b> must
  *                                  hold, on top of every clause set on this record — a
  *                                  disjunction ("Destreza 3 e Saque Rápido, <i>ou</i> Foco 5").
@@ -220,6 +223,7 @@ public record FeatRequirements (
         BigDecimal requiredTotalExperience,
         Integer maximumAwakenedTitles,
         Integer maximumCentelhas,
+        org.aventyrs.core.character.Character.Sexo requiredSexo,
         @Singular("alternative") List<FeatRequirements> anyOf
 ) {
     public FeatRequirements {

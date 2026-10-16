@@ -18,6 +18,8 @@ import org.aventyrs.core.monster.MonstrousAbilitySelection;
 import org.aventyrs.core.sheet.IllegalOperationException;
 import org.aventyrs.core.skill.DifficultyLevel;
 import org.aventyrs.core.skill.SkillType;
+import org.aventyrs.core.effect.EffectChainServiceImpl;
+import org.aventyrs.core.scene.InitiativePosition;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -125,5 +127,24 @@ class MutanteMonstruosoAbilityTest {
         MonsterSheet abominacao = spawn(61, MonstrousAbilitySelection.of(MutanteMonstruosoAbility.REGENERACAO_MULTIPLICATIVA));
         abominacao.tickTemporaryEffects();
         assertEquals(1, abominacao.getPendingDiceRolls().size());
+    }
+
+    @Test
+    void fisiologiaEstranhaRaisesTheCorrenteMarginByTwoAndAtApexWhileActiveRefusesEveryOne() {
+        EffectChainServiceImpl chains = new EffectChainServiceImpl();
+        MonsterSheet presa = spawn(0, MonstrousAbilitySelection.of(MutanteMonstruosoAbility.FISIOLOGIA_ESTRANHA));
+        MonsterSheet apex = spawn(46, MonstrousAbilitySelection.of(MutanteMonstruosoAbility.FISIOLOGIA_ESTRANHA));
+        int base = chains.getRequiredMargin(null, InitiativePosition.UNKNOWN,
+                spawn(0, MonstrousAbilitySelection.of(MutanteMonstruosoAbility.MEMBROS_MULTIPLOS, "BRACOS")),
+                InitiativePosition.UNKNOWN);
+        assertEquals(base + 2, chains.getRequiredMargin(null, InitiativePosition.UNKNOWN, presa, InitiativePosition.UNKNOWN));
+        new ActiveAbilityServiceImpl().activate(apex.getCharacter(), apex, held(apex, "Fisiologia Estranha"), 1);
+        assertTrue(chains.getRequiredMargin(null, InitiativePosition.UNKNOWN, apex, InitiativePosition.UNKNOWN) > 100);
+    }
+
+    @Test
+    void adaptacaoMilagrosaCostsFivePd() {
+        MonsterSheet sheet = spawn(46, MonstrousAbilitySelection.of(MutanteMonstruosoAbility.ADAPTACAO_MILAGROSA));
+        assertEquals(5, held(sheet, "Adaptação Milagrosa").getDeterminationPointCost());
     }
 }

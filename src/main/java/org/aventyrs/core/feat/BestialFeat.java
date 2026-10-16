@@ -125,9 +125,8 @@ public enum BestialFeat implements Feat {
      */
     // The free Habilidade de Competência is real, recorded on HerancaBestialFeat.
     // The Movimento Base de Voo is real (Feat#grantsMovementMode).
-    // TODO: flying as a timed state — "voar exige o uso de 2PA e 3PD" for 1d6 Rodadas, +1 per
-    //  Herança held — is not modelled; whether the holder is flying is the caller's
-    //  EnvironmentalState#flying.
+    // Its Efeito de Voo is real (Feat#resolveFlightActivation) — 2PA and 3PD, 1d6 Rodadas +1 per
+    // Herança held, landing safely.
     HERANCA_AVIANA(
             "Receba +1 de bônus racial em Foco. Você agora tem asas e possui Movimento Base de "
                     + "Voo. Em Cenas de Combate voar exige o uso de 2PA e 3PD, a capacidade de voo "
@@ -146,6 +145,16 @@ public enum BestialFeat implements Feat {
         @Override
         public int resolveAttributeBonus(final AttributeDomain domain, final Character character) {
             return domain == AttributeDomain.FOCUS ? HERANCA_ATTRIBUTE_BONUS : 0;
+        }
+
+        /** "Em Cenas de Combate voar exige o uso de 2PA e 3PD … 1d6 Rodadas, +1 Rodada para cada Talento de Herança." */
+        @Override
+        public java.util.Optional<org.aventyrs.core.character.FlightActivation> resolveFlightActivation(
+                final Character character, final CombatantSheet holder) {
+            return java.util.Optional.of(new org.aventyrs.core.character.FlightActivation("Herança Aviana",
+                    org.aventyrs.core.sheet.ActionCost.ofActionPoints(HERANCA_AVIANA_FLIGHT_ACTION_POINTS),
+                    HERANCA_AVIANA_FLIGHT_COST, 0,
+                    org.aventyrs.core.character.Dice.of(1, heldHerancas(character))));
         }
     },
 
@@ -417,6 +426,19 @@ public enum BestialFeat implements Feat {
 
     /** The "+1 de bônus racial" every Talento de Herança's own Atributo clause grants. */
     private static final int HERANCA_ATTRIBUTE_BONUS = 1;
+
+    /** HERANCA_AVIANA's "voar exige o uso de 2PA e 3PD". */
+    private static final int HERANCA_AVIANA_FLIGHT_ACTION_POINTS = 2;
+    private static final int HERANCA_AVIANA_FLIGHT_COST = 3;
+
+    /** How many Talentos de Herança character holds, in either form — Herança Aviana's "+1 Rodada para cada". */
+    static int heldHerancas(final Character character) {
+        return (int) character.getFeats().stream()
+                .map(Feat::catalogEntry)
+                .filter(feat -> feat instanceof BestialFeat bestial && bestial.name().startsWith("HERANCA_"))
+                .distinct()
+                .count();
+    }
 
     private final String description;
     private final FeatRequirements featRequirements;

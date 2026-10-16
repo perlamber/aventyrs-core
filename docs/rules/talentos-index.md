@@ -153,7 +153,7 @@ The list below used to be headed "still cannot express". Every shape on it is no
   all-or-nothing. As one branch it is `Feat#isEligibleAtCreation` — the question a starting slot
   asks — overridden beside `isEligible`: `PeritoFeat#TREINADO_EM_PERICIAS` ("recém-criados ou
   Graduação 4 em 3 Perícias", 0.0.70). `FeericoFeat#ASAS` ("Avianos e Bestiais, ou … recém-criados
-  de raça Feérica") could take the same shape and has not yet.
+  de raça Feérica") takes the same shape since 0.1.7.8.
 - **A second Perícia Graduação** — `requiredSkillType`/`requiredSkillGraduation` is one pair;
   `AssassinoFeat#ESPECIALISTA_TECNOLOGICO` names two and keeps an `isEligible` override.
 - **A held Talento's own recorded *choice*** — "apenas personagens que não escolheram Magias
@@ -263,8 +263,9 @@ Most constants cite one of these rather than a novel gap:
   Still missing: no *weapon catalog* is authored, so nothing produces the natural weapons
   Dracônico's repertoire and every Herança Bestial assume, and no Talento can reclassify a
   wielded weapon as natural for its holder (`ArtesMarciaisFeat#DOMINAR_ARTE_MARCIAL_FERROADA_ESMAGADORA`).
-- **No flight state** — no Movimento Base de Voo distinct from the ordinary one. Blocks three of
-  four Aviano Talentos outright.
+- **Flight state — built.** The Movimento Base de Voo is a `MovementMode` (0.0.63) and the timed
+  Efeito de Voo is `FlightService` (0.1.7.8), so Coração Alado's +1d6 and Eterno Viajante's
+  unlimited Duração are real; only Aviano's sleep-flying and Braços Livres' hands remain.
 - **No form/transformation state** — blocks Draconato, Metamorfose Selvagem, the Homem-Fera line.
 - **Bocarra / Devorar Inteiro** — blocks the whole Ôgrico tree.
 - **No Atributo grant from a Talento** — `Race#getFixedAttributeBonuses()` is the only racial

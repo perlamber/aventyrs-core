@@ -241,9 +241,9 @@ class CharacterCreationServiceStartingFeatsTest {
         org.aventyrs.core.feat.Feat autoconhecimento = org.aventyrs.core.feat.VantagemDeEgoEscolhidaFeat.of(character,
                 org.aventyrs.core.ego.AutocontroleAdvantage.RESOLUTO);
         creationService.grantStartingFeats(character,
-                List.of(MobilidadeFeat.ESQUIVA, DestinoFeat.PRODIGIO, autoconhecimento), sheet);
+                List.of(MobilidadeFeat.ESQUIVA, DestinoFeat.CORACAO_DE_FERRO_DO_DESTINO, autoconhecimento), sheet);
 
-        assertEquals(List.of(MobilidadeFeat.ESQUIVA, DestinoFeat.PRODIGIO, autoconhecimento), character.getFeats());
+        assertEquals(List.of(MobilidadeFeat.ESQUIVA, DestinoFeat.CORACAO_DE_FERRO_DO_DESTINO, autoconhecimento), character.getFeats());
         assertEquals(0, BigDecimal.TEN.compareTo(sheet.getUnUsedExperience()));
     }
 
@@ -271,7 +271,7 @@ class CharacterCreationServiceStartingFeatsTest {
 
         IllegalOperationException error = assertThrows(IllegalOperationException.class,
                 () -> creationService.grantStartingFeats(character,
-                        List.of(MobilidadeFeat.ESQUIVA, DestinoFeat.PRODIGIO, MobilidadeFeat.INICIATIVA_APRIMORADA)));
+                        List.of(MobilidadeFeat.ESQUIVA, DestinoFeat.CORACAO_DE_FERRO_DO_DESTINO, MobilidadeFeat.INICIATIVA_APRIMORADA)));
         assertEquals(INVALID_STARTING_FEAT_SELECTION, error.getMessage());
     }
 

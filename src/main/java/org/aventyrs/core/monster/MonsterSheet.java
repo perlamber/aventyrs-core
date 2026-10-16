@@ -301,7 +301,8 @@ public class MonsterSheet extends AbstractCombatantSheet {
     /**
      * A new Cena begins: the Efeitos de Ego count resets, and every "Apenas uma vez por Cena"
      * Efeito Ativo ({@link MonstrousActiveAbility#isOncePerScene()}) is usable again. Called by
-     * whoever runs the table when a Cena starts; nothing in this core knows when that is.
+     * whoever runs the table when a Cena starts; nothing in this core knows when that is. {@code
+     * CombatantSheet#startNewScene} resets the Efeitos Ativos too, for a foe that is a plain sheet.
      */
     public void beginScene() {
         egoEffectsUsedThisScene = 0;

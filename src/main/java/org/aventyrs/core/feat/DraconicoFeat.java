@@ -28,8 +28,8 @@ import org.aventyrs.core.sheet.CombatantSheet;
  * <p>The Arma Natural half of the tree is now real: {@link #ARMAMENTO_DRACONICO} (through {@link
  * ArmamentoDraconicoFeat}) and {@link #SOPRO_DE_DRAGAO} grant entries of the {@link NaturalWeapon}
  * catalog, surfaced by {@code Character#getNaturalWeapons()}, and {@link #SOPRO_DE_DRAGAO}'s "+1
- * Margem Crítica Menor" applies for real, scoped to a Sopro attack. What is still blocked hangs
- * off <b>flying as a timed state</b> (the Movimento Base de Voo itself is real), the missing
+ * Margem Crítica Menor" applies for real, scoped to a Sopro attack. Flying as a timed state is real
+ * since 0.1.7.8 ({@code FlightService}); what is still blocked hangs off the missing
  * <b>elemental damage type</b> and this core rolling <b>no dice</b> (the "+1d6 … para cada
  * Título Aventyr Desperto" riders). {@link #ASAS_DE_DRAGAO} is fully real: its +2 Defesas is
  * unconditional because the wings are always there, and so is the Capa restriction that pays for
@@ -82,10 +82,8 @@ public enum DraconicoFeat implements Feat {
      * transformed into, so the bonus applies whether or not the holder is flying. It covers
      * <b>both</b> DF and DM — the text says "suas Defesas", the broad form.
      */
-    // The Movimento Base de Voo is real (Feat#grantsMovementMode).
-    // TODO: flying as a timed state — the PD cost, its per-Título reduction and the 1d6 + metade
-    //  do Vigor Duração — is not modelled; whether the holder is flying is the caller's
-    //  EnvironmentalState#flying.
+    // The Movimento Base de Voo is real (Feat#grantsMovementMode), and so is its Efeito de Voo —
+    // 4PD less 2 per Título, 1d6 + metade do Vigor Rodadas (Feat#resolveFlightActivation).
     // "Impede de usar Equipamentos do tipo Capa" is real — a permanent
     // Feat#getForbiddenEquipmentCategories entry, refused by CharacterSheet#equip/canEquip and
     // caught on an already-assembled loadout by validateEquipmentLoadout. So the malus that pays
@@ -115,6 +113,16 @@ public enum DraconicoFeat implements Feat {
         @Override
         public int resolveDefenseBonus(final DefenseType defenseType, final Character character) {
             return ASAS_DEFENSE_BONUS;
+        }
+
+        /** "Exige o uso de 4PD. Este Custo é reduzido em -2 para cada Título … 1d6+Metade do Vigor Rodadas." */
+        @Override
+        public Optional<org.aventyrs.core.character.FlightActivation> resolveFlightActivation(
+                final Character character, final CombatantSheet holder) {
+            int cost = ASAS_FLIGHT_COST - ASAS_FLIGHT_COST_PER_TITLE * character.getAllTitles().size();
+            return Optional.of(new org.aventyrs.core.character.FlightActivation("Asas de Dragão",
+                    org.aventyrs.core.sheet.ActionCost.NONE, cost, 0,
+                    org.aventyrs.core.character.Dice.of(1, holder.getAttributeTotal(AttributeDomain.VIGOR) / 2)));
         }
 
         /**
@@ -237,6 +245,12 @@ public enum DraconicoFeat implements Feat {
                     : RacialTraitSuppression.NONE;
         }
     };
+
+    /** ASAS_DE_DRAGAO's "exige o uso de 4PD". */
+    private static final int ASAS_FLIGHT_COST = 4;
+
+    /** ASAS_DE_DRAGAO's "reduzido em -2 para cada Título Aventyr que o personagem possua". */
+    private static final int ASAS_FLIGHT_COST_PER_TITLE = 2;
 
     private static final int ASAS_DEFENSE_BONUS = 2;
     private static final int SOPRO_CRITICAL_MARGIN_INCREASE = 1;

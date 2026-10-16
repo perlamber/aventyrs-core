@@ -119,6 +119,12 @@ public class SpellCastRequest {
      */
     private final boolean defensive;
 
+    /**
+     * Canção de Flora's animal counts (core 0.1.7.6), priced into the cast by {@code SpellInvocationService#extraManaCost}.
+     * {@code null} reads as none; ignored by a Magia that invokes nothing.
+     */
+    private final org.aventyrs.core.magic.invocation.InvocationChoices invocationChoices;
+
     /** Whether the caster opted into feat for this cast. */
     public boolean activated(final org.aventyrs.core.feat.Feat feat) {
         return activatedFeats.contains(feat);

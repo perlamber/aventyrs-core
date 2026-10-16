@@ -54,6 +54,11 @@ public final class MonstrousTraits {
         return isElemental(tree) || hasType(tree, MagicType.DIVINA) || hasType(tree, MagicType.PROFANA);
     }
 
+    /** "Divina ou Profana" — Conjuração Elemental's Predador tree (20261015). */
+    public static boolean isDivineOrProfane(final MagicTree tree) {
+        return hasType(tree, MagicType.DIVINA) || hasType(tree, MagicType.PROFANA);
+    }
+
     /** "Árvores Elemental: Natural" — the Natural school. */
     public static boolean isNatural(final MagicTree tree) {
         return hasType(tree, MagicType.NATURAL);

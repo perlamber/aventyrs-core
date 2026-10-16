@@ -238,14 +238,16 @@ class CireneiaAbilityTest {
     // ---- Apex ----------------------------------------------------------------------------------
 
     @Test
-    void auraDoParadoxoGivesTheMonsterTwoPa() {
+    void auraDoParadoxoEmitsAConcentratedAuraAndGrantsDestreza() {
         MonsterBlueprint apex = SampleMonster.PANTERA_DE_CIRENEIA.get().toBuilder().powerDegree(50)
                 .ability(MonstrousAbilitySelection.of(CireneiaAbility.AURA_DO_PARADOXO)).build();
         MonsterSheet sheet = apex.spawn(new Player());
-        int before = actionPoints.getMaxActionPoints(sheet, 1);
+        assertTrue(sheet.resolveMonsterAuras().isEmpty());
         activeAbilities.activate(sheet.getCharacter(), sheet, held(sheet, "Aura do Paradoxo"), 1);
-        assertEquals(before + 2, actionPoints.getMaxActionPoints(sheet, 1));
+        assertTrue(sheet.isConcentrating());
+        assertEquals(1, sheet.resolveMonsterAuras().size());
         assertEquals(3, sheet.getDeterminationSpent());
+        // The -2PA / +3PA halves are the Scene's (MonsterAuraSceneTest).
     }
 
     @Test

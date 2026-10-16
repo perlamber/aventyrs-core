@@ -199,7 +199,7 @@ public class AttackDelivery {
         if (attack.getAreaOfEffect() != null) {
             // An area attack names whoever stands in its footprint — no count to enforce — but the
             // area itself must be one the attacker's Talentos grant for this attack.
-            boolean granted = attackTargetingService.resolveAttackArea(attack.getAttacker().getCharacter(),
+            boolean granted = attackTargetingService.resolveAttackArea(attack.getAttacker(),
                             attack.getAttackSkill(), attack.getAttackSource(), attack.getAttackRoll())
                     .filter(attack.getAreaOfEffect()::equals)
                     .isPresent();
@@ -747,6 +747,9 @@ public class AttackDelivery {
         if (attack.getAttacker() instanceof org.aventyrs.core.monster.MonsterSheet foe) {
             chains.addAll(foe.getAttackEffectChains());
         }
+        // Its Habilidades Monstruosas' — Possessão's Enfraquecer o Espírito, Ofuscar's window (core 0.1.7.2).
+        chains.addAll(org.aventyrs.core.monster.MonstrousAbilityGrant.attackEffectChains(attack.getAttacker(),
+                attack.getAttackSkill(), attack.getAttackSource()));
         return chains;
     }
 

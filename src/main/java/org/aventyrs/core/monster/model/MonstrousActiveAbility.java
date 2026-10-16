@@ -38,7 +38,7 @@ public class MonstrousActiveAbility implements ActiveAbility {
 
     /**
      * The Resfriamento that stands for "Apenas uma vez por Cena" — long enough never to lapse on
-     * its own; {@code MonsterSheet#beginScene} is what clears it.
+     * its own; {@code CombatantSheet#startNewScene} is what clears it.
      */
     public static final int ONCE_PER_SCENE = Integer.MAX_VALUE;
 
@@ -90,7 +90,7 @@ public class MonstrousActiveAbility implements ActiveAbility {
         return 0;
     }
 
-    /** Whether it is limited to once per Cena, reset by {@code MonsterSheet#beginScene}. */
+    /** Whether it is limited to once per Cena, reset by {@code CombatantSheet#startNewScene}. */
     public boolean isOncePerScene() {
         return cooldownRounds == ONCE_PER_SCENE;
     }

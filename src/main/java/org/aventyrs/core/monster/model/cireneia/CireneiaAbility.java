@@ -11,8 +11,19 @@ import org.aventyrs.core.monster.model.ImplementationStatus;
 import org.aventyrs.core.monster.model.MonsterModel;
 import org.aventyrs.core.monster.model.MonstrousAbility;
 import org.aventyrs.core.monster.model.MonstrousActiveAbility;
+import org.aventyrs.core.effect.EffectChain;
+import org.aventyrs.core.effect.monstrous.Ofuscar;
 import org.aventyrs.core.sheet.ActionCost;
+import org.aventyrs.core.sheet.CombatantSheet;
+import org.aventyrs.core.sheet.SourcedState;
+import org.aventyrs.core.sheet.SustainedState;
+import org.aventyrs.core.monster.MonstrousAbilityGrant;
+import org.aventyrs.core.scene.AuraBonus;
+import org.aventyrs.core.scene.AuraReach;
+import org.aventyrs.core.scene.MonsterAura;
+import org.aventyrs.core.scene.Range;
 import org.aventyrs.core.sheet.TemporaryBonus;
+import org.aventyrs.core.skill.AttackSource;
 import org.aventyrs.core.skill.Skill;
 import org.aventyrs.core.skill.SkillType;
 
@@ -219,17 +230,14 @@ public enum CireneiaAbility implements MonstrousAbility {
     },
 
     /**
-     * TODO: the whole Habilidade is a Corrente de Efeitos Monstruosa ("Ofuscar – Alvo sofre Redutor
-     * de -1PA por 1 Rodada, este Monstro recebe Bônus de +1PA") riding the monster's attacks, plus
-     * a -2 to enemies' Resistência à Correntes de Efeitos. {@code EffectChainService} computes a
-     * margin but nothing applies a Corrente when an attack lands, and a monster's attack is resolved
-     * on the defender's side ({@code AttackReceiver}), which has no hook for one. The active is kept
-     * for its price and Resfriamento.
+     * The passive -2 on enemies' Resistência à Correntes de Efeitos, and the Corrente {@link Ofuscar} on the holder's
+     * attacks while the Efeito Ativo's window runs ("Neste Turno", a {@link SourcedState} lapsing as its next Turn
+     * opens) — or always, from Abominação ("Se torna um efeito Passivo, sempre ativo"). Core 0.1.7.2.
      */
     OFUSCAR("Ofuscar", PREDADOR,
             "Efeito Passivo: A Resistência à Correntes de Efeitos dos inimigos deste Monstro são reduzidas em -2. Resfriamento 1.\n"
                     + "Efeito Ativo – Ofuscar [+1PA, 2PD]: Neste Turno as Perícias de Ataques recebem a Corrente de Efeitos Monstruosa – Ofuscar.\n"
-                    + "“Ofuscar – Alvo sofre Redutor de -1PA por 1 Rodada, este Monstro recebe Bônus de +1PA por 1 Rodada.”\n"
+                    + "“Ofuscar – Alvo sofre Redutor de -1PA por 1 Rodada, este Monstro recebe Bônus de +1PA por 1 Rodada. Efeito Cumulativo.”\n"
                     + "Aprimoramentos dos Apex\n"
                     + "• Ofuscar – Duração muda para 1 Rodada e adicionalmente afeta as Defesas contra os ataques Corpo-a-Corpo.\n"
                     + "Aprimoramentos das Abominações\n"
@@ -237,17 +245,32 @@ public enum CireneiaAbility implements MonstrousAbility {
 
 
         @Override
+        public int resolveTargetEffectChainResistanceReduction(final CombatantSheet holder,
+                                                               final AbilityContext context) {
+            return OFUSCAR_RESISTANCE_REDUCTION;
+        }
+
+        @Override
+        public List<EffectChain> resolveAttackEffectChains(final SkillType attackSkill, final AttackSource attackSource,
+                                                           final CombatantSheet holder, final AbilityContext context) {
+            return context.isAtLeast(MonsterCategory.ABOMINACAO) || holder.hasEffectFrom(OFUSCAR_WINDOW)
+                    ? List.of(new Ofuscar(holder))
+                    : List.of();
+        }
+
+        @Override
         public List<ActiveAbility> resolveActiveAbilities(final AbilityContext context) {
             if (context.isAtLeast(MonsterCategory.ABOMINACAO)) {
                 return List.of();
             }
             return List.of(MonstrousActiveAbility.builder()
-                    .name("Ofuscar")
+                    .name(OFUSCAR_WINDOW)
                     .description("Neste Turno as Perícias de Ataques recebem a Corrente de Efeitos Monstruosa – Ofuscar.")
                     .actionPointCost(ActionCost.ofActionPoints(1))
                     .determinationPointCost(2)
                     .durationInRounds(1)
                     .cooldownRounds(1)
+                    .effect(() -> new SourcedState(OFUSCAR_WINDOW, 1))
                     .build());
         }
     },
@@ -259,21 +282,56 @@ public enum CireneiaAbility implements MonstrousAbility {
      * which this core never does; the caller applies the latter to each character it finds in range.
      */
     AURA_DO_PARADOXO("Aura do Paradoxo", APEX,
-            "Efeito Ativo [2PA, 3PD]: Enquanto houver pelo menos 1 personagem em Distância Curta que não possua Aura do Paradoxo, este monstro recebe Bônus de +2PA. Todos os outros personagens no Alcance recebem Redutor de -2PA.\n"
-                    + "Pontos de Ação reduzidos pela Aura do Paradoxo são recuperados no início da Rodada seguinte, mas apenas após os personagens deixarem a Área de Efeito.\n"
+            "Efeito Passivo: Bônus Racial de +2 em Destreza.\n"
+                    + "Efeito Ativo [2PA, 3PD]: Emite a Aura do Paradoxo. Resfriamento 2.\n"
+                    + "“Aura do Paradoxo – Área de Efeito Circular Média, Todos os outros personagens no Alcance recebem Redutor de -2PA, enquanto ao menos 1 personagem inimigo for afetado este Monstro recebe Bônus de +3PA.\n"
+                    + "Pontos de Ação reduzidos pela Aura do Paradoxo são recuperados 1 Rodada após os personagens deixarem a Área de Efeito.\n"
                     + "A Duração da Aura do Paradoxo é de Concentração + 2 Rodadas, o efeito é encerrado automaticamente (mesmo com a Concentração mantida) se não houver outros personagens em sua Área de Efeito por 2 Rodadas\n"
+                    + "Monstros que possuam Aura do Paradoxo são imunes aos seus efeitos.”\n"
                     + "Aprimoramentos das Abominações\n"
                     + "• Ofuscar – Se torna um efeito Passivo, sempre ativo.") {
+        /** "Efeito Passivo: Bônus Racial de +2 em Destreza" (20261015). */
+        @Override
+        public Map<AttributeDomain, Integer> resolveRacialAttributeBonuses(final AbilityContext context) {
+            return Map.of(AttributeDomain.DEXTERITY, 2);
+        }
+
         @Override
         public List<ActiveAbility> resolveActiveAbilities(final AbilityContext context) {
             return List.of(MonstrousActiveAbility.builder()
-                    .name("Aura do Paradoxo")
-                    .description("Enquanto houver pelo menos 1 personagem em Distância Curta sem Aura do Paradoxo, "
-                            + "recebe Bônus de +2PA; todos os outros personagens no Alcance recebem Redutor de -2PA.")
+                    .name(PARADOXO)
+                    .description("Emite a Aura do Paradoxo (Circular Média, Concentração + 2 Rodadas): todos os outros "
+                            + "personagens no Alcance recebem -2PA; enquanto ao menos 1 inimigo for afetado, +3PA.")
                     .actionPointCost(ActionCost.ofActionPoints(2))
                     .determinationPointCost(3)
-                    .durationInRounds(AURA_DURATION)
-                    .effect(() -> new TemporaryBonus(ModifierType.ACTION_POINTS, 2, AURA_DURATION, "Aura do Paradoxo"))
+                    .cooldownRounds(2)
+                    .onActivated(sheet -> {
+                        sheet.beginConcentration();
+                        sheet.applyEffect(new SustainedState(PARADOXO, sheet.getId(), AURA_DURATION));
+                    })
+                    .build());
+        }
+
+        /**
+         * While emitted: Circular Média, everyone else -2PA (recovered 1 Rodada after leaving), the holder +3PA while
+         * an enemy is inside, ended after 2 Rodadas with nobody else inside; other holders of this Habilidade are
+         * immune.
+         */
+        @Override
+        public List<MonsterAura> resolveAuras(final CombatantSheet holder, final AbilityContext context) {
+            if (!holder.hasEffectFrom(PARADOXO)) {
+                return List.of();
+            }
+            return List.of(MonsterAura.builder()
+                    .source(PARADOXO)
+                    .radius(Range.DISTANCIA_MEDIA)
+                    .reach(AuraReach.ALL_OTHERS)
+                    .whileInside(new AuraBonus(ModifierType.ACTION_POINTS, -2))
+                    .holderActionPointsWhileOccupied(3)
+                    .exitLingerRounds(1)
+                    .emptyRoundsToEnd(2)
+                    .exempt(sheet -> MonstrousAbilityGrant.heldBy(sheet.getCharacter())
+                            .anyMatch(grant -> grant.getAbility() == AURA_DO_PARADOXO))
                     .build());
         }
     },
@@ -287,7 +345,7 @@ public enum CireneiaAbility implements MonstrousAbility {
             "Efeito Passivo: Efeitos Temporais e Planares em Distância Média consideram este monstro como ativador ou conjurador.\n"
                     + "Esta Habilidade não é ativada quando o Efeito Temporal ou Planar é conjurado por outro personagem Preferido de Cireneia.\n"
                     + "Aprimoramentos das Abominações\n"
-                    + "• Área de Efeito muda para Distância Longa e pode ser utilizado para pungar efeitos Temporais e Planares de personagens Apex, mas não de outra Abominações.") {
+                    + "• Área de Efeito muda para Distância Longa e pode ser utilizado para pungar efeitos Temporais e Planares de personagens Apex Preferidos de Cireneia, mas não de outras Abominações.") {
         @Override
         public ImplementationStatus getImplementationStatus() {
             return ImplementationStatus.TABLE_ONLY;
@@ -303,7 +361,16 @@ public enum CireneiaAbility implements MonstrousAbility {
     /** {@link #RELAMPEJANTE}'s pick: the extra Ação Livre. */
     public static final String FREE_ACTION_CHOICE = "FREE_ACTIONS";
 
-    /** Aura do Paradoxo's "Concentração + 2 Rodadas", with no Concentração tracked. */
+    /** Ofuscar's passive: "A Resistência à Correntes de Efeitos dos inimigos deste Monstro são reduzidas em -2". */
+    private static final int OFUSCAR_RESISTANCE_REDUCTION = 2;
+
+    /** The Efeito Ativo, and the {@link SourcedState} its "Neste Turno" window runs as. */
+    private static final String OFUSCAR_WINDOW = "Ofuscar";
+
+    /** Aura do Paradoxo — the Efeito Ativo, its {@link SustainedState} and the aura's source. */
+    private static final String PARADOXO = "Aura do Paradoxo";
+
+    /** Aura do Paradoxo's "Concentração + 2 Rodadas": the trailing 2. */
     private static final int AURA_DURATION = 2;
 
     private final String displayName;
@@ -333,10 +400,10 @@ public enum CireneiaAbility implements MonstrousAbility {
             case MOVIMENTO_APRIMORADO -> "Vantagem and \"sempre acertam\" on an Investida are computed, not applied: "
                     + "IncomingAttack has no Investida flag.";
             case LIBERDADE_SELVAGEM -> "Sonido's \"não permite Reações\": no action records whether it may be reacted to.";
-            case OFUSCAR -> "The Corrente de Efeitos Ofuscar and the -2 Resistência à Correntes de Efeitos: no Corrente "
-                    + "reaches a target, and Resistência à Correntes de Efeitos has no number.";
-            case AURA_DO_PARADOXO -> "Only the monster's own +2PA: the range condition and the -2PA on everyone else "
-                    + "are geometry.";
+            case OFUSCAR -> "The Apex's \"afeta as Defesas contra os ataques Corpo-a-Corpo\": a defence carries no "
+                    + "Corrente de Efeitos.";
+            case AURA_DO_PARADOXO -> "The Abominação line repeats Ofuscar's \"Se torna um efeito Passivo\" (a copy "
+                    + "slip in the manual, not applied). Coverage is the caller's distances, refreshed after movement.";
             case PREFERIDO_DE_CIRENEIA -> "No Efeito is tagged Temporal or Planar, so there is nothing to redirect.";
             default -> null;
         };

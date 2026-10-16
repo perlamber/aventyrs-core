@@ -1165,6 +1165,23 @@ public interface CombatantSheet extends Interactable<CombatantSheet> {
      */
     List<ProjectedAura> resolveProjectedAuras(SceneContext ownContext);
 
+    /**
+     * The monster auras this combatant emits right now (core 0.1.7.4) — every held Habilidade Monstruosa's {@code
+     * resolveAuras}. Granted, revoked and pulsed by {@code Scene#refreshMonsterAuras}/{@code #pulseMonsterAuras}.
+     */
+    default List<org.aventyrs.core.scene.MonsterAura> resolveMonsterAuras() {
+        return org.aventyrs.core.monster.MonstrousAbilityGrant.auras(this);
+    }
+
+    /**
+     * Whether this is a monster — a fixed stat block or a rules-built foe holding Habilidades Monstruosas, whichever
+     * sheet carries it. What "o Monstro e seus aliados" reads as (Dádiva de Gaea, table ruling 2026-10-15).
+     */
+    default boolean isMonster() {
+        return this instanceof org.aventyrs.core.monster.MonsterSheet
+                || org.aventyrs.core.monster.MonstrousAbilityGrant.heldBy(getCharacter()).findAny().isPresent();
+    }
+
     // --- Turn lifecycle -----------------------------------------------------------------------
 
     /**

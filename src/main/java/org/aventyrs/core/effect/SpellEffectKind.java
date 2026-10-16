@@ -51,8 +51,9 @@ public enum SpellEffectKind {
     OFFENSIVE(() -> new BodyChangeEffectBuilder(true)),
 
     /**
-     * Conjures a creature or an item. No builder, and genuinely blocked: {@code Spell} has no
-     * column pointing at a {@code MonsterTemplate}. See {@link InvocationEffect}.
+     * Conjures a creature or an item. No builder, by design: an invocation is a new Scene participant,
+     * not an {@code Interaction} on a sheet. The Magia names it with {@code Spell#getInvocation()} (core
+     * 0.1.7.6) and {@code SpellInvocationService#plan} turns it into an order. See {@link InvocationEffect}.
      */
     INVOCATION(null);
 

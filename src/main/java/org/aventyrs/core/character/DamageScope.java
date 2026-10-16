@@ -22,9 +22,16 @@ import java.util.Set;
  *                 matches one with a {@link DamageDescriptor} naming that nature
  * @param elementFree whether a hit carrying any element is outside it — "que não sejam Elementais", which since the
  *                 2026-10-12 taxonomy must also leave out a Mágico Elemental
+ * @param excludedSanctity a nature a hit is outside the scope for, or {@code null} — "que não sejam … Profanos"
+ *                 (Forma de Vento, 20261015)
  */
 public record DamageScope(@NonNull Set<DamageType> types, ElementalType element, DamageSanctity sanctity,
-                          boolean elementFree) {
+                          boolean elementFree, DamageSanctity excludedSanctity) {
+
+    public DamageScope(@NonNull final Set<DamageType> types, final ElementalType element, final DamageSanctity sanctity,
+                       final boolean elementFree) {
+        this(types, element, sanctity, elementFree, null);
+    }
 
     /** A scope of no particular nature — every scope before core 0.0.89. */
     public DamageScope(@NonNull final Set<DamageType> types, final ElementalType element) {
@@ -56,6 +63,13 @@ public record DamageScope(@NonNull Set<DamageType> types, ElementalType element,
     public static final DamageScope NON_ELEMENTAL_NON_PRIMORDIAL =
             new DamageScope(Set.of(DamageType.FISICO, DamageType.MAGICO), null, null, true);
 
+    /**
+     * "Efeitos e danos que não sejam Elementais, Profanos ou Primordiais" (Forma de Vento, 20261015) — {@link
+     * #NON_ELEMENTAL_NON_PRIMORDIAL} that also leaves a Profano hit out.
+     */
+    public static final DamageScope NON_ELEMENTAL_NON_PROFANE_NON_PRIMORDIAL =
+            new DamageScope(Set.of(DamageType.FISICO, DamageType.MAGICO), null, null, true, DamageSanctity.PROFANO);
+
     /** Danos of one element — Elemental or Mágico Elemental. */
     public static DamageScope element(@NonNull final ElementalType element) {
         return new DamageScope(Set.of(DamageType.MAGICO, DamageType.ELEMENTAL), element);
@@ -71,6 +85,9 @@ public record DamageScope(@NonNull Set<DamageType> types, ElementalType element,
             return false;
         }
         if (elementFree && descriptor != null && descriptor.elementalType() != null) {
+            return false;
+        }
+        if (excludedSanctity != null && descriptor != null && descriptor.sanctity() == excludedSanctity) {
             return false;
         }
         if (element == null) {

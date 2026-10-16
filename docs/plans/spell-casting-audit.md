@@ -3,6 +3,10 @@
 **Status (2026-10-01):** steps 1–4 are built — core 0.0.93–0.0.96, the client, and the API (spell relay and summon
 participant). What stays open is listed under each step.
 
+**Update (2026-10-16, core 0.1.7.6):** an invocation Magia now names its `SpellInvocation`, and
+`SpellInvocationService#plan` turns a landed cast into an `InvocationOrder`. The client's per-Magia `invokeAliados`/
+`invokeUndead` switches are replaced by one generic landing (see the `magic-system` skill).
+
 **Step 1, as built:**
 
 | Gap | Fix |

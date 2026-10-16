@@ -6,10 +6,14 @@ import org.aventyrs.core.ability.ActiveAbility;
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.DamageDescriptor;
+import org.aventyrs.core.character.DamageSanctity;
 import org.aventyrs.core.character.DamageScope;
 import org.aventyrs.core.character.DamageType;
 import org.aventyrs.core.character.Dice;
 import org.aventyrs.core.effect.CriticalEffectType;
+import org.aventyrs.core.effect.EffectChain;
+import org.aventyrs.core.effect.monstrous.MarcaElemental;
+import org.aventyrs.core.effect.monstrous.MurcharAbissal;
 import org.aventyrs.core.item.NaturalWeapon;
 import org.aventyrs.core.magic.BranchLevel;
 import org.aventyrs.core.magic.ElementalType;
@@ -23,11 +27,19 @@ import org.aventyrs.core.monster.model.MonsterModel;
 import org.aventyrs.core.monster.model.MonstrousAbility;
 import org.aventyrs.core.monster.model.MonstrousActiveAbility;
 import org.aventyrs.core.monster.model.MonstrousTraits;
+import org.aventyrs.core.scene.AreaOfEffect;
+import org.aventyrs.core.scene.AuraPulse;
+import org.aventyrs.core.scene.AuraReach;
+import org.aventyrs.core.scene.MonsterAura;
+import org.aventyrs.core.scene.Range;
 import org.aventyrs.core.sheet.ActionCost;
+import org.aventyrs.core.sheet.CombatantSheet;
 import org.aventyrs.core.sheet.ConditionType;
 import org.aventyrs.core.sheet.LifeSteal;
 import org.aventyrs.core.sheet.RecurringDice;
+import org.aventyrs.core.sheet.SourcedState;
 import org.aventyrs.core.sheet.TemporaryEffect;
+import org.aventyrs.core.skill.AttackSource;
 import org.aventyrs.core.skill.SkillType;
 
 import java.util.ArrayList;
@@ -61,9 +73,9 @@ import static org.aventyrs.core.monster.model.MonstrousTraits.bonus;
 public enum AlmaElementalAbility implements MonstrousAbility {
 
     /** Anatomia Elemental: RE, Resistência a Críticos and Instinto; then Meio-Dano, then immunity, to the chosen element. */
-    SANGUE_ELEMENTAL("Sangue Elemental", PRESA, 
+    SANGUE_ELEMENTAL("Sangue Elemental", PRESA,
             "Efeito Passivo – Anatomia Elemental.\n"
-                    + "“Anatomia Elemental – Escolha um Elemento, este Monstro recebe RE, Resistência a Críticos, Bônus Racial de +2 em Instinto”\n"
+                    + "“Anatomia Elemental – Escolha um Elemento, este Monstro recebe RE, Resistência a Críticos, Bônus Racial de +2 em Instinto. Danos causados por este Monstro são Elementais em substituição aos seus tipos.”\n"
                     + "Aprimoramentos dos Deviantes\n"
                     + "• Danos do Elemento escolhido são reduzidos à metade (efeito de Meio-Dano).\n"
                     + "Aprimoramentos dos Predadores\n"
@@ -99,21 +111,34 @@ public enum AlmaElementalAbility implements MonstrousAbility {
         public boolean isImmuneToDamage(final DamageType type, final DamageDescriptor descriptor, final AbilityContext context) {
             return context.isAtLeast(APEX) && chosenScope(context).map(scope -> scope.matches(type, descriptor)).orElse(false);
         }
+
+        /**
+         * "Danos causados por este Monstro são Elementais em substituição aos seus tipos" — Elemental of the chosen
+         * element (the 0.1.6.10 taxonomy). A running Fúria Elemental names its own element, and wins.
+         */
+        @Override
+        public DamageDescriptor resolveAttackDamageRetype(final SkillType attackSkill, final AttackSource attackSource,
+                                                          final CombatantSheet holder, final AbilityContext context) {
+            if (holder.hasEffectFrom(FURIA_ELEMENTAL)) {
+                return null;
+            }
+            return chosenElement(context).map(element -> new DamageDescriptor(DamageType.ELEMENTAL, element)).orElse(null);
+        }
     },
 
     /**
-     * The chosen Arma Natural, and from Deviante +2 on its attacks. Fúria Elemental's element typing
-     * and its Cataclismo are not applied: the Efeito lands on the holder, while "a Arma Natural causa
-     * dano Elemental" retypes a future attack's damage, which no self effect can reach.
+     * The chosen Arma Natural; from Deviante every attack an Explosão and +3 Dano; from Apex the weapon's Margem +3
+     * and -2 on its targets' Resistência. Fúria Elemental runs as a {@link SourcedState}: while it does the holder's
+     * attacks are Elementais (Mágicos from Predador, with Marca Elemental), Margem +3 and Cataclismo (core 0.1.7.3).
      */
-    ARMAMENTO_ELEMENTAL("Armamento Elemental", PRESA, 
+    ARMAMENTO_ELEMENTAL("Armamento Elemental", PRESA,
             "Efeito Passivo – Escolha uma Arma Natural, este Monstro possui a Arma Natural escolhida.\n"
-                    + "Efeito Ativo – Fúria Elemental [1PA, 2PD]: Escolha um Elemento, durante 3 Rodadas a Arma Natural causa dano Físico Elemental e recebe Cataclismo como Efeito Crítico adicional. Resfriamento 3.\n"
+                    + "Efeito Ativo – Fúria Elemental [1PA, 2PD]: Escolha um Elemento, ataques deste Monstro são Elementais em substituição aos seus tipos, tem a Margem Crítica Menor aumentada em +3 números e recebem Cataclismo como Efeito Crítico adicional. Resfriamento 3.\n"
                     + "Aprimoramentos dos Deviantes\n"
-                    + "• Rolagens de Ataques e Danos com a Arma Natural recebem Bônus de +2.\n"
+                    + "• Ataques recebem Área de Efeito – Explosão e infligem +3 pontos de Danos.\n"
                     + "Aprimoramentos dos Predadores\n"
-                    + "• Fúria Elemental – ataques infligem Danos Mágicos e recebem a Corrente de Efeitos Monstruosa – Marca Elemental.\n"
-                    + "“Marca Elemental – Alvo sofre 3 pontos de Dano Mágico Elemental por 2+Vigor do Alvo Rodadas (Efeito de Maldição)”\n"
+                    + "• Fúria Elemental – Ataques infligem Danos Mágicos e recebem a Corrente de Efeitos Monstruosa – Marca Elemental.\n"
+                    + "“Marca Elemental – Alvo sofre 3 pontos de Dano Mágico Elemental por 2+Vigor do Alvo Rodadas (Efeito de Maldição, não cumulativo)”\n"
                     + "Aprimoramentos dos Apex\n"
                     + "• Ataques da Arma natural tem Margem Crítica Menor aumentada em +3, também reduzem a Resistência a Correntes de Efeitos do alvo em -2.\n"
                     + "• Fúria Elemental – Duração aumentada em +2 Rodadas, Resfriamento reduzido para 2 Rodadas.") {
@@ -128,16 +153,56 @@ public enum AlmaElementalAbility implements MonstrousAbility {
             return context.pick(WEAPON, NaturalWeapon.class).map(List::of).orElse(List.of());
         }
 
-        /** "Rolagens de Ataques … com a Arma Natural recebem Bônus de +2" — the GD its attacks present. */
+        /** Deviante: "Ataques recebem Área de Efeito – Explosão". */
         @Override
-        public int resolveModifier(final ModifierType type, final AbilityContext context) {
-            if (!context.isAtLeast(DEVIANTE)) {
-                return 0;
+        public AreaOfEffect resolveAttackArea(final SkillType attackSkill, final AttackSource attackSource,
+                                              final CombatantSheet holder, final AbilityContext context) {
+            return context.isAtLeast(DEVIANTE) ? AreaOfEffect.ATTACK_EXPLOSION : null;
+        }
+
+        /** Deviante: "… e infligem +3 pontos de Danos" — standing, on every attack. */
+        @Override
+        public List<TemporaryEffect> resolveStandingEffects(final AbilityContext context, final Character character) {
+            return context.isAtLeast(DEVIANTE)
+                    ? List.of(MonstrousTraits.standing(ModifierType.DAMAGE_ROLL_BONUS, ARMAMENTO_DAMAGE_BONUS,
+                    "Armamento Elemental"))
+                    : List.of();
+        }
+
+        /** Apex: "também reduzem a Resistência a Correntes de Efeitos do alvo em -2". */
+        @Override
+        public int resolveTargetEffectChainResistanceReduction(final CombatantSheet holder,
+                                                               final AbilityContext context) {
+            return context.isAtLeast(APEX) ? 2 : 0;
+        }
+
+        @Override
+        public DamageDescriptor resolveAttackDamageRetype(final SkillType attackSkill, final AttackSource attackSource,
+                                                          final CombatantSheet holder, final AbilityContext context) {
+            if (!holder.hasEffectFrom(FURIA_ELEMENTAL)) {
+                return null;
             }
-            return context.pick(WEAPON, NaturalWeapon.class)
-                    .filter(weapon -> weapon.getSkillType().getRollBonusType() == type)
-                    .map(weapon -> ARMAMENTO_ATTACK_BONUS)
-                    .orElse(0);
+            // Predador: "Ataques infligem Danos Mágicos" — Mágico of the element; before it, Elemental.
+            DamageType type = context.isAtLeast(PREDADOR) ? DamageType.MAGICO : DamageType.ELEMENTAL;
+            return chosenElement(context).map(element -> new DamageDescriptor(type, element)).orElse(null);
+        }
+
+        @Override
+        public List<CriticalEffectType> resolveAdditionalCriticalEffects(final SkillType attackSkill,
+                                                                         final AttackSource attackSource,
+                                                                         final CombatantSheet holder,
+                                                                         final AbilityContext context) {
+            return holder.hasEffectFrom(FURIA_ELEMENTAL) ? List.of(CriticalEffectType.CATACLISMO) : List.of();
+        }
+
+        @Override
+        public List<EffectChain> resolveAttackEffectChains(final SkillType attackSkill, final AttackSource attackSource,
+                                                           final CombatantSheet holder, final AbilityContext context) {
+            if (!context.isAtLeast(PREDADOR) || !holder.hasEffectFrom(FURIA_ELEMENTAL)) {
+                return List.of();
+            }
+            return chosenElement(context).<List<EffectChain>>map(element -> List.of(new MarcaElemental(element)))
+                    .orElse(List.of());
         }
 
         @Override
@@ -154,23 +219,27 @@ public enum AlmaElementalAbility implements MonstrousAbility {
         @Override
         public List<ActiveAbility> resolveActiveAbilities(final AbilityContext context) {
             boolean apex = context.isAtLeast(APEX);
+            int duration = apex ? FURIA_DURATION + 2 : FURIA_DURATION;
             return List.of(MonstrousActiveAbility.builder()
-                    .name("Fúria Elemental")
-                    .description("Durante " + (apex ? 5 : 3) + " Rodadas a Arma Natural causa dano Físico Elemental "
-                            + "e recebe Cataclismo como Efeito Crítico adicional.")
+                    .name(FURIA_ELEMENTAL)
+                    .description("Durante " + duration + " Rodadas os ataques são "
+                            + (context.isAtLeast(PREDADOR) ? "Mágicos Elementais e recebem a Marca Elemental" : "Elementais")
+                            + ", com Margem Crítica Menor +3 e Cataclismo como Efeito Crítico adicional.")
                     .actionPointCost(ActionCost.ofActionPoints(1))
                     .determinationPointCost(2)
-                    .durationInRounds(apex ? 5 : 3)
+                    .durationInRounds(duration)
                     .cooldownRounds(apex ? 2 : 3)
+                    .effect(() -> new SourcedState(FURIA_ELEMENTAL, duration))
+                    .effect(bonus(ModifierType.LESSER_CRITICAL_MARGIN, 3, duration, FURIA_ELEMENTAL))
                     .build());
         }
 
         @Override
         public String getUnappliedNote() {
-            return "Fúria Elemental's element and extra Cataclismo, its Marca Elemental, the +2 on the weapon's "
-                    + "damage and the -2 Resistência à Correntes de Efeitos: an Efeito Ativo lands on its holder and "
-                    + "cannot retype a later attack's damage. The +2 on attacks covers every attack with the weapon's "
-                    + "Perícia, not the weapon alone.";
+            return "Fúria Elemental's \"Escolha um Elemento\" is the element picked with the Habilidade, not one per "
+                    + "activation; its Duração (3, Apex 5) is the previous revision's, the new text naming none but "
+                    + "the Apex's +2. The Apex Margem +3 and -2 Resistência reach the Arma Natural's Perícia and every "
+                    + "Corrente the holder lands, not the weapon alone.";
         }
     },
 
@@ -178,16 +247,17 @@ public enum AlmaElementalAbility implements MonstrousAbility {
      * Retribuição Elemental and the Aura Elemental both land on <i>others</i> — the attacker, every
      * character in the area — so only the Aura's price and Resfriamento are carried.
      */
-    SANGUE_ELEMENTAL_DEVIANTE("Sangue Elemental", DEVIANTE, 
+    SANGUE_ELEMENTAL_DEVIANTE("Sangue Elemental", DEVIANTE,
             "Efeito Passivo: Escolha um Elemento; Retribuição Elemental.\n"
                     + "“Retribuição Elemental - Atacantes corpo-a-corpo que infligirem danos ao Elemental sofrem 3 pontos de Dano Elemental.”\n"
-                    + "Efeito Ativo – Aura Elemental: Cria uma Aura Elemental ao redor do Monstro com Área de Efeito Circular Curta. Outros personagens na área sofrem 1d6 pontos de Dano Físico Elemental. Esta Habilidade só pode ser ativada se o Monstro estiver ferido e tem Duração de 2 Rodadas. Resfriamento 2.\n"
+                    + "Efeito Ativo – Aura Elemental [2PA, 2PD]: Invoca a Aura Elemental.\n"
+                    + "“Aura Elemental - Área de Efeito Circular Curta. Outros personagens na área sofrem 1d6 pontos de Dano Físico Elemental. Esta Habilidade só pode ser ativada se o Monstro estiver ferido, tem Duração de 2 Rodadas e Resfriamento 2.”\n"
                     + "Aprimoramentos dos Predadores\n"
-                    + "• Retribuição Elemental – Dano muda para 1d6 e se torna Mágico Elemental.\n"
+                    + "• Retribuição Elemental – Dano aumenta em +1d6 e se torna Mágico Elemental.\n"
                     + "• Explosão Pós-Mortis.\n"
                     + "“Explosão Pós Mortis – Este Monstro explode quando morre e não pode ser revivido. A explosão tem Área de Efeito Circular Média e inflige 2d6+Instinto pontos de Dano Mágico Elemental.”\n"
                     + "Aprimoramentos dos Apex\n"
-                    + "• Aura Elemental – Alcance muda para Área de Efeito Circular Média e passa a infligir 2d6 pontos de Dano Mágico Elemental.") {
+                    + "• Aura Elemental – Alcance muda para Área de Efeito Circular Média e dano muda para 2d6 pontos de Dano Mágico Elemental.") {
         @Override
         public List<ChoiceSpec> getChoiceSpecs(final MonsterCategory category) {
             return List.of(ChoiceSpec.one(ELEMENT, MonstrousTraits.elementOptions()));
@@ -197,41 +267,64 @@ public enum AlmaElementalAbility implements MonstrousAbility {
         public List<ActiveAbility> resolveActiveAbilities(final AbilityContext context) {
             boolean apex = context.isAtLeast(APEX);
             return List.of(MonstrousActiveAbility.builder()
-                    .name("Aura Elemental")
-                    .description("Outros personagens na área sofrem " + (apex ? "2d6 pontos de Dano Mágico" : "1d6 pontos de Dano Físico")
-                            + " Elemental. Apenas se o Monstro estiver ferido.")
-                    .actionPointCost(ActionCost.ofActionPoints(1))
+                    .name(AURA_ELEMENTAL)
+                    .description("Invoca a Aura Elemental (Circular " + (apex ? "Média" : "Curta") + ", 2 Rodadas): "
+                            + "outros personagens na área sofrem " + (apex ? "2d6 pontos de Dano Mágico" : "1d6 pontos de Dano")
+                            + " Elemental por Rodada. Apenas se o Monstro estiver ferido.")
+                    .actionPointCost(ActionCost.ofActionPoints(2))
+                    .determinationPointCost(2)
                     .durationInRounds(2)
                     .cooldownRounds(2)
                     .usableWhen(sheet -> sheet.getDamageTaken() > 0)
+                    .effect(() -> new SourcedState(AURA_ELEMENTAL, 2))
+                    .build());
+        }
+
+        /** The Aura Elemental while it runs: 1d6 Elemental (Apex 2d6 Mágico Elemental, Média) to everyone else inside. */
+        @Override
+        public List<MonsterAura> resolveAuras(final CombatantSheet holder, final AbilityContext context) {
+            if (!holder.hasEffectFrom(AURA_ELEMENTAL) || chosenElement(context).isEmpty()) {
+                return List.of();
+            }
+            boolean apex = context.isAtLeast(APEX);
+            ElementalType element = chosenElement(context).get();
+            return List.of(MonsterAura.builder()
+                    .source(AURA_ELEMENTAL)
+                    .radius(apex ? Range.DISTANCIA_MEDIA : Range.DISTANCIA_CURTA)
+                    .reach(AuraReach.ALL_OTHERS)
+                    .pulse(AuraPulse.builder()
+                            .dice(apex ? 2 : 1)
+                            .descriptor(new DamageDescriptor(apex ? DamageType.MAGICO : DamageType.ELEMENTAL, element))
+                            .build())
                     .build());
         }
 
         @Override
         public String getUnappliedNote() {
-            return "Retribuição Elemental (RETALIATION_DAMAGE is fixed to Natural damage and Envenenado), the Aura's "
-                    + "damage to others in its area (geometry) and Explosão Pós-Mortis. Only the Aura's price, "
-                    + "Resfriamento and \"apenas se ferido\" are applied.";
+            return "Retribuição Elemental (a Habilidade Monstruosa has no retaliation hook; RetaliationResolver scans "
+                    + "Talentos) and Explosão Pós-Mortis (no death trigger). The Aura Elemental pulses at the holder's "
+                    + "Turn start, for 2 Rodadas.";
         }
     },
 
-    /** Foco +2 and the chosen Árvores de Magia, up to Muda, then Emergente, then Florescente. */
-    CONJURACAO_ELEMENTAL("Conjuração Elemental", DEVIANTE, 
-            "Efeito Passivo: Foco +2.\n"
-                    + "Efeito Ativo – Conjuração Elemental: Aprende 2 Árvores de Magia Elemental é capaz de conjurar Sementes, Brotos e Mudas destas Árvores.\n"
+    /**
+     * Bônus Racial +2 Foco and two Árvores Elementais up to Muda; Predador a Divina or Profana third and Emergentes;
+     * Apex Florescentes of the same trees (the 20261015 text dropped the Apex's extra tree).
+     */
+    CONJURACAO_ELEMENTAL("Conjuração Elemental", DEVIANTE,
+            "Efeito Passivo: Bônus Racial de +2 em Foco.\n"
+                    + "Efeito Ativo – Conjuração Elemental: Aprende 2 Árvores de Magia Elemental. É capaz de conjurar Sementes, Brotos e Mudas destas Árvores.\n"
                     + "Aprimoramentos dos Predadores\n"
-                    + "• Conjuração Elemental – Aprende uma Árvore de Magia adicional Elemental, Divina ou Profana. É se torna capaz de conjurar Magias Emergentes.\n"
+                    + "• Conjuração Elemental – Aprende uma Árvore de Magia adicional Divina ou Profana.\n"
+                    + "• Conjuração Elemental - Se torna capaz de conjurar Magias Emergentes das Árvores conhecidas.\n"
                     + "Aprimoramentos dos Apex\n"
-                    + "• Conjuração Elemental – Aprende uma Árvore de Magia adicional Elemental, Divina ou Profana. É se torna capaz de conjurar Magias Florescentes.") {
+                    + "• Conjuração Elemental – Se torna capaz de conjurar Magias Florescentes das Árvores conhecidas.") {
         @Override
         public List<ChoiceSpec> getChoiceSpecs(final MonsterCategory category) {
             List<ChoiceSpec> specs = new ArrayList<>();
             specs.add(ChoiceSpec.many(TREES, MonstrousTraits.treeOptions(MonstrousTraits::isElemental), 2));
             if (category.isAtLeast(PREDADOR)) {
-                specs.add(ChoiceSpec.one(PREDADOR_TREE, MonstrousTraits.treeOptions(MonstrousTraits::isElementalDivineOrProfane)));
-            }
-            if (category.isAtLeast(APEX)) {
-                specs.add(ChoiceSpec.one(APEX_TREE, MonstrousTraits.treeOptions(MonstrousTraits::isElementalDivineOrProfane)));
+                specs.add(ChoiceSpec.one(PREDADOR_TREE, MonstrousTraits.treeOptions(MonstrousTraits::isDivineOrProfane)));
             }
             return specs;
         }
@@ -246,8 +339,9 @@ public enum AlmaElementalAbility implements MonstrousAbility {
             BranchLevel deepest = context.isAtLeast(APEX) ? BranchLevel.FLORESCENTE
                     : context.isAtLeast(PREDADOR) ? BranchLevel.EMERGENTE : BranchLevel.MUDA;
             List<String> trees = new ArrayList<>(context.picks(TREES));
-            trees.addAll(context.picks(PREDADOR_TREE));
-            trees.addAll(context.picks(APEX_TREE));
+            if (context.isAtLeast(PREDADOR)) {
+                trees.addAll(context.picks(PREDADOR_TREE));
+            }
             return MonstrousTraits.spellsUpTo(trees, deepest);
         }
 
@@ -257,15 +351,15 @@ public enum AlmaElementalAbility implements MonstrousAbility {
         }
     },
 
-    /** The Arma de Sopro, and Sopro Cataclísmico's +2d6 and +3 Margem Crítica Menor for the Turn. */
-    SOPRO_ELEMENTAL("Sopro Elemental", PREDADOR, 
+    /** The Arma de Sopro, and Sopro Cataclísmico's +2d6, +3 Margem Crítica Menor and Cataclismo for the Turn. */
+    SOPRO_ELEMENTAL("Sopro Elemental", PREDADOR,
             "Efeito Passivo - Adquire a Arma de Sopro.\n"
-                    + "Efeito Ativo – Sopro Cataclísmico [+1PA, 2PD]: Dano da Arma de Sopro aumenta em +2d6 neste Turno e Margem Crítica Menor aumenta em +3.\n"
+                    + "Efeito Ativo – Sopro Cataclísmico [+1PA, 2PD]: Apenas neste Turno, dano da Arma de Sopro aumenta em +2d6, Margem Crítica Menor aumenta em +3 e recebe Cataclismo como Efeito Crítico adicional.\n"
                     + "Aprimoramentos dos Apex\n"
                     + "• Sopro Cataclísmico –Alcance muda para Cone Longo e o dano não é reduzido pela distância percorrida.\n"
                     + "Aprimoramentos das Abominações\n"
                     + "• Sopro Cataclísmico – Alcance muda para Cone Muito Longo e aplica a Corrente de Efeito Monstruosa – Sopro Apocalíptico.\n"
-                    + "“Sopro Apocalíptico – Aplica a Corrente de Efeitos Menor Cataclismo em cada alvo.”") {
+                    + "“Sopro Apocalíptico – Aplica o Efeito Crítico Menor Cataclismo em cada alvo.”") {
         @Override
         public List<NaturalWeapon> resolveNaturalWeapons(final AbilityContext context) {
             return List.of(NaturalWeapon.ARMA_DE_SOPRO);
@@ -274,39 +368,54 @@ public enum AlmaElementalAbility implements MonstrousAbility {
         @Override
         public List<ActiveAbility> resolveActiveAbilities(final AbilityContext context) {
             return List.of(MonstrousActiveAbility.builder()
-                    .name("Sopro Cataclísmico")
-                    .description("Dano da Arma de Sopro aumenta em +2d6 neste Turno e Margem Crítica Menor aumenta em +3.")
+                    .name(SOPRO_CATACLISMICO)
+                    .description("Apenas neste Turno, dano da Arma de Sopro aumenta em +2d6, Margem Crítica Menor "
+                            + "aumenta em +3 e recebe Cataclismo como Efeito Crítico adicional.")
                     .actionPointCost(ActionCost.ofActionPoints(1))
                     .determinationPointCost(2)
                     .durationInRounds(1)
-                    .effect(bonus(ModifierType.EXTRA_DAMAGE_DICE, 2, 1, "Sopro Cataclísmico"))
-                    .effect(bonus(ModifierType.LESSER_CRITICAL_MARGIN, 3, 1, "Sopro Cataclísmico"))
+                    .effect(bonus(ModifierType.EXTRA_DAMAGE_DICE, 2, 1, SOPRO_CATACLISMICO))
+                    .effect(bonus(ModifierType.LESSER_CRITICAL_MARGIN, 3, 1, SOPRO_CATACLISMICO))
+                    .effect(() -> new SourcedState(SOPRO_CATACLISMICO, 1))
                     .build());
+        }
+
+        /** Sopro Cataclísmico's "recebe Cataclismo como Efeito Crítico adicional" — the Sopro's own crits only. */
+        @Override
+        public List<CriticalEffectType> resolveAdditionalCriticalEffects(final SkillType attackSkill,
+                                                                         final AttackSource attackSource,
+                                                                         final CombatantSheet holder,
+                                                                         final AbilityContext context) {
+            return attackSource == NaturalWeapon.ARMA_DE_SOPRO && holder.hasEffectFrom(SOPRO_CATACLISMICO)
+                    ? List.of(CriticalEffectType.CATACLISMO)
+                    : List.of();
         }
 
         @Override
         public String getUnappliedNote() {
             return "The Cone ranges and \"não é reduzido pela distância\" (geometry), and the Abominação's Sopro "
-                    + "Apocalíptico (no Corrente de Efeitos reaches a target). The +2d6 and +3 ride every attack "
-                    + "this Turn, not the Sopro alone.";
+                    + "Apocalíptico (a Corrente applying an Efeito Crítico needs the critical-effect context and "
+                    + "dice). The +2d6 and +3 ride every attack this Turn, not the Sopro alone.";
         }
     },
 
     /** Summons are not built: only Invocar Elemental's price reaches the sheet. */
-    INVOCAR_ELEMENTAL("Invocar Elemental", PREDADOR, 
+    INVOCAR_ELEMENTAL("Invocar Elemental", PREDADOR,
             "Efeito Passivo: Este monstro possui um Subordinado que lhe serve ou auxilia.\n"
-                    + "Efeito Ativo – Invocar Elemental [3PA, 4PD]: Invoca dois Monstros Elementais do tipo Presa para ajudar.\n"
+                    + "Efeito Ativo – Invocar Elemental [3PA, 4PD]: Invoca dois Monstros com o Modelo Alma Elemental do tipo Presa para ajudar.\n"
                     + "Aprimoramentos dos Apex\n"
                     + "• Invocar Elemental – o tipo dos Monstros invocados é Deviante.\n"
                     + "Aprimoramentos das Abominações\n"
                     + "• Possui um Subordinado adicional\n"
-                    + "• Invocar Elemental – o tipo dos Monstros invocados é Predador, alternativamente pode optar por invocar um único Monstro do tipo Apex.") {
+                    + "• Invocar Elemental – o tipo dos Monstros invocados é Predador\n"
+                    + "• Invocar Elemental – Efeito Alternativo, invoca um único Monstro do tipo Apex.") {
         @Override
         public List<ActiveAbility> resolveActiveAbilities(final AbilityContext context) {
             MonsterCategory summoned = context.isAtLeast(ABOMINACAO) ? PREDADOR : context.isAtLeast(APEX) ? DEVIANTE : PRESA;
             return List.of(MonstrousActiveAbility.builder()
                     .name("Invocar Elemental")
-                    .description("Invoca dois Monstros Elementais do tipo " + summoned.name() + ".")
+                    .description("Invoca dois Monstros com o Modelo Alma Elemental do tipo " + summoned.name()
+                            + (context.isAtLeast(ABOMINACAO) ? " (ou, alternativamente, um único do tipo APEX)." : "."))
                     .actionPointCost(ActionCost.ofActionPoints(3))
                     .determinationPointCost(4)
                     .build());
@@ -320,10 +429,10 @@ public enum AlmaElementalAbility implements MonstrousAbility {
     },
 
     /** Multiplicador de PD +1; Tormenta Cataclísmica's own 1d6 regeneration and Roubo de Vida 2. */
-    TORMENTA_CATACLISMICA("Tormenta Cataclísmica", APEX, 
+    TORMENTA_CATACLISMICA("Tormenta Cataclísmica", APEX,
             "Efeito Passivo – Multiplicador de PD +1.\n"
-                    + "Efeito Ativo – Tormenta Cataclísmica [4PA, 5PD]: Altera o terreno por 5 Rodadas, criando uma Tormenta Cataclísmica. Enquanto estiver no terreno transformado em Tormenta Cataclísmica recupera 1d6PV por Rodada e seus ataques recebem Roubo de Vida 2.\n"
-                    + "“Tormenta Cataclísmica – Área Circular Muito Longa, o terreno é tomado por energia elemental, infligindo 1d6+Instinto pontos de Dano Físico Elemental a todos os personagens, Equipamentos e objetos em seu interior.\n"
+                    + "Efeito Ativo – Tormenta Cataclísmica [4PA, 5PD]: Apenas uma vez por Cena, altera o terreno por 5 Rodadas, criando uma Tormenta Cataclísmica. Enquanto estiver na Área de Efeito da Tormenta Cataclísmica recupera 1d6PV por Rodada e seus ataques recebem Roubo de Vida 2.\n"
+                    + "“Tormenta Cataclísmica – Área Circular Muito Longa, o terreno é tomado por energia elemental, infligindo 1d6+Instinto pontos de Dano Elemental a todos os personagens, Equipamentos e objetos em seu interior.\n"
                     + "Aprimoramentos das Abominações\n"
                     + "• Tormenta Cataclísmica – Os danos da Tormenta Cataclísmica mudam para Mágico Elemental.\n"
                     + "• Tormenta Cataclísmica – Uma tempestade de energia elemental cai sobre o terreno, causando 1d6 Pontos de Dano Mágico Elemental a todos os personagens.") {
@@ -336,10 +445,12 @@ public enum AlmaElementalAbility implements MonstrousAbility {
         public List<ActiveAbility> resolveActiveAbilities(final AbilityContext context) {
             return List.of(MonstrousActiveAbility.builder()
                     .name("Tormenta Cataclísmica")
-                    .description("Por 5 Rodadas: recupera 1d6PV por Rodada e seus ataques recebem Roubo de Vida 2.")
+                    .description("Apenas uma vez por Cena, por 5 Rodadas: recupera 1d6PV por Rodada e seus ataques "
+                            + "recebem Roubo de Vida 2.")
                     .actionPointCost(ActionCost.ofActionPoints(4))
                     .determinationPointCost(5)
                     .durationInRounds(TORMENTA_DURATION)
+                    .cooldownRounds(MonstrousActiveAbility.ONCE_PER_SCENE)
                     .effect(() -> RecurringDice.healing(Dice.of(1), TORMENTA_DURATION, "Tormenta Cataclísmica"))
                     .effect(() -> new LifeSteal(2, Optional.of(TORMENTA_DURATION)))
                     .build());
@@ -352,12 +463,12 @@ public enum AlmaElementalAbility implements MonstrousAbility {
         }
     },
 
-    /** Fisiologia Abissal or Celestial: immunities, Conjuração +2, Roubo de Vida or 1d6 regeneration. */
-    ASCENCAO("Ascenção", APEX, 
-            "Efeito Passivo – Adquire Fisiologia Abissal ou Fisiologia Celestial.\n"
-                    + "“Fisiologia Abissal – Imu4nidade a Doenças e Maldições, Conjuração +2 e Ataques recebem Roubo de Vida 2 e a Corrente de Efeito Monstruosa – Murchar. Danos Elementais se tornam Profanos em substituição aos seus tipos e ignoram RM.”\n"
+    /** Ascenção Abissal or Celestial: immunities, Conjuração +2, Roubo de Vida or 1d6 regeneration. */
+    ASCENCAO("Ascenção", APEX,
+            "Efeito Passivo – Adquire Ascenção Abissal ou Ascenção Celestial.\n"
+                    + "“Ascenção Abissal – Imunidade a Doenças e Maldições, Conjuração +2 e Ataques recebem Roubo de Vida 2 e a Corrente de Efeito Monstruosa – Murchar. Danos Elementais se tornam Profanos em substituição aos seus tipos e ignoram RM.”\n"
                     + "“Murchar – Alvo sofre Redutor de -2 Multiplicador de PV por 2 Rodadas (efeito de Maldição).\n"
-                    + "“Fisiologia Celestial – Imunidade a Doenças e Encantamentos Nocivos, Conjuração +2, recuperam 1d6PV a cada Rodada e seus ataques recebem a Corrente de Efeitos Monstruosa - Expurgo. Danos Elementais se tornam Sagrados em substituição aos seus tipos e ignoram RM.”\n"
+                    + "“Ascenção Celestial – Imunidade a Doenças e Encantamentos Nocivos, Conjuração +2, recuperam 1d6PV a cada Rodada e seus ataques recebem a Corrente de Efeitos Monstruosa - Expurgo. Danos Elementais se tornam Sagrados em substituição aos seus tipos e ignoram RM.”\n"
                     + "“Expurgo – Desativa Habilidades Ativas e Encantamentos do alvo.”\n"
                     + "Aprimoramentos das Abominações\n"
                     + "• Imunidade a Efeitos Críticos e Correntes de Efeitos que não sejam de fontes Abissais, Celestiais ou Primordiais.") {
@@ -383,7 +494,7 @@ public enum AlmaElementalAbility implements MonstrousAbility {
         @Override
         public List<TemporaryEffect> resolveStandingEffects(final AbilityContext context, final Character character) {
             return CELESTIAL.equals(context.pick(ASPECT))
-                    ? List.of(RecurringDice.healing(Dice.of(1), null, "Fisiologia Celestial"))
+                    ? List.of(RecurringDice.healing(Dice.of(1), null, "Ascenção Celestial"))
                     : List.of(new LifeSteal(2, Optional.empty()));
         }
 
@@ -393,10 +504,25 @@ public enum AlmaElementalAbility implements MonstrousAbility {
             return context.isAtLeast(ABOMINACAO) ? EnumSet.allOf(CriticalEffectType.class) : Set.of();
         }
 
+        /** Ascenção Abissal: "Ataques recebem … a Corrente de Efeito Monstruosa – Murchar". */
+        @Override
+        public List<EffectChain> resolveAttackEffectChains(final SkillType attackSkill, final AttackSource attackSource,
+                                                           final CombatantSheet holder, final AbilityContext context) {
+            return ABISSAL.equals(context.pick(ASPECT)) ? List.of(new MurcharAbissal()) : List.of();
+        }
+
+        /** "Danos Elementais se tornam Profanos / Sagrados em substituição aos seus tipos". */
+        @Override
+        public DamageSanctity resolveElementalDamageSanctity(final AbilityContext context) {
+            return ABISSAL.equals(context.pick(ASPECT)) ? DamageSanctity.PROFANO
+                    : CELESTIAL.equals(context.pick(ASPECT)) ? DamageSanctity.SAGRADO : null;
+        }
+
         @Override
         public String getUnappliedNote() {
-            return "Murchar and Expurgo (no Corrente de Efeitos reaches a target), elemental damage turned Profano or "
-                    + "Sagrado and ignoring RM (no damage type for either), immunity to Encantamentos Nocivos, and the "
+            return "Expurgo (\"Desativa Habilidades Ativas e Encantamentos do alvo\" names nothing this core can switch "
+                    + "off), \"ignoram RM\" on the Profano/Sagrado damage (only a Habilidade's own Elemental retype is "
+                    + "turned, and nothing bypasses RM for it), immunity to Encantamentos Nocivos, and the "
                     + "Abominação's exception for Abissal, Celestial and Primordial sources (critical effects carry "
                     + "no source).";
         }
@@ -411,7 +537,10 @@ public enum AlmaElementalAbility implements MonstrousAbility {
     /** {@link #CONJURACAO_ELEMENTAL}'s Predador tree. */
     public static final String PREDADOR_TREE = "predadorTree";
 
-    /** {@link #CONJURACAO_ELEMENTAL}'s Apex tree. */
+    /**
+     * {@link #CONJURACAO_ELEMENTAL}'s former Apex tree — dropped by the 20261015 text, kept only so a saved pick still
+     * names a known key. Nothing reads it.
+     */
     public static final String APEX_TREE = "apexTree";
 
     /** {@link #ASCENCAO}'s pick. */
@@ -419,8 +548,21 @@ public enum AlmaElementalAbility implements MonstrousAbility {
     public static final String ABISSAL = "ABISSAL";
     public static final String CELESTIAL = "CELESTIAL";
 
-    private static final int ARMAMENTO_ATTACK_BONUS = 2;
+    /** Armamento Elemental's Deviante "+3 pontos de Danos". */
+    private static final int ARMAMENTO_DAMAGE_BONUS = 3;
     private static final int TORMENTA_DURATION = 5;
+
+    /** Fúria Elemental — the Efeito Ativo and the {@link SourcedState} it runs as. */
+    private static final String FURIA_ELEMENTAL = "Fúria Elemental";
+
+    /** Fúria Elemental's Duração before the Apex's +2 — the previous revision's 3; the new text names no base. */
+    private static final int FURIA_DURATION = 3;
+
+    /** Aura Elemental — the Efeito Ativo, its window and the aura's source. */
+    private static final String AURA_ELEMENTAL = "Aura Elemental";
+
+    /** Sopro Cataclísmico — the Efeito Ativo and its one-Turn window. */
+    private static final String SOPRO_CATACLISMICO = "Sopro Cataclísmico";
 
     private final String displayName;
     private final MonsterCategory tier;

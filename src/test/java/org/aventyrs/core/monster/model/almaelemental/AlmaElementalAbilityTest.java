@@ -1,6 +1,15 @@
 package org.aventyrs.core.monster.model.almaelemental;
 
 import org.aventyrs.core.character.Resistance;
+import org.aventyrs.core.character.DamageDescriptor;
+import org.aventyrs.core.character.DamageSanctity;
+import org.aventyrs.core.character.services.AttackTargetingServiceImpl;
+import org.aventyrs.core.effect.monstrous.MarcaElemental;
+import org.aventyrs.core.effect.monstrous.MurcharAbissal;
+import org.aventyrs.core.monster.MonstrousAbilityGrant;
+import org.aventyrs.core.scene.AreaOfEffect;
+import org.aventyrs.core.sheet.RecurringDamage;
+import java.util.Optional;
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.DamageType;
 import org.aventyrs.core.character.services.ActiveAbilityServiceImpl;
@@ -73,17 +82,92 @@ class AlmaElementalAbilityTest {
     }
 
     @Test
-    void armamentoElementalGrantsTheWeaponAndItsAttackBonus() {
+    void armamentoElementalGrantsTheWeaponAndFromDevianteAnExplosionAndThreeDamage() {
         MonsterSheet presa = spawn(0, claws());
         assertTrue(presa.getNaturalWeapons().contains(NaturalWeapon.GARRAS_AFIADAS));
         assertTrue(presa.getCharacter().getNaturalWeapons().contains(NaturalWeapon.GARRAS_AFIADAS));
 
         SkillType skill = NaturalWeapon.GARRAS_AFIADAS.getSkillType();
-        int presaBonus = MonsterRules.skillDifficulty(blueprint(0, claws()).build(), skill).bonus();
-        int devianteBonus = MonsterRules.skillDifficulty(blueprint(12, claws()).build(), skill).bonus();
-        assertEquals(presaBonus + 2, devianteBonus);
+        // 20261015: the old "+2 on attacks and damage" is gone — an Explosão and +3 Danos instead.
+        assertEquals(MonsterRules.skillDifficulty(blueprint(0, claws()).build(), skill).bonus(),
+                MonsterRules.skillDifficulty(blueprint(12, claws()).build(), skill).bonus());
+        AttackTargetingServiceImpl targeting = new AttackTargetingServiceImpl();
+        assertTrue(targeting.resolveAttackArea(presa.getCharacter(), skill, NaturalWeapon.GARRAS_AFIADAS, null).isEmpty());
+        MonsterSheet deviante = spawn(12, claws());
+        assertEquals(Optional.of(AreaOfEffect.ATTACK_EXPLOSION),
+                targeting.resolveAttackArea(deviante.getCharacter(), skill, NaturalWeapon.GARRAS_AFIADAS, null));
+        assertEquals(0, presa.getTemporaryBonus(ModifierType.DAMAGE_ROLL_BONUS));
+        assertEquals(3, deviante.getTemporaryBonus(ModifierType.DAMAGE_ROLL_BONUS));
+
         assertEquals(3, AlmaElementalAbility.ARMAMENTO_ELEMENTAL.resolveCriticalMarginIncrease(skill,
                 blueprint(46, claws()).build().contextFor(blueprint(46, claws()).build().getAbilities().get(0))));
+    }
+
+    @Test
+    void anatomiaElementalRetypesEveryAttackToItsElement() {
+        MonsterSheet sheet = spawn(0, fireBlood());
+        assertEquals(new DamageDescriptor(DamageType.ELEMENTAL, ElementalType.FOGO),
+                MonstrousAbilityGrant.attackDamageRetype(sheet, SkillType.ATAQUE_CORPO_A_CORPO, NaturalWeapon.GARRAS_AFIADAS));
+    }
+
+    @Test
+    void furiaElementalRetypesAddsCataclismoAndFromPredadorMarcaElemental() {
+        MonsterSheet presa = spawn(0, claws());
+        SkillType skill = NaturalWeapon.GARRAS_AFIADAS.getSkillType();
+        assertEquals(List.of(), MonstrousAbilityGrant.additionalCriticalEffects(presa, skill, NaturalWeapon.GARRAS_AFIADAS));
+        new ActiveAbilityServiceImpl().activate(presa.getCharacter(), presa, held(presa, "Fúria Elemental"), 1);
+        assertEquals(new DamageDescriptor(DamageType.ELEMENTAL, ElementalType.FOGO),
+                MonstrousAbilityGrant.attackDamageRetype(presa, skill, NaturalWeapon.GARRAS_AFIADAS));
+        assertEquals(List.of(CriticalEffectType.CATACLISMO),
+                MonstrousAbilityGrant.additionalCriticalEffects(presa, skill, NaturalWeapon.GARRAS_AFIADAS));
+        assertEquals(3, presa.getTemporaryBonus(ModifierType.LESSER_CRITICAL_MARGIN));
+        assertTrue(MonstrousAbilityGrant.attackEffectChains(presa, skill, NaturalWeapon.GARRAS_AFIADAS).isEmpty());
+
+        MonsterSheet predador = spawn(26, claws());
+        new ActiveAbilityServiceImpl().activate(predador.getCharacter(), predador, held(predador, "Fúria Elemental"), 1);
+        assertEquals(new DamageDescriptor(DamageType.MAGICO, ElementalType.FOGO),
+                MonstrousAbilityGrant.attackDamageRetype(predador, skill, NaturalWeapon.GARRAS_AFIADAS));
+        assertTrue(MonstrousAbilityGrant.attackEffectChains(predador, skill, NaturalWeapon.GARRAS_AFIADAS).stream()
+                .anyMatch(MarcaElemental.class::isInstance));
+    }
+
+    @Test
+    void marcaElementalDealsThreeMagicoElementalForTwoPlusVigorRodadas() {
+        MonsterSheet target = spawn(0, claws());
+        new MarcaElemental(ElementalType.FOGO).applyTo(target);
+        RecurringDamage mark = target.getRunningEffects().stream().filter(RecurringDamage.class::isInstance)
+                .map(RecurringDamage.class::cast).findFirst().orElseThrow();
+        assertEquals(3, mark.getValuePerRound());
+        assertEquals(2 + target.getAttributeTotal(AttributeDomain.VIGOR), mark.getRemainingRounds());
+        new MarcaElemental(ElementalType.FOGO).applyTo(target);
+        assertEquals(1, target.getRunningEffects().stream().filter(RecurringDamage.class::isInstance).count());
+    }
+
+    @Test
+    void ascencaoAbissalTurnsTheElementalRetypeProfaneAndCarriesMurchar() {
+        MonsterSheet sheet = spawn(46, fireBlood(),
+                MonstrousAbilitySelection.of(AlmaElementalAbility.ASCENCAO, AlmaElementalAbility.ABISSAL));
+        assertEquals(new DamageDescriptor(DamageType.ELEMENTAL, ElementalType.FOGO, DamageSanctity.PROFANO),
+                MonstrousAbilityGrant.attackDamageRetype(sheet, SkillType.ATAQUE_CORPO_A_CORPO, NaturalWeapon.GARRAS_AFIADAS));
+        assertTrue(MonstrousAbilityGrant.attackEffectChains(sheet, SkillType.ATAQUE_CORPO_A_CORPO,
+                NaturalWeapon.GARRAS_AFIADAS).stream().anyMatch(MurcharAbissal.class::isInstance));
+    }
+
+    @Test
+    void soproCataclismicoAddsCataclismoToTheSoproOnly() {
+        MonsterSheet sheet = spawn(26, MonstrousAbilitySelection.of(AlmaElementalAbility.SOPRO_ELEMENTAL));
+        new ActiveAbilityServiceImpl().activate(sheet.getCharacter(), sheet, held(sheet, "Sopro Cataclísmico"), 1);
+        SkillType skill = NaturalWeapon.ARMA_DE_SOPRO.getSkillType();
+        assertEquals(List.of(CriticalEffectType.CATACLISMO),
+                MonstrousAbilityGrant.additionalCriticalEffects(sheet, skill, NaturalWeapon.ARMA_DE_SOPRO));
+        assertEquals(List.of(), MonstrousAbilityGrant.additionalCriticalEffects(sheet, skill, NaturalWeapon.GARRAS_AFIADAS));
+    }
+
+    @Test
+    void tormentaCataclismicaIsOncePerCena() {
+        MonsterSheet sheet = spawn(46, MonstrousAbilitySelection.of(AlmaElementalAbility.TORMENTA_CATACLISMICA));
+        assertTrue(((org.aventyrs.core.monster.model.MonstrousActiveAbility) held(sheet, "Tormenta Cataclísmica"))
+                .isOncePerScene());
     }
 
     @Test

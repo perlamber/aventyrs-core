@@ -9,6 +9,7 @@ import org.aventyrs.core.magic.SpellData;
 import org.aventyrs.core.magic.SpellDuration;
 import org.aventyrs.core.magic.SpellTargeting;
 import org.aventyrs.core.magic.SpellTree;
+import org.aventyrs.core.magic.invocation.SpellInvocation;
 import org.aventyrs.core.scene.Range;
 import org.aventyrs.core.skill.DifficultyLevel;
 import org.aventyrs.core.skill.SkillType;
@@ -20,9 +21,10 @@ import org.aventyrs.core.skill.SkillType;
  * <p>Every Magia here invokes a creature, and since core 0.0.92 each one is real: the stat blocks are {@code
  * monster.summon.NatureSummon}s ({@code NatureSummonKind}), and what each Magia does once cast — the creature, its
  * Duração, what it may not coexist with, any extra PM — is {@code magic.invocation.NatureInvocationService}, which
- * places the creatures in the {@code Scene} as their caster's invocations ({@code Scene#addSummons}). A {@code Spell}
- * still has no column naming its creature: the service is the link. The {@code Atributos e Perícias} blocks are
- * summarised in each {@code Efeito:} as before.
+ * places the creatures in the {@code Scene} as their caster's invocations ({@code Scene#addSummons}). Since core
+ * 0.1.7.6 each Magia (and each Efeito Alternativo that invokes something else) names its {@code
+ * magic.invocation.SpellInvocation}, which {@code SpellInvocationService#plan} turns into the order a caller sends on.
+ * The {@code Atributos e Perícias} blocks are summarised in each {@code Efeito:} as before.
  */
 public enum AliadosDaNaturezaSpell implements AuthoredSpell {
 
@@ -55,10 +57,12 @@ public enum AliadosDaNaturezaSpell implements AuthoredSpell {
                     + "torna um Subordinado Prodigioso.")
             // TODO: "A Duração da magia é reduzida à metade" is relative to its parent; SpellDuration
             //  holds an absolute figure, not a modifier of the column it overrides.
-            .alternateEffect(SpellAlternateEffect.named("Falsa Matilha"))
+            .alternateEffect(SpellAlternateEffect.builder().name("Falsa Matilha")
+                    .invocation(SpellInvocation.FALSA_MATILHA).build())
             .criticalEffectType(CriticalEffectType.POTENCIALIZAR)
             .duration(SpellDuration.rodadas(3))
             .targeting(SpellTargeting.TOQUE)
+            .invocation(SpellInvocation.CATIVAR_ANIMAL)
             .build()),
 
     /**
@@ -84,10 +88,12 @@ public enum AliadosDaNaturezaSpell implements AuthoredSpell {
             .secondaryEffectDescription("Predador Regional: Você pode aumentar o Custo de Conjuração em +1PM, se o "
                     + "fizer o animal invocado será um forte exemplar da sua espécie, recebendo +2 Graduações em "
                     + "suas Perícias e Vigor +1.")
-            .alternateEffect(SpellAlternateEffect.named("Predador Regional"))
+            .alternateEffect(SpellAlternateEffect.builder().name("Predador Regional")
+                    .invocation(SpellInvocation.PREDADOR_REGIONAL).build())
             .criticalEffectType(CriticalEffectType.POTENCIALIZAR)
             .duration(SpellDuration.rodadas(3))
             .targeting(SpellTargeting.distancia(Range.ADJACENTE))
+            .invocation(SpellInvocation.ALIADO)
             .build()),
 
     /** Restates "Como Aliado da Natureza" outright — the principal effect, at quantity. */
@@ -113,6 +119,7 @@ public enum AliadosDaNaturezaSpell implements AuthoredSpell {
             .criticalEffectType(CriticalEffectType.POTENCIALIZAR)
             .duration(SpellDuration.concentracaoMais(2))
             .targeting(SpellTargeting.distancia(Range.ADJACENTE))
+            .invocation(SpellInvocation.CANCAO_DE_FLORA)
             .build()),
 
     /**
@@ -139,6 +146,7 @@ public enum AliadosDaNaturezaSpell implements AuthoredSpell {
             .criticalEffectType(CriticalEffectType.POTENCIALIZAR)
             .duration(SpellDuration.rodadas(3))
             .targeting(SpellTargeting.distancia(Range.ADJACENTE))
+            .invocation(SpellInvocation.EXPERIMENTO)
             .build()),
 
     /**
@@ -165,6 +173,7 @@ public enum AliadosDaNaturezaSpell implements AuthoredSpell {
             .criticalEffectType(CriticalEffectType.POTENCIALIZAR)
             .duration(SpellDuration.rodadas(3))
             .targeting(SpellTargeting.distancia(Range.ADJACENTE))
+            .invocation(SpellInvocation.TOTEM_DE_GAEA)
             .build()),
 
     /**
@@ -186,10 +195,12 @@ public enum AliadosDaNaturezaSpell implements AuthoredSpell {
             .secondaryEffectDescription("Laboratório de Lacerto: Ao invés de invocar um monstro com as qualidades do "
                     + "Orgulho de Lacerto, invoca simultaneamente 2 Experimentos de Lacerto, este efeito não é "
                     + "cumulativo com a magia Orgulho de Lacerto.")
-            .alternateEffect(SpellAlternateEffect.named("Laboratório de Lacerto"))
+            .alternateEffect(SpellAlternateEffect.builder().name("Laboratório de Lacerto")
+                    .invocation(SpellInvocation.LABORATORIO).build())
             .criticalEffectType(CriticalEffectType.POTENCIALIZAR)
             .duration(SpellDuration.concentracaoMais(2))
             .targeting(SpellTargeting.distancia(Range.ADJACENTE))
+            .invocation(SpellInvocation.ORGULHO)
             .build()),
 
     /**
@@ -217,6 +228,7 @@ public enum AliadosDaNaturezaSpell implements AuthoredSpell {
             .criticalEffectType(CriticalEffectType.POTENCIALIZAR)
             .duration(SpellDuration.concentracaoMais(2))
             .targeting(SpellTargeting.TOQUE)
+            .invocation(SpellInvocation.ANCIENTE)
             .build());
 
     private final SpellData data;

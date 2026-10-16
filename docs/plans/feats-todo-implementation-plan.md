@@ -535,6 +535,10 @@ restrictions, and a set of effects/hooks "active only while in this form". Plus 
   `FeericoFeat#NADADEIRAS` — **~15**.
 - **Effort:** 2 sessions. **Depends on:** Phase 5 for form-gated flight; the sub-stat is
   independent.
+- **Status (2026-10-16, core 0.1.7.8):** the timed **Efeito de Voo** is built — `FlightService`,
+  `FlightActivation`, `FlightEffect` — covering Asas, Asas de Dragão, Pixie, Braços Alados, Herança Aviana,
+  Benção de Flora, Coração Alado and Eterno Viajante. Every flight lands safely (table ruling).
+  `FeericoFeat` is wired in full except `DRIADE`, which is deliberately left TODO.
 
 ---
 

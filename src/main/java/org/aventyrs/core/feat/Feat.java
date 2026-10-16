@@ -277,6 +277,9 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
         boolean centelhasCeilingSatisfied = requirements.maximumCentelhas() == null
                 || character.getCentelhas() <= requirements.maximumCentelhas();
 
+        boolean sexoSatisfied = requirements.requiredSexo() == null
+                || requirements.requiredSexo() == character.getSexo();
+
         boolean disjunctionSatisfied = requirements.anyOf().isEmpty()
                 || requirements.anyOf().stream().anyMatch(branch -> satisfies(branch, character, sheet));
 
@@ -286,7 +289,7 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
                 && titlesSatisfied && raceSatisfied && raceNotForbidden && creatureTypeSatisfied
                 && deitySatisfied && categoryCountSatisfied && regaliaCraftHistorySatisfied
                 && alignmentSatisfied && fameSatisfied && experienceSatisfied && awakenedTitlesCeilingSatisfied
-                && centelhasCeilingSatisfied && disjunctionSatisfied;
+                && centelhasCeilingSatisfied && sexoSatisfied && disjunctionSatisfied;
     }
 
     /**
@@ -2973,6 +2976,56 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
      */
     default int resolveModeMovementIncrease(final MovementMode mode, final Character character) {
         return 0;
+    }
+
+    /**
+     * The Efeito de Voo this Talento's wings start in a stressful Scene — its price and Duração as the
+     * text states them for this holder ({@code FeericoFeat#ASAS}'s "3PD, Feéricos usam 3PM … reduzido
+     * em 1 para cada Título … 1d6+Metade do Vigor Rodadas"). Empty by default: a Talento that grants
+     * Voo without one (a Forma's, a timed Blessing's) flies for free. Collected, then adjusted by every
+     * held Talento's flight hooks below, by {@code FlightService#getFlightActivations}; holder is never
+     * {@code null} there.
+     */
+    default java.util.Optional<org.aventyrs.core.character.FlightActivation> resolveFlightActivation(
+            final Character character, final CombatantSheet holder) {
+        return java.util.Optional.empty();
+    }
+
+    /** PM taken off every Efeito de Voo its holder starts — {@code FeericoFeat#BENCAO_DE_FLORA}'s −1PM. Zero by default. */
+    default int resolveFlightMagicPointReduction(final Character character) {
+        return 0;
+    }
+
+    /**
+     * A Duração replacing every Efeito de Voo's own — Benção de Flora's "muda para 2d6+Metade do Foco
+     * Rodadas". Applied before {@link #resolveFlightExtraDurationDice}, so a die added elsewhere still
+     * lands on top. {@code null} by default.
+     */
+    default org.aventyrs.core.character.Dice resolveFlightDurationOverride(final Character character,
+                                                                         final CombatantSheet holder) {
+        return null;
+    }
+
+    /** Dice added to every Efeito de Voo's Duração — {@code AvianoFeat#CORACAO_ALADO}'s "+1d6 Rodadas". Zero by default. */
+    default int resolveFlightExtraDurationDice(final Character character) {
+        return 0;
+    }
+
+    /** Whether its holder's flights have no Duração at all — {@code AvianoFeat#ETERNO_VIAJANTE}. False by default. */
+    default boolean removesFlightDurationLimit(final Character character) {
+        return false;
+    }
+
+    /**
+     * How far its holder senses another's spellcasting — {@code FeericoFeat#SENTIR_O_FLUXO_DE_MANA}'s
+     * "sempre que outros personagens conjurarem magias em Distância Curta você irá identificá-los
+     * automaticamente". A permission the caller acts on, since only it sees every cast and every
+     * position: it tells the holder who cast what, and marks a caster hidden from them as detected
+     * ({@code Hidden#markDetectedBy}; table ruling, 2026-10-16). Read through {@code
+     * Character#getSpellcastingSenseRange()}. {@code null} by default.
+     */
+    default org.aventyrs.core.scene.Range resolveSpellcastingSenseRange(final Character character) {
+        return null;
     }
 
     /**

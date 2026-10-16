@@ -19,6 +19,13 @@ import org.aventyrs.core.scene.Scene;
 import org.aventyrs.core.scene.SceneSummon;
 import org.aventyrs.core.sheet.CombatantSheet;
 import org.aventyrs.core.sheet.Player;
+import org.aventyrs.core.character.services.ActiveAbilityServiceImpl;
+import org.aventyrs.core.effect.CriticalEffectType;
+import org.aventyrs.core.effect.monstrous.MarcaDaEscuridao;
+import org.aventyrs.core.effect.monstrous.SangriaProfana;
+import org.aventyrs.core.effect.monstrous.Sanguenomancia;
+import org.aventyrs.core.monster.MonstrousAbilityGrant;
+import org.aventyrs.core.skill.SkillType;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -72,11 +79,81 @@ class EscolhidoDeMacariaAbilityTest {
     }
 
     @Test
-    void theRenascidoIsStrongerAndTougher() {
+    void theRenascidoMonstruosoIsStrongerAndTougherOnlyForThreeRodadasAfterAMacariaActivation() {
         MonsterSheet renascido = spawn(0, of(EscolhidoDeMacariaAbility.RENASCIDO));
-        assertEquals(3, renascido.getCharacter().getEffectiveAttributeTotal(AttributeDomain.STRENGTH));
-        assertEquals(3, renascido.getCharacter().getEffectiveAttributeTotal(AttributeDomain.INSTINCT));
-        assertTrue(damage(renascido, new DamageDescriptor(DamageType.FISICO)) < 10, "RDS");
+        assertEquals(1, renascido.getAttributeTotal(AttributeDomain.STRENGTH));
+        int unbuffed = damage(renascido, new DamageDescriptor(DamageType.FISICO));
+
+        new ActiveAbilityServiceImpl().activate(renascido.getCharacter(), renascido,
+                held(renascido, "Sanguenomancia Inata"), 1);
+        assertEquals(3, renascido.getAttributeTotal(AttributeDomain.STRENGTH));
+        assertEquals(3, renascido.getAttributeTotal(AttributeDomain.INSTINCT));
+        assertTrue(damage(renascido, new DamageDescriptor(DamageType.FISICO)) < unbuffed, "RDS");
+        assertEquals(2, renascido.getTotalLifeSteal());
+
+        // A Título activation renews rather than stacks.
+        MonstrousAbilityGrant.onTitleActivation(renascido);
+        assertEquals(3, renascido.getAttributeTotal(AttributeDomain.STRENGTH));
+        assertEquals(2, renascido.getTotalLifeSteal());
+    }
+
+    @Test
+    void sanguenomanciasHitTakesVigorDownToOneAndIsRefusedByTheUndead() {
+        MonsterSheet predador = spawn(26, of(EscolhidoDeMacariaAbility.RENASCIDO));
+        new ActiveAbilityServiceImpl().activate(predador.getCharacter(), predador,
+                held(predador, "Sanguenomancia Inata"), 1);
+        assertTrue(MonstrousAbilityGrant.attackEffectChains(predador, SkillType.ATAQUE_CORPO_A_CORPO, null).stream()
+                .anyMatch(Sanguenomancia.class::isInstance));
+
+        MonsterSheet living = spawn(0, MonstrousAbilitySelection.of(
+                org.aventyrs.core.monster.model.cireneia.CireneiaAbility.ATRIBUTOS_APRIMORADOS));
+        int vigor = living.getAttributeTotal(AttributeDomain.VIGOR);
+        new Sanguenomancia(2).applyTo(living);
+        assertEquals(Math.max(1, vigor - 2), living.getAttributeTotal(AttributeDomain.VIGOR));
+
+        int undeadVigor = predador.getAttributeTotal(AttributeDomain.VIGOR);
+        new Sanguenomancia(2).applyTo(predador);
+        assertEquals(undeadVigor, predador.getAttributeTotal(AttributeDomain.VIGOR), "a Doença; the dead are immune");
+    }
+
+    @Test
+    void garrasEspectraisCarrySangriaProfanaAndSangramentoForThreeRodadas() {
+        MonsterSheet espectral = spawn(12, of(EscolhidoDeMacariaAbility.ESPECTRAL));
+        new ActiveAbilityServiceImpl().activate(espectral.getCharacter(), espectral, held(espectral, "Garras Espectrais"), 1);
+        assertEquals(3, ((MonstrousActiveAbility) held(espectral, "Garras Espectrais")).getDurationInRounds());
+        assertTrue(MonstrousAbilityGrant.attackEffectChains(espectral, SkillType.ATAQUE_CORPO_A_CORPO, null).stream()
+                .anyMatch(SangriaProfana.class::isInstance));
+        assertEquals(List.of(CriticalEffectType.SANGRAMENTO),
+                MonstrousAbilityGrant.additionalCriticalEffects(espectral, SkillType.ATAQUE_CORPO_A_CORPO, null));
+    }
+
+    @Test
+    void marcaDaEscuridaoCursesQueuesThreeD6AndStealsTheTargetsVigor() {
+        MonsterSheet anunciador = spawn(26, of(EscolhidoDeMacariaAbility.ANUNCIADOR_DA_ESCURIDAO));
+        MonstrousActiveAbility marca = (MonstrousActiveAbility) held(anunciador, "Marca da Escuridão");
+        assertEquals(4, marca.getDeterminationPointCost());
+        assertEquals(2, marca.getCooldownRounds());
+        new ActiveAbilityServiceImpl().activate(anunciador.getCharacter(), anunciador, marca, 1);
+        assertTrue(MonstrousAbilityGrant.attackEffectChains(anunciador, SkillType.ATAQUE_CORPO_A_CORPO, null).stream()
+                .anyMatch(MarcaDaEscuridao.class::isInstance));
+
+        MonsterSheet living = spawn(0, MonstrousAbilitySelection.of(
+                org.aventyrs.core.monster.model.cireneia.CireneiaAbility.ATRIBUTOS_APRIMORADOS));
+        int lifeSteal = anunciador.getTotalLifeSteal();
+        new MarcaDaEscuridao(anunciador).applyTo(living);
+        assertTrue(living.hasCondition(org.aventyrs.core.sheet.ConditionType.AMALDICOADO, null));
+        assertEquals(lifeSteal + living.getAttributeTotal(AttributeDomain.VIGOR), anunciador.getTotalLifeSteal());
+    }
+
+    @Test
+    void titerePossessesForTwoRodadas() {
+        MonsterSheet mestre = spawn(46, of(EscolhidoDeMacariaAbility.MESTRE_DAS_MARIONETES));
+        new ActiveAbilityServiceImpl().activate(mestre.getCharacter(), mestre, held(mestre, "Títere"), 1);
+        MonsterSheet living = spawn(0, MonstrousAbilitySelection.of(
+                org.aventyrs.core.monster.model.cireneia.CireneiaAbility.ATRIBUTOS_APRIMORADOS));
+        MonstrousAbilityGrant.attackEffectChains(mestre, SkillType.ATAQUE_A_DISTANCIA, null).forEach(c -> c.applyTo(living));
+        assertTrue(living.getHeldConditions().stream().anyMatch(c ->
+                c.getType() == org.aventyrs.core.sheet.ConditionType.POSSESSAO && c.getRemainingRounds() == 2));
     }
 
     @Test

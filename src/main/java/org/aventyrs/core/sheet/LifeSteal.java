@@ -30,8 +30,30 @@ import java.util.Optional;
 public class LifeSteal extends TemporaryEffect {
     private final int value;
 
+    /**
+     * Who granted it, or {@code null}. A sourced Roubo de Vida does not stack with another from the same source — a
+     * new one renews it ("Efeitos não cumulativos, novas instâncias renovam a Duração", Renascido Monstruoso, core
+     * 0.1.7.3); an unsourced one keeps stacking.
+     */
+    private final String source;
+
     public LifeSteal(final int value, final Optional<Integer> remainingRounds) {
+        this(value, remainingRounds, null);
+    }
+
+    public LifeSteal(final int value, final Optional<Integer> remainingRounds, final String source) {
         super(remainingRounds.orElse(null));
         this.value = value;
+        this.source = source;
+    }
+
+    @Override
+    int maximumSimultaneous() {
+        return source != null ? 1 : super.maximumSimultaneous();
+    }
+
+    @Override
+    Object stackingKey() {
+        return source;
     }
 }

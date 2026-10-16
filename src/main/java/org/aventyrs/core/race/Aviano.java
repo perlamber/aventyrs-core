@@ -51,13 +51,10 @@ import java.util.Map;
  *   ground movement.</li>
  *   <li><b>Braços Alados</b> (asas in place of arms; both hands count as "membros inábeis para
  *   rolagens de Perícia"; flying in a Cena de Combate costs 1PD and lasts 1d6 + metade da Destreza
- *   Rodadas) — the flight itself is <b>real</b> ({@link #grantsMovementMode}); still missing: no
- *   limb/anatomy concept to mark a member inábil and no per-Perícia penalty keyed on one, flying
- *   as a timed state (whether an Aviano is flying is the caller's {@code EnvironmentalState}), and no
- *   "spend a resource to enter a timed state" transaction (Pontos de Determinação are spent
- *   through {@code CombatantSheet}, but nothing converts a spend into a {@code TemporaryEffect}
- *   the way this needs — the same gap {@code Gorgona}'s Monstros em pele de Fada cites). This
- *   core also never rolls the 1d6 itself.</li>
+ *   Rodadas) — the flight itself is <b>real</b> ({@link #grantsMovementMode}); and so is its Efeito de Voo (1PD
+ *   in a Cena de Combate, 1d6 + metade da Destreza Rodadas, a safe landing — {@code FlightService},
+ *   core 0.1.7.8). Still missing: no limb/anatomy concept to mark a member inábil and no
+ *   per-Perícia penalty keyed on one.</li>
  *   <li><b>Pés Hábeis e Poderosos</b> (holding items and performing manual actions with the feet)
  *   — the flip side of Braços Alados' penalty, so it is blocked on the same missing limb concept;
  *   with neither modeled, the pair currently nets out to no mechanical effect at all.</li>
@@ -112,14 +109,30 @@ public class Aviano implements Race {
     }
 
     /**
-     * Braços Alados — "os utilizam para voar livremente". The Movimento Base de Voo is real; the
-     * 1PD activation in a Cena de Combate and its 1d6 + metade da Destreza Duração are not (whether
-     * the Aviano is flying right now is the caller's {@code EnvironmentalState#flying}).
+     * Braços Alados — "os utilizam para voar livremente". The Movimento Base de Voo is real, and so
+     * (core 0.1.7.8) is its Efeito de Voo — see {@link #resolveFlightActivation}.
      */
     @Override
     public boolean grantsMovementMode(final MovementMode mode) {
         return mode == MovementMode.FLIGHT;
     }
+
+    /**
+     * "Voar em Cenas de Combate … exige o uso de 1PD, a capacidade de voo poderá ser usada por
+     * 1d6+Metade da Destreza Rodadas, quando encerrada a duração retornam ao solo lentamente".
+     * ⚠️ No Tempo de Ativação is stated, so none is charged.
+     */
+    @Override
+    public java.util.Optional<org.aventyrs.core.character.FlightActivation> resolveFlightActivation(
+            final Character character, final org.aventyrs.core.sheet.CombatantSheet holder) {
+        int halfDexterity = holder.getAttributeTotal(AttributeDomain.DEXTERITY) / 2;
+        return java.util.Optional.of(new org.aventyrs.core.character.FlightActivation("Braços Alados",
+                org.aventyrs.core.sheet.ActionCost.NONE, BRACOS_ALADOS_FLIGHT_COST, 0,
+                org.aventyrs.core.character.Dice.of(1, halfDexterity)));
+    }
+
+    /** Braços Alados' "exige o uso de 1PD". */
+    private static final int BRACOS_ALADOS_FLIGHT_COST = 1;
 
     /** The subtype's "enquanto voando seu Movimento Base aumenta em +2UD/+1UD". */
     @Override

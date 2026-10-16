@@ -115,7 +115,8 @@ public final class BarreiraMagicaActiveAbility implements ActiveAbility {
     }
 
     /** The 2 Rodadas, extended by every effect that lengthens any Magia's Duração. */
-    public int resolveDurationInRounds(final Character character) {
+    @Override
+    public Integer resolveDurationInRounds(final Character character) {
         return DURATION_IN_ROUNDS + SPELL_DURATION_SERVICE.resolveNonSpellDurationIncrease(character);
     }
 

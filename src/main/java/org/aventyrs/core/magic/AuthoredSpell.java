@@ -171,6 +171,11 @@ public interface AuthoredSpell extends Spell {
     }
 
     @Override
+    default Optional<org.aventyrs.core.magic.invocation.SpellInvocation> getInvocation() {
+        return Optional.ofNullable(getData().getInvocation());
+    }
+
+    @Override
     default boolean isCasterAffected() {
         return getData().isCasterAffected();
     }

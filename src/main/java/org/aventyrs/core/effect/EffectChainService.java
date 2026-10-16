@@ -56,11 +56,14 @@ public interface EffectChainService {
         if (defender.hasUndeadAnatomy()) {
             margin += org.aventyrs.core.monster.UndeadAnatomy.EFFECT_CHAIN_RESISTANCE;
         }
+        // Habilidades Monstruosas: Fisiologia Estranha's +2, Forma Verdadeira's +3 (core 0.1.7.2).
+        margin += org.aventyrs.core.monster.MonstrousAbilityGrant.effectChainResistanceIncrease(defender);
         if (attacker != null) {
             Character source = attacker.getCharacter();
             margin -= source.getFeats().stream()
                     .mapToInt(feat -> feat.resolveTargetEffectChainResistanceReduction(source, attackerPosition))
                     .sum();
+            margin -= org.aventyrs.core.monster.MonstrousAbilityGrant.targetEffectChainResistanceReduction(attacker);
         }
         return Math.max(0, margin);
     }

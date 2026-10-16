@@ -168,6 +168,9 @@ public class Scene {
      * #grantedBlessings}.
      */
     private final Map<CombatantSheet, List<ProjectedAuraGrant>> projectedAuraBonuses = new HashMap<>();
+
+    /** What every holder's monster auras grant, and how long each has stood empty — see {@link #refreshMonsterAuras}. */
+    private final MonsterAuraLedger monsterAuras = new MonsterAuraLedger();
     private final List<SceneAction> actionHistory = new ArrayList<>();
     private final Map<Direction, UUID> connections = new EnumMap<>(Direction.class);
 
@@ -1022,6 +1025,38 @@ public class Scene {
     }
 
     /**
+     * Re-resolves every {@link MonsterAura} holder emits (core 0.1.7.4), granting each one's {@link
+     * MonsterAura#whileInside} figures and {@link MonsterAura#wardedConditions} to whoever it now covers and taking
+     * them back from whoever it no longer does — a leaver keeps a {@link MonsterAura#exitLingerRounds} remainder — plus
+     * the holder's own bonus while an enemy is inside. Returns everyone covered.
+     *
+     * <p>Caller-driven, like {@link #refreshProjectedAuras}: this core does no geometry, so a caller invokes it for
+     * every aura holder after any movement, join or emission. holderContext must be the holder's own.
+     */
+    public List<CombatantSheet> refreshMonsterAuras(final CombatantSheet holder, final SceneContext holderContext) {
+        return monsterAuras.refresh(holder, holderContext);
+    }
+
+    /** Who aura, emitted by holder, covers right now — for a caller drawing it or asking "na aura de X". */
+    public List<CombatantSheet> getMonsterAuraCoverage(final CombatantSheet holder, final MonsterAura aura,
+                                                       final SceneContext holderContext) {
+        return holderContext == null ? List.of() : MonsterAuraLedger.covered(holder, aura, holderContext);
+    }
+
+    /**
+     * Resolves every pulse holder's auras fire at the start of its Turn in round (table ruling 2026-10-15): each
+     * aura's dice thrown once through roller, each covered target's {@link AuraHit} computed from holderContext's
+     * distances (or distanceUd's exact UD, when the caller has them). Nothing is applied — the caller applies each hit
+     * on the sheet it controls ({@link AuraHit#applyTo}) and heals the holder for a life-stealing pulse. An aura that
+     * has stood empty of other characters for its {@link MonsterAura#emptyRoundsToEnd} pulses ends here instead.
+     */
+    public List<AuraPulseResult> pulseMonsterAuras(final CombatantSheet holder, final SceneContext holderContext,
+                                                   final int round, final org.aventyrs.core.util.DiceRoller roller,
+                                                   final java.util.function.ToIntFunction<CombatantSheet> distanceUd) {
+        return monsterAuras.pulse(holder, holderContext, round, roller, distanceUd);
+    }
+
+    /**
      * Binds every foe newly within range of holder's active Auras, and returns them. A foe is
      * anyone in {@link #getEnemies(CombatantSheet)} whose distance in holderContext is within
      * the Aura's radius, who isn't bound already, and whom the Aura's source hasn't affected
@@ -1240,6 +1275,8 @@ public class Scene {
             // open-ended bonus has no countdown to clear it, so missing either would strand it.
             revokeProjectedAuras(characterSheet);
             revokeProjectedAurasTo(characterSheet);
+            monsterAuras.revokeFrom(characterSheet);
+            monsterAuras.revokeTo(characterSheet);
             grantedBlessings.entrySet().removeIf(entry -> {
                 if (!entry.getKey().getId().equals(characterSheet.getId())) {
                     return false;

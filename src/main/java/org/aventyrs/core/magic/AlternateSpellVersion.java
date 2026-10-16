@@ -156,6 +156,12 @@ public class AlternateSpellVersion implements Spell {
         return Optional.ofNullable(alternate.ward());
     }
 
+    /** The alternate's own invocation, else the parent's — Falsa Matilha still captivates an animal. */
+    @Override
+    public Optional<org.aventyrs.core.magic.invocation.SpellInvocation> getInvocation() {
+        return alternate.invocation() != null ? Optional.of(alternate.invocation()) : parent.getInvocation();
+    }
+
     @Override
     public boolean isCasterAffected() {
         return alternate.casterAffected() != null ? alternate.casterAffected() : parent.isCasterAffected();

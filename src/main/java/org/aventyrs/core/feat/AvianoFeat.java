@@ -12,9 +12,9 @@ import org.aventyrs.core.skill.SkillType;
  *
  * <p><b>The Movimento Base de Voo is real</b> ({@code MovementMode#FLIGHT}, granted by {@code
  * Aviano}'s Braços Alados), so {@link #CORACAO_ALADO}'s +2UD per Título and {@link
- * #BRACOS_LIVRES}' -3UD land on it. What stays missing is <b>flying as a timed state</b> — the PD
- * cost, the dice-rolled Duração, the sleep-flying — since whether a character is flying is the
- * caller's {@code EnvironmentalState#flying}, not something this core enters or ends.
+ * #BRACOS_LIVRES}' -3UD land on it. <b>Flying as a timed state</b> is real too (core 0.1.7.8): the
+ * Braços Alados' Efeito de Voo is bought through {@code FlightService}, which {@link #CORACAO_ALADO}
+ * lengthens and {@link #ETERNO_VIAJANTE} unbounds. What stays missing is the sleep-flying.
  *
  * <p>{@link #VISAO_DA_VERDADE} is the exception, and the reason {@code
  * Feat#resolveDifficultyReduction} exists: its GD clause is the plain unconditional form, on a
@@ -27,8 +27,8 @@ public enum AvianoFeat implements Feat {
      * em +2UD para cada Título Aventyr Desperto que possuir."
      */
     // The +2UD per Título is real, on the flight axis (Feat#resolveModeMovementIncrease), which
-    // Aviano's own Braços Alados grants.
-    // TODO: the +1d6 Duração is a die, and this core never rolls dice.
+    // Aviano's own Braços Alados grants. The +1d6 Duração is real on every Efeito de Voo
+    // (Feat#resolveFlightExtraDurationDice) — the caller rolls the extra die.
     CORACAO_ALADO(
             "A Duração de seu Efeito de Voo aumenta em +1d6 Rodadas. Seu Movimento Base de Voo "
                     + "aumenta em +2UD para cada Título Aventyr Desperto que possuir.",
@@ -39,6 +39,11 @@ public enum AvianoFeat implements Feat {
         @Override
         public int resolveModeMovementIncrease(final MovementMode mode, final Character character) {
             return mode == MovementMode.FLIGHT ? CORACAO_ALADO_FLIGHT_PER_TITLE * character.getAllTitles().size() : 0;
+        }
+
+        @Override
+        public int resolveFlightExtraDurationDice(final Character character) {
+            return 1;
         }
     },
 
@@ -72,9 +77,8 @@ public enum AvianoFeat implements Feat {
      * estressantes. Você pode desligar parte do seu cérebro e dormir voando em linha reta por
      * até Descanso Mínimo."
      */
-    // TODO: removing the flight Duração limit — the Movimento Base de Voo exists now, but flying
-    //  as a timed state with a PD cost and a Duração is not modelled (whether one is flying is
-    //  the caller's EnvironmentalState#flying), so there is no limit to remove.
+    // The unlimited Duração is real (Feat#removesFlightDurationLimit): the flight is still bought,
+    // then held until the holder lands or falls unconscious (FlightEffect).
     // TODO: the sleep-flying half additionally needs a sleep state, which nothing tracks — the
     //  same "no Fadiga/asfixia" gap Troll's own Sono de Pedra cites.
     ETERNO_VIAJANTE(
@@ -85,7 +89,12 @@ public enum AvianoFeat implements Feat {
             FeatRequirements.builder()
                     .requiredFeat(CORACAO_ALADO)
                     .requiredAwakenedTitles(1)
-                    .build()),
+                    .build()) {
+        @Override
+        public boolean removesFlightDurationLimit(final Character character) {
+            return true;
+        }
+    },
 
     /**
      * "A GD de suas rolagens de Atenção é reduzida em -1 Nível, adicionalmente você pode enxergar

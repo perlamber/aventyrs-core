@@ -138,6 +138,9 @@ final class CriticalEffectResolver {
             for (AventyrTitle title : attacker.getCharacter().getAllTitles()) {
                 types.addAll(title.resolveAdditionalCriticalEffects(attackSkill, attackSource, attacker));
             }
+            // Habilidades Monstruosas — Fúria Elemental's and Sopro Cataclísmico's Cataclismo (core 0.1.7.2).
+            types.addAll(org.aventyrs.core.monster.MonstrousAbilityGrant.additionalCriticalEffects(attacker,
+                    attackSkill, attackSource));
         }
         if (requested != null) {
             types.addAll(requested);

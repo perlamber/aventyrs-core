@@ -143,7 +143,7 @@ public class ActiveAbilityServiceImpl implements ActiveAbilityService {
         // caller's call.
         if (grantedForm != null) {
             characterSheet.enterForm(grantedForm);
-            characterSheet.applyEffect(new FormEffect(grantedForm, ability.resolveDurationInRounds()));
+            characterSheet.applyEffect(new FormEffect(grantedForm, ability.resolveDurationInRounds(character)));
         }
         // Started only once everything above has succeeded — an activation that threw never
         // happened, so it must not lock the ability out.
@@ -156,6 +156,8 @@ public class ActiveAbilityServiceImpl implements ActiveAbilityService {
         if (actionCost.kind() == ActionCost.Kind.REACTION) {
             characterSheet.spendReaction();
         }
+        // What a Habilidade Monstruosa grants for an activation — Renascido Monstruoso (core 0.1.7.3).
+        org.aventyrs.core.monster.MonstrousAbilityGrant.onActivation(characterSheet, ability);
     }
 
     /**

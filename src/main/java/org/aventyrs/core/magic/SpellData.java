@@ -141,4 +141,10 @@ public class SpellData {
 
     /** The second reach of an {@code Alcance: Pessoal ou Toque}, or {@code null}. */
     private final SpellTargeting alternateTargeting;
+
+    /**
+     * What a cast invokes (core 0.1.7.6) — a creature, a spawner or a Subordinado — or {@code null} for a Magia that
+     * invokes nothing. See {@link org.aventyrs.core.magic.invocation.SpellInvocation}.
+     */
+    private final org.aventyrs.core.magic.invocation.SpellInvocation invocation;
 }
