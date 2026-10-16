@@ -156,13 +156,23 @@ public enum DestinoFeat implements Feat {
      */
     // Real, through HabilidadeDeAtributoEscolhidaFeat — the acquired form recording which
     // Habilidade the player picked, granted past the AttributeAbilityService slot economy by
-    // Feat#getGrantedAttributeAbilities. Its "Atributo com valor Base 2 ou superior" is the same
-    // floor that hook's own factory enforces, so the clause needs no second check.
+    // Feat#getGrantedAttributeAbilities. "Atributo com valor Base 2 ou superior" is both the
+    // prerequisite and the floor on the options (Base + Bônus Racial, table ruling 2026-10-16),
+    // below the Base 3 a first slot needs — HabilidadeDeAtributoEscolhidaFeat#meetsFloor.
     PRODIGIO(
             "Escolha um Atributo que você possua valor Base 2 ou superior. Você adquire uma "
                     + "Habilidade do Atributo escolhido, você ainda precisa preencher requisitos "
                     + "de Atributos Mínimos - se houver.",
-            FeatRequirements.builder().build()),
+            FeatRequirements.builder()
+                    .requiredAnyAttributeValue(2)
+                    .build()) {
+        /** "Escolha um Atributo … uma das Habilidades do Atributo escolhido" — see HabilidadeDeAtributoEscolhidaFeat#optionsFor. */
+        @Override
+        public List<FeatChoice<?>> resolveRequiredChoices(final Character holder) {
+            return List.of(FeatChoice.ofOne(org.aventyrs.core.ability.AttributeAbility.class,
+                    HabilidadeDeAtributoEscolhidaFeat.optionsFor(holder, this)));
+        }
+    },
 
     /** "Escolha um Atributo, você recebe uma das Habilidades do Atributo escolhido." */
     // Real, the same way as PRODIGIO — HabilidadeDeAtributoEscolhidaFeat serves all three of
@@ -174,7 +184,14 @@ public enum DestinoFeat implements Feat {
                     + "receber seus benefícios.",
             FeatRequirements.builder()
                     .requiredAnyAttributeValue(3)
-                    .build()),
+                    .build()) {
+        /** "Escolha um Atributo … uma das Habilidades do Atributo escolhido" — see HabilidadeDeAtributoEscolhidaFeat#optionsFor. */
+        @Override
+        public List<FeatChoice<?>> resolveRequiredChoices(final Character holder) {
+            return List.of(FeatChoice.ofOne(org.aventyrs.core.ability.AttributeAbility.class,
+                    HabilidadeDeAtributoEscolhidaFeat.optionsFor(holder, this)));
+        }
+    },
 
     /**
      * "Você recebe +1 de Bônus Racial no Atributo escolhido e uma de suas Habilidades do Atributo."
@@ -193,7 +210,14 @@ public enum DestinoFeat implements Feat {
             FeatRequirements.builder()
                     .requiredFeat(GENIALIDADE)
                     .requiredAwakenedTitles(2)
-                    .build()),
+                    .build()) {
+        /** "Escolha um Atributo … uma das Habilidades do Atributo escolhido" — see HabilidadeDeAtributoEscolhidaFeat#optionsFor. */
+        @Override
+        public List<FeatChoice<?>> resolveRequiredChoices(final Character holder) {
+            return List.of(FeatChoice.ofOne(org.aventyrs.core.ability.AttributeAbility.class,
+                    HabilidadeDeAtributoEscolhidaFeat.optionsFor(holder, this)));
+        }
+    },
 
     /** "Escolha um Talento Racial que você cumpra todos os demais requisitos, além da Raça." */
     // Real, through ExcepcionalidadeFeat — the acquired form recording the chosen Talento Racial

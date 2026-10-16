@@ -210,6 +210,26 @@ class GrantedSkillTraitTest {
                 withStrength(3), DestinoFeat.PRODIGIO, StrengthAbility.DESTRUIDOR_DE_MUROS));
     }
 
+    /** Prodígio declares its pick: the Habilidades of every Atributo at Base 2 or more, less the held ones. */
+    @Test
+    void prodigioOffersTheAbilitiesOfEveryAttributeAtBaseTwo() {
+        Character character = withStrength(2).toBuilder()
+                .attributeAbilities(new ArrayList<>(List.of(StrengthAbility.SUBJUGAR))).build();
+
+        List<FeatChoice<?>> choices = DestinoFeat.PRODIGIO.resolveRequiredChoices(character);
+
+        assertEquals(1, choices.size());
+        assertEquals(org.aventyrs.core.ability.AttributeAbility.class, choices.get(0).type());
+        List<?> options = choices.get(0).options();
+        assertTrue(options.contains(StrengthAbility.DESTRUIDOR_DE_MUROS), "Base 2 is enough for Prodígio");
+        assertFalse(options.contains(StrengthAbility.SUBJUGAR), "already held");
+        assertFalse(options.contains(org.aventyrs.core.ability.GnoseAbility.PERITO_TEORICO), "offered resolved");
+        options.forEach(option -> assertDoesNotThrow(() -> HabilidadeDeAtributoEscolhidaFeat.of(character,
+                DestinoFeat.PRODIGIO, (org.aventyrs.core.ability.AttributeAbility) option)));
+        assertTrue(DestinoFeat.GENIALIDADE.resolveRequiredChoices(character).get(0).options().stream()
+                .noneMatch(StrengthAbility.class::isInstance), "Genialidade keeps the first slot's Base 3");
+    }
+
     // ---------- The no-other-effects form ----------
 
     /**

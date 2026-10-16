@@ -258,6 +258,17 @@ public interface Race {
     }
 
     /**
+     * The Efeito de Voo this Raça's wings start in a stressful Scene — {@code Aviano}'s Braços Alados,
+     * "exige o uso de 1PD … 1d6+Metade da Destreza Rodadas". Silenced with {@link #grantsMovementMode}
+     * under physical-trait suppression. Empty by default.
+     */
+    default java.util.Optional<org.aventyrs.core.character.FlightActivation> resolveFlightActivation(
+            final org.aventyrs.core.character.Character character,
+            final org.aventyrs.core.sheet.CombatantSheet holder) {
+        return java.util.Optional.empty();
+    }
+
+    /**
      * Whether this race never loses movement to Terreno Difícil while on land — {@code
      * Pequenino}'s Sempre Veloz. Withheld while flying or at least half submerged, which {@code
      * MovementTerrainService#ignoresDifficultTerrain} reads off the actor's {@code

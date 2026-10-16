@@ -78,7 +78,7 @@ class DespertarAntecipadoFeatTest {
     private CharacterSheet createdWith(final Character character, final AventyrTitle chosen) {
         CharacterSheet sheet = CharacterSheet.of(character, new Player());
         creationService.grantStartingFeats(character,
-                List.of(DespertarAntecipadoFeat.of(character, chosen), DestinoFeat.PRODIGIO), sheet);
+                List.of(DespertarAntecipadoFeat.of(character, chosen), DestinoFeat.CORACAO_DE_FERRO_DO_DESTINO), sheet);
         return sheet;
     }
 
@@ -119,7 +119,7 @@ class DespertarAntecipadoFeatTest {
 
         IllegalOperationException error = assertThrows(IllegalOperationException.class,
                 () -> creationService.grantStartingFeats(character,
-                        List.of(DestinoFeat.DESPERTAR_ANTECIPADO, DestinoFeat.PRODIGIO)));
+                        List.of(DestinoFeat.DESPERTAR_ANTECIPADO, DestinoFeat.CORACAO_DE_FERRO_DO_DESTINO)));
 
         assertEquals(FEAT_REQUIRES_CHOICE, error.getMessage());
     }

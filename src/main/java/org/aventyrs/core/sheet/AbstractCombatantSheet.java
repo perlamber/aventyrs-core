@@ -1718,9 +1718,15 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
                 .filter(effect -> effect instanceof PowerStoneBinding && effect.isExpired())
                 .map(PowerStoneBinding.class::cast)
                 .toList();
+        // A lapsing Efeito de Voo lands its holder — safely, whatever the source (table ruling, 2026-10-16).
+        boolean flightLapsed = temporaryEffects.stream()
+                .anyMatch(effect -> effect instanceof FlightEffect && effect.isExpired());
         temporaryEffects.removeIf(TemporaryEffect::isExpired);
         if (formLapsed) {
             enterForm(null);
+        }
+        if (flightLapsed) {
+            setFlying(false);
         }
         lapsedBindings.forEach(binding -> endPowerStoneBinding(binding, false));
         // "Ao fim da duração alvo se torna Assustado" — the fear ladder steps down rather than
@@ -3549,6 +3555,10 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
         }
         flightEffects.forEach(applied -> temporaryEffects.removeIf(effect -> effect == applied));
         flightEffects.clear();
+        // Landing early ends a bought Efeito de Voo's countdown with it (core 0.1.7.8).
+        if (!takeOff) {
+            temporaryEffects.removeIf(FlightEffect.class::isInstance);
+        }
         this.flying = takeOff;
         if (takeOff) {
             for (AttributeAbility ability : getCharacter().getAttributeAbilities()) {

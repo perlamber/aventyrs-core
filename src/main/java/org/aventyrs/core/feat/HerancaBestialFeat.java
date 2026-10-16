@@ -96,4 +96,11 @@ public final class HerancaBestialFeat extends AbstractFeat {
                                       final CombatantSheet holder) {
         return heranca.grantsMovementMode(mode, character, holder);
     }
+
+    /** Forwarded — Aviana's Efeito de Voo. */
+    @Override
+    public java.util.Optional<org.aventyrs.core.character.FlightActivation> resolveFlightActivation(
+            final Character character, final CombatantSheet holder) {
+        return heranca.resolveFlightActivation(character, holder);
+    }
 }

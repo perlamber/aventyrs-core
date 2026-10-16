@@ -292,6 +292,17 @@ public class Character {
                 .collect(java.util.stream.Collectors.toUnmodifiableSet());
     }
 
+    /**
+     * The widest distance at which a held Talento lets this character sense another's spellcasting
+     * ({@code Feat#resolveSpellcastingSenseRange}), or empty for none.
+     */
+    public java.util.Optional<org.aventyrs.core.scene.Range> getSpellcastingSenseRange() {
+        return getFeats().stream()
+                .map(feat -> feat.resolveSpellcastingSenseRange(this))
+                .filter(Objects::nonNull)
+                .max(java.util.Comparator.naturalOrder());
+    }
+
     /** Whether a racial trait or held Talento lets this character breathe underwater. */
     public boolean canBreatheUnderwater() {
         return getFeats().stream().anyMatch(feat -> feat.allowsUnderwaterBreathing(this));

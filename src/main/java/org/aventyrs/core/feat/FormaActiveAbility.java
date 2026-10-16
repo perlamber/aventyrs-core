@@ -49,10 +49,19 @@ final class FormaActiveAbility implements ActiveAbility {
     /** What this Forma is worth per Título Aventyr Desperto — see {@link Uplift}. */
     private final Uplift uplift;
 
+    /** Rodadas a holder adds to the Duração — Ancienteforme's "Nascidos da Floresta … +2 Rodadas". */
+    private final java.util.function.ToIntFunction<Character> extraRounds;
+
     FormaActiveAbility(final Feat talento, final FormType form, final Uplift uplift) {
+        this(talento, form, uplift, holder -> 0);
+    }
+
+    FormaActiveAbility(final Feat talento, final FormType form, final Uplift uplift,
+                       final java.util.function.ToIntFunction<Character> extraRounds) {
         this.talento = talento;
         this.form = form;
         this.uplift = uplift;
+        this.extraRounds = extraRounds;
     }
 
     /**
@@ -101,6 +110,15 @@ final class FormaActiveAbility implements ActiveAbility {
         return BASE_DURATION_IN_ROUNDS;
     }
 
+    @Override
+    public Integer resolveDurationInRounds(final Character character) {
+        return durationFor(character);
+    }
+
+    private int durationFor(final Character character) {
+        return getDurationInRounds() + (character == null ? 0 : extraRounds.applyAsInt(character));
+    }
+
     /** "Não poderá ser reativado até que passe por um Descanso Longo." */
     @Override
     public RestType getReactivationRest() {
@@ -145,19 +163,21 @@ final class FormaActiveAbility implements ActiveAbility {
     @Override
     public List<TemporaryEffect> resolveEffects(final Character character) {
         int titles = character.getAllTitles().size();
+        int rounds = durationFor(character);
         List<TemporaryEffect> effects = new ArrayList<>();
-        add(effects, ModifierType.SIZE_CATEGORY, uplift.sizeCategory() * titles);
-        add(effects, ModifierType.DEFESAS, uplift.defesas() * titles);
+        add(effects, ModifierType.SIZE_CATEGORY, uplift.sizeCategory() * titles, rounds);
+        add(effects, ModifierType.DEFESAS, uplift.defesas() * titles, rounds);
         for (AttributeDomain domain : uplift.attributes()) {
-            add(effects, domain.getBonusModifierType(), uplift.attribute() * titles);
+            add(effects, domain.getBonusModifierType(), uplift.attribute() * titles, rounds);
         }
         return List.copyOf(effects);
     }
 
     /** Skips a figure of zero rather than holding a bonus worth nothing for the Duração. */
-    private void add(final List<TemporaryEffect> effects, final ModifierType type, final int value) {
+    private void add(final List<TemporaryEffect> effects, final ModifierType type, final int value,
+                     final int rounds) {
         if (value != 0) {
-            effects.add(new TemporaryBonus(type, value, getDurationInRounds()));
+            effects.add(new TemporaryBonus(type, value, rounds));
         }
     }
 

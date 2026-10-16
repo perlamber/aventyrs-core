@@ -92,6 +92,15 @@ public interface ActiveAbility {
     }
 
     /**
+     * {@link #resolveDurationInRounds()} for one holder — a Duração that depends on who activates it
+     * ({@code FeericoFeat#ANCIENTEFORME}'s "Nascidos da Floresta permanecem nesta forma por +2
+     * Rodadas"). What {@code ActiveAbilityService#activate} applies; defaults to the holder-less form.
+     */
+    default Integer resolveDurationInRounds(final org.aventyrs.core.character.Character character) {
+        return resolveDurationInRounds();
+    }
+
+    /**
      * Resfriamento — how many Rodadas must pass after this ability is activated before it may be
      * activated again. Zero by default, which is every ability whose rules text states no
      * Resfriamento and means "as often as you can pay for it".

@@ -3,13 +3,24 @@ package org.aventyrs.core.feat;
 import lombok.Getter;
 import lombok.NonNull;
 import org.aventyrs.core.ability.AttributeAbility;
+import org.aventyrs.core.ability.CharismaAbility;
+import org.aventyrs.core.ability.DexterityAbility;
+import org.aventyrs.core.ability.FocusAbility;
+import org.aventyrs.core.ability.GnoseAbility;
+import org.aventyrs.core.ability.InstinctAbility;
+import org.aventyrs.core.ability.MagiaAlternativaAbility;
+import org.aventyrs.core.ability.PeritoTeoricoAbility;
+import org.aventyrs.core.ability.StrengthAbility;
+import org.aventyrs.core.ability.VigorAbility;
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.services.AttributeAbilityService;
 import org.aventyrs.core.sheet.IllegalOperationException;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 import static org.aventyrs.core.util.TranslatableMessages.CHOSEN_ATTRIBUTE_ABILITY_REQUIREMENT_NOT_MET;
 
@@ -53,19 +64,51 @@ public final class HabilidadeDeAtributoEscolhidaFeat extends AbstractFeat {
      * least one slot in it, i.e. that Atributo's <b>base</b> ≥ {@link
      * AttributeAbilityService#FIRST_ABILITY_ATTRIBUTE_BASE}.
      *
-     * <p>{@link DestinoFeat#PRODIGIO}'s own "um Atributo que você possua valor Base 2 ou superior"
-     * is the same floor stated outright, so no constant needs a second check. The raw constructor
+     * <p>{@link DestinoFeat#PRODIGIO} is the exception: its own "um Atributo que você possua valor
+     * Base 2 ou superior" replaces that floor (table ruling 2026-10-16), read as Base + Bônus Racial
+     * like every Talento Atributo clause — see {@link #meetsFloor}. The raw constructor
      * stays unvalidated for the builder-bypass convention, exactly as {@code
      * ConselheiroDeGuerraYmirianoFeat} splits its own two entry points.
      */
     public static HabilidadeDeAtributoEscolhidaFeat of(@NonNull final Character holder,
                                                        @NonNull final DestinoFeat talento,
                                                        @NonNull final AttributeAbility chosenAbility) {
-        int base = holder.getAttributes().getAttribute(chosenAbility.getAttributeDomain()).getBase();
-        if (base < AttributeAbilityService.FIRST_ABILITY_ATTRIBUTE_BASE) {
+        if (!meetsFloor(holder, talento, chosenAbility.getAttributeDomain())) {
             throw new IllegalOperationException(CHOSEN_ATTRIBUTE_ABILITY_REQUIREMENT_NOT_MET);
         }
         return new HabilidadeDeAtributoEscolhidaFeat(talento, chosenAbility);
+    }
+
+    /** Prodígio's floor: Base + Bônus Racial ≥ 2. */
+    static final int PRODIGIO_ATTRIBUTE_FLOOR = 2;
+
+    /** Whether domain may supply talento's Habilidade: Prodígio's Base 2 floor, else a first slot's base. */
+    static boolean meetsFloor(final Character holder, final DestinoFeat talento, final AttributeDomain domain) {
+        var value = holder.getAttributes().getAttribute(domain);
+        return talento == DestinoFeat.PRODIGIO
+                ? value.getBaseWithRacialBonus() >= PRODIGIO_ATTRIBUTE_FLOOR
+                : value.getBase() >= AttributeAbilityService.FIRST_ABILITY_ATTRIBUTE_BASE;
+    }
+
+    /**
+     * Every Habilidade de Atributo holder may pick for talento — what {@link #of} accepts back.
+     * Each Atributo meeting {@link #meetsFloor} offers its whole catalog, less what holder already
+     * has. {@code GnoseAbility#PERITO_TEORICO} and {@code
+     * FocusAbility#MAGIA_ALTERNATIVA} are offered in their resolved, grantable forms ({@link
+     * PeritoTeoricoAbility}, {@link MagiaAlternativaAbility}), since their catalog entries are
+     * rules text only.
+     */
+    public static List<AttributeAbility> optionsFor(final Character holder, final DestinoFeat talento) {
+        List<AttributeAbility> held = holder.getAttributeAbilities();
+        return Stream.of(VigorAbility.values(), StrengthAbility.values(), DexterityAbility.values(),
+                        FocusAbility.values(), MagiaAlternativaAbility.values(), InstinctAbility.values(),
+                        GnoseAbility.values(), PeritoTeoricoAbility.values(), CharismaAbility.values())
+                .flatMap(Arrays::stream)
+                .map(AttributeAbility.class::cast)
+                .filter(ability -> ability != GnoseAbility.PERITO_TEORICO && ability != FocusAbility.MAGIA_ALTERNATIVA)
+                .filter(ability -> meetsFloor(holder, talento, ability.getAttributeDomain()))
+                .filter(ability -> !held.contains(ability))
+                .toList();
     }
 
     /** The ability a character chose for talento, if they hold it in its acquired form. */
