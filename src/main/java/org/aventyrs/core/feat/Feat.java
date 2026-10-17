@@ -2404,8 +2404,8 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
      * Níveis the GD to resist one particular incoming Magia drops for the holder — {@code
      * MetamagicoFeat#ARTESAO_DE_BARREIRAS} (while a Barreira runs) and {@code #APTIDAO_MAGICA_SUPREMA}'s
      * "A GD para resistir às magias que você também é capaz de conjurar é reduzida em 1 nível". Applied
-     * by {@code AttackReceiver}, where the defender rolls against a GD; {@code AttackDelivery} compares
-     * against a flat Defesa and reports it unapplied, like every defender-side nível. Zero by default.
+     * by {@code AttackReceiver}, where the defender rolls against a GD, and by {@code AttackDelivery}, which
+     * hardens the flat Defesa by that many tiers ({@code DifficultyLevel#shiftValue}). Zero by default.
      */
     default int resolveSpellResistanceDifficultyReduction(final Spell spell, final CombatantSheet holder) {
         return 0;
@@ -2823,6 +2823,17 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
     }
 
     /**
+     * A Defesa bonus against an attack <b>made as a Reação</b> (core 0.1.7.18) — {@code MobilidadeFeat#ESQUIVA}'s
+     * "+2 em suas Defesas para resistir à Reações de seus inimigos". Read only when the attack says so ({@code
+     * IncomingAttack#isReaction()}, {@code DeliveredAttack#isReaction()}): Defender o Perímetro, Impedir Conjuração,
+     * a fired Preparação, a Título reaction attack. Added by {@code AttackReceiver} to the defence total and by
+     * {@code AttackDelivery} to the defender's flat Defesa. Zero by default.
+     */
+    default int resolveReactionDefenseBonus(final DefenseType defenseType, final CombatantSheet holder) {
+        return 0;
+    }
+
+    /**
      * How much this Talento raises the holder's Mana Multiplier — summed by {@code
      * MagicPointsService#getManaMultiplier} across {@code Character#getFeats()}, on top of
      * {@code Character#getManaMultiplier()} and the {@code ModifierType#MANA_MULTIPLIER} scan.
@@ -2903,6 +2914,18 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
      * by default.
      */
     default boolean halvesMovementBase(final Character character) {
+        return false;
+    }
+
+    /**
+     * Whether this Talento halves its holder's Movimento Base <b>right now</b>, off their live state (core 0.1.7.20)
+     * — {@code MobilidadeFeat#MOVIMENTO_FURTIVO}'s "pode se mover enquanto furtivo, mas seu Movimento Base é reduzido
+     * à metade" while the holder is Escondido. Read by {@code MovementService#getMovementBase(CombatantSheet, int)}
+     * in its last halving stage (with Caído and Passos Reduzidos — once however many say so). Not the {@link
+     * #halvesMovementBase(Character)} stage, which halves the permanent figure; this one does not default to it,
+     * so a permanent halving never applies twice. False by default.
+     */
+    default boolean halvesCurrentMovementBase(final Character character, final CombatantSheet holder) {
         return false;
     }
 
@@ -3076,6 +3099,18 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
     }
 
     /**
+     * {@link #resolveRoundMovementIncrease(int, Character)} with the holder's sheet (core 0.1.7.19) — for a clause
+     * scoped to what the holder just did: {@code MobilidadeFeat#SE_MOVER_E_ATACAR}'s "+2UD para se mover
+     * imediatamente após efetuar uma Rolagem de Perícia de Ataque" reads the Turn's action log and {@code
+     * CombatantSheet#getMovementsAtLatestAction()}. Read by {@code MovementService#getMovementBase(CombatantSheet,
+     * int)} only. <b>Defaults to the sheet-less form</b>, so every existing override keeps working.
+     */
+    default int resolveRoundMovementIncrease(final int movementIndex, final Character character,
+                                             final CombatantSheet holder) {
+        return resolveRoundMovementIncrease(movementIndex, character);
+    }
+
+    /**
      * UD this Talento adds to a Reposicionar — summed by {@code
      * org.aventyrs.core.character.services.RepositionService#getDistance} across {@code
      * Character#getFeats()} on top of {@code RepositionService#DISTANCE_UD}. currentRound is the
@@ -3119,11 +3154,25 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
      * than {@link #resolveDamageReduction}. "Durante o movimento" is a window shorter than a
      * Rodada, which is the shortest thing a {@code TemporaryBonus} can last — granting one would
      * keep protecting the charger after the charge had landed. It therefore rides {@code
-     * ChargeResult#unappliedMovementDamageReduction} as exact, unapplied data, the same discipline
-     * {@code AttackDelivery}'s {@code unappliedDifficultyReduction} follows.
+     * ChargeResult#unappliedMovementDamageReduction} as exact, unapplied data.
      */
     default int resolveChargeMovementDamageReduction(final Character character) {
         return 0;
+    }
+
+    /**
+     * What this Talento grants its holder once an Investida's area attack has been resolved and its damage applied
+     * (core 0.1.7.22) — {@code MobilidadeFeat#INVESTIDA_SELVAGEM_SOLAR}'s Defesas and {@code #INVESTIDA_SELVAGEM_LUNAR}'s
+     * Roubo de Vida, "se em sua Investida Selvagem você causar danos à 3 ou mais inimigos", for "Duração em Rodadas igual
+     * ao número de inimigos atingidos pela explosão". enemiesHit counts the explosion's enemy targets, enemiesDamaged
+     * those who actually lost PV — both the caller's, which this core cannot count. chargeWeapon is the weapon the
+     * Investida was made with ({@code null} unarmed). Applied by {@code ChargeService#applySavageAftermath}; empty by
+     * default.
+     */
+    default List<org.aventyrs.core.sheet.TemporaryEffect> resolveChargeAftermathEffects(
+            final CombatantSheet holder, final org.aventyrs.core.item.Weapon chargeWeapon, final int enemiesHit,
+            final int enemiesDamaged) {
+        return List.of();
     }
 
     /**
@@ -3182,6 +3231,39 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
      */
     default List<Blessing> resolveInitiativeBlessings() {
         return List.of();
+    }
+
+    /**
+     * Blessings this Talento grants when its holder holds <b>the first slot of the turn order</b> as combat starts —
+     * {@code MobilidadeFeat#PORTA_ESTANDARTE}'s "apenas se você for o primeiro a agir, você e seus aliados recebem
+     * Pontos de Ação adicionais" (core 0.1.7.21; table ruling 2026-10-17: the holder's own slot, not a group's
+     * initiative win). Granted by {@code Scene#applyFirstToActBlessings}, to the holder and — for a {@code
+     * TargetScope#SELF_AND_ALLIES} one — to every ally. Empty by default.
+     */
+    default List<Blessing> resolveFirstToActBlessings(final CombatantSheet holder) {
+        return List.of();
+    }
+
+    /**
+     * UD per Ponto de Ação this Talento adds to its holder's own movement heading toward an enemy ({@code
+     * org.aventyrs.core.scene.MovementHeading}) — Porta-Estandarte's "Nestas Rodadas iniciais seu Movimento Base
+     * aumenta em +2UD sempre que se mover em direção a um inimigo". currentRound is the 0-based combat Rodada;
+     * firstToAct whether the holder holds the first turn-order slot. Summed by {@code
+     * Scene#getHeadingMovementBonus}. Zero by default.
+     */
+    default int resolveApproachMovementIncrease(final CombatantSheet holder, final int currentRound,
+                                                final boolean firstToAct) {
+        return 0;
+    }
+
+    /**
+     * UD per Ponto de Ação this Talento adds to an <b>ally's</b> movement heading toward its holder — Porta-Estandarte's
+     * "o Movimento Base de seus aliados aumentam em +2UD para se moverem em sua direção". Same arguments as {@link
+     * #resolveApproachMovementIncrease}, about the holder. Zero by default.
+     */
+    default int resolveAllyApproachMovementIncrease(final CombatantSheet holder, final int currentRound,
+                                                    final boolean firstToAct) {
+        return 0;
     }
 
     /**

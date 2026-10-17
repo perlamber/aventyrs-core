@@ -313,8 +313,8 @@ public enum EscudeiroFeat implements Feat {
 
     /**
      * "A GD de seu primeiro Ataque com Escudo de cada um de seus Turnos é reduzida em -1 nível."
-     * <b>Real</b> as a GD reduction — which {@code AttackDelivery} reports as {@code
-     * unappliedDifficultyReduction} against a flat Defesa, as it does every nível.
+     * <b>Real</b> as a GD reduction — which {@code AttackDelivery} applies to a flat Defesa as a tier
+     * step, as it does every nível.
      *
      * <p>"Após ser bem-sucedido em realizar um Empurrão Violento" is a critical Ataque com Escudo that
      * landed this Turn — Arte do Escudo Atacante's Rugido (table ruling). Until the Turn ends the

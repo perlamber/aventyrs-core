@@ -139,19 +139,19 @@ public class DeliveredAttackResult {
     private final Boolean effectChainTriggered;
 
     /**
-     * The attacker's own {@code difficultyReduction}, reported but <b>not applied</b> — see
-     * {@link AttackDelivery}'s javadoc for the open question behind that.
+     * The attacker's own {@code difficultyReduction} in níveis — <b>already applied</b>: every
+     * target's {@code requiredTotal} is eased by it (see {@link AttackDelivery}'s javadoc). Reported
+     * so a caller can show why the number rolled against moved.
      */
-    private final int unappliedDifficultyReduction;
+    private final int difficultyReduction;
 
     /**
      * Níveis the primary defender's Talentos take off the GD to resist this Magia — Artesão de
      * Barreiras, Aptidão Mágica Suprema ({@code Feat#resolveSpellResistanceDifficultyReduction}).
-     * Reported unapplied, like {@link #unappliedDifficultyReduction}: this path compares against a
-     * flat Defesa, and no conversion from a nível to Defesa points is defined. 0 for anything but a
-     * Magia. {@code AttackReceiver}, where the defender rolls against a GD, applies it.
+     * <b>Already applied</b>: {@link #requiredTotal} is that many níveis harder. 0 for anything but
+     * a Magia.
      */
-    private final int unappliedSpellResistanceReduction;
+    private final int spellResistanceReduction;
 
     /**
      * The attacker's roll bundled as a {@link CombatantAction} ready to file — its Perícia,

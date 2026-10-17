@@ -111,13 +111,16 @@ Rodada" clause reads back).
   (`SANGUE_QUENTE`/`VIOLENCIA_DESCOMUNAL`/`ARCANISMO_AVASSALADOR`).
 - The Corrente margin is inverted for `AttackReceiver` (attack beats defence by 5, or 7 vs
   `RESOLUTO`) — an inference from `EffectChainService`'s own text, flagged on the class.
-- `AttackDelivery` **reports but does not apply** the attacker's `difficultyReduction`: it's
-  denominated in níveis and a foe's Defesa is a flat integer, with no defined conversion. TODO'd
-  on the class rather than guessed at. `AssassinoFeat#SAQUE_RELAMPAGO`'s "-1 nível" (via
-  `Feat#resolveAttackCostDifficultyReduction`, gated on the roll's `ActionCost` and the
-  per-Rodada action log) is the first authored clause that lands here — it flows into
-  `getUnappliedDifficultyReduction()` on this path, and applies for real on the direct
-  skill-roll path and via `AttackReceiver` (`DifficultyLevel#easier`).
+- `AttackDelivery` **applies níveis to a flat Defesa as a tier step** (0.1.7.16, table ruling
+  2026-10-17): `DifficultyLevel#shiftValue` reads the Defesa as the tier it reaches plus the excess,
+  shifts the tier and keeps the excess (Médio+2 = 20 → Fácil+2 = 16); a value in Muito Fácil can't
+  go lower, one below every tier is left alone. The attacker's `difficultyReduction` (Excelências,
+  Saque Relâmpago, Escancarar/Estudar Defesas, Sorte…) eases every target's Defesa — target-scoped
+  níveis are judged against the primary, like every target hook — and each defender's
+  `Feat#resolveSpellResistanceDifficultyReduction` hardens its own. Both are reported, already
+  applied, as `DeliveredAttackResult#getDifficultyReduction`/`#getSpellResistanceReduction`.
+  ⚠️ The direct skill-roll path's `AbstractSkillInteraction#easedTarget` still snaps to the tier's
+  base (dropping the excess) — a different reading of the same rule.
 - **The `attackTarget`-aware 4-arg `applyTo` lives on `AbstractSkillInteraction`**, gated on
   `isAttackSkill()`, not on `AtaqueADistanciaInteraction`. That was the fix
   `AnoesRacialAbility.ABATEDORES_DE_GIGANTES` needed — its rules text always covered every Perícia

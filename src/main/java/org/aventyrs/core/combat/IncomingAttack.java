@@ -110,6 +110,13 @@ public class IncomingAttack {
     private final boolean intercepted;
 
     /**
+     * This attack is made as a Reação — Defender o Perímetro, Impedir Conjuração, a fired Preparação, a Título reaction
+     * attack (core 0.1.7.18). What {@code Feat#resolveReactionDefenseBonus} ({@code MobilidadeFeat#ESQUIVA}) reads.
+     * {@code false} by default.
+     */
+    private final boolean reaction;
+
+    /**
      * The Efeitos Críticos this attack inflicts <i>if</i> the defense roll comes up a critical
      * failure — caller-constructed, because this core has no way to know which one a given
      * weapon or Magia carries (Sangramento? ManaPurge? RealExecution?), the same restraint

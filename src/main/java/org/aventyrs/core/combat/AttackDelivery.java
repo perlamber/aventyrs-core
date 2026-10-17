@@ -81,21 +81,19 @@ import static org.aventyrs.core.util.TranslatableMessages.TOO_MANY_ATTACK_TARGET
  * target's chain head is marked {@code DamageInteraction#halvingDamage()} — one attack makes one
  * dano roll, and the Meio-Dano is applied inside it.
  *
- * <h2>Open question: the attacker's own {@code difficultyReduction}</h2>
+ * <h2>Níveis against a flat Defesa</h2>
  *
  * A Perícia's GD reduction is denominated in <i>níveis</i>, which is exactly what {@code
  * DifficultyLevel#easier} takes — and that's how {@link AttackReceiver} applies it. Here the
- * target number is a flat integer authored on the foe's stat block, and <b>there is no defined
- * conversion from níveis to points</b>. Rather than invent a rate, {@link #resolve} computes the
- * reduction and reports it on {@link DeliveredAttackResult#getUnappliedDifficultyReduction()}
- * without applying it — real, exact data whose application is blocked, the same discipline this
- * codebase applies elsewhere.
- *
- * <p>TODO: apply the attacker's difficultyReduction once the rules define what one nível is
- * worth against a flat Defesa (or once a foe's Defesa is authored as a tier rather than a number).
- * {@code AssassinoFeat#SAQUE_RELAMPAGO}'s "-1 nível" is the first authored clause blocked here —
- * it joins {@code unappliedDifficultyReduction} on this path and applies for real on the direct
- * skill-roll path and via {@link AttackReceiver}.
+ * target number is a flat Defesa, so {@link #resolve} reads it as a tier plus the excess over that
+ * tier (the shape a foe's Defesa is built in — Esquiva e Aparar GD + modifiers), shifts the tier and
+ * keeps the excess: {@code DifficultyLevel#shiftValue}, table ruling 2026-10-17. Médio+2 (20) one
+ * nível easier is Fácil+2 (16). The attacker's own {@code difficultyReduction} eases every target's
+ * Defesa ({@code AssassinoFeat#SAQUE_RELAMPAGO}, Escancarar/Estudar Defesas, the Excelências…), and
+ * each defender's own Magia-resistance níveis ({@code Feat#resolveSpellResistanceDifficultyReduction})
+ * harden theirs; both are reported on {@link DeliveredAttackResult} for display. A target-conditioned
+ * nível (Escancarar, Estudar) is resolved against the <b>primary</b> target and so reaches every
+ * additional target too — the multi-target limit every target-conditioned roll hook shares.
  *
  * <h2>What it produces</h2>
  *
@@ -234,9 +232,9 @@ public class AttackDelivery {
 
         // The Aptidões Mágicas' DM against a Magia the defender can cast rides on the flat Defesa the
         // caller supplied, which cannot see what is being resisted.
-        int requiredTotal = attack.getDefenseValue()
-                + SpellResistance.defenseBonus(defender, attack.getDefenseType(), attack.getAttackSource())
-                + defenceFavour(attack, defender);
+        int difficultyReduction = attackResult.getDifficultyReduction() + attack.getDifficultyReduction();
+        int spellResistanceReduction = SpellResistance.difficultyReduction(defender, attack.getAttackSource());
+        int requiredTotal = requiredTotal(attack, defender, attack.getDefenseValue(), difficultyReduction);
         int attackTotal = attackResult.getSkillRollBonus()
                 + (attackRoll == null ? 0 : attackRoll.getTotal());
 
@@ -247,16 +245,14 @@ public class AttackDelivery {
                 .everyTargetHalved(everyTargetHalved)
                 .retaliation(retaliation)
                 .equipmentRetaliation(equipmentRetaliation)
-                .unappliedDifficultyReduction(attackResult.getDifficultyReduction())
-                .unappliedSpellResistanceReduction(SpellResistance.difficultyReduction(defender, attack.getAttackSource()));
+                .difficultyReduction(difficultyReduction)
+                .spellResistanceReduction(spellResistanceReduction);
 
         if (attackRoll == null) {
             additionalTargets.forEach(target -> result.additionalTargetResult(DeliveredAttackTargetResult.builder()
                     .defender(target.defender())
-                    .requiredTotal(target.defenseValue()
-                            + SpellResistance.defenseBonus(target.defender(), attack.getDefenseType(),
-                                    attack.getAttackSource())
-                            + defenceFavour(attack, target.defender()))
+                    .requiredTotal(requiredTotal(attack, target.defender(), target.defenseValue(),
+                            difficultyReduction))
                     .build()));
             return result.attackResult(attackResult).build();
         }
@@ -302,7 +298,7 @@ public class AttackDelivery {
 
         for (AttackTarget target : additionalTargets) {
             result.additionalTargetResult(resolveAdditionalTarget(attack, target, attackTotal, rolledCritical,
-                    blindMiss));
+                    blindMiss, difficultyReduction));
         }
 
         if (hit) {
@@ -356,7 +352,8 @@ public class AttackDelivery {
                 attack.getScene() == null ? 0 : attack.getScene().getCurrentRound(),
                 new ActionOutcome(hit, margin, criticalResult, null),
                 attack.getDefender().getId(),
-                attack.getAttackRoll().getActivatedFeats());
+                attack.getAttackRoll().getActivatedFeats(),
+                attack.getAttackRoll().getManoeuvre());
     }
 
     /** Whether a held Talento halves this whole attack because of how it was made — Ataque Repentino. */
@@ -397,11 +394,9 @@ public class AttackDelivery {
      */
     private DeliveredAttackTargetResult resolveAdditionalTarget(final DeliveredAttack attack, final AttackTarget target,
                                                                  final int attackTotal, final CriticalResult criticalResult,
-                                                                 final boolean blindMiss) {
+                                                                 final boolean blindMiss, final int difficultyReduction) {
         CombatantSheet defender = target.defender();
-        int requiredTotal = target.defenseValue()
-                + SpellResistance.defenseBonus(defender, attack.getDefenseType(), attack.getAttackSource())
-                + defenceFavour(attack, defender);
+        int requiredTotal = requiredTotal(attack, defender, target.defenseValue(), difficultyReduction);
         int margin = attackTotal - requiredTotal;
         SkillRoll attackRoll = attack.getAttackRoll();
         boolean hit = (margin >= 0 || forcedSuccess(attackRoll)) && !blindMiss
@@ -770,6 +765,22 @@ public class AttackDelivery {
         chains.addAll(org.aventyrs.core.monster.MonstrousAbilityGrant.attackEffectChains(attack.getAttacker(),
                 attack.getAttackSkill(), attack.getAttackSource()));
         return chains;
+    }
+
+    /**
+     * What the roll must reach against one defender: its flat Defesa plus the Aptidões Mágicas' DM,
+     * a defence Favorecido and a Reação attack's Defesa bonus (Esquiva), then moved by níveis — eased by the attacker's own difficultyReduction,
+     * hardened by that defender's GD reduction to resist this Magia — through {@code
+     * DifficultyLevel#shiftValue}, which keeps the excess over the tier.
+     */
+    private static int requiredTotal(final DeliveredAttack attack, final CombatantSheet defender,
+                                     final int defenseValue, final int difficultyReduction) {
+        int flat = defenseValue
+                + SpellResistance.defenseBonus(defender, attack.getDefenseType(), attack.getAttackSource())
+                + defenceFavour(attack, defender)
+                + ReactionDefense.bonus(defender, attack.getDefenseType(), attack.isReaction());
+        return org.aventyrs.core.skill.DifficultyLevel.shiftValue(flat,
+                SpellResistance.difficultyReduction(defender, attack.getAttackSource()) - difficultyReduction);
     }
 
     /**

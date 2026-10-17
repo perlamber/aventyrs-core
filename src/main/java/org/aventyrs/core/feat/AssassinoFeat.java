@@ -137,10 +137,9 @@ public enum AssassinoFeat implements Feat {
      * which reads the roll's {@code ActionCost} ("apenas 1PA ou Ação Livre" — a Reação or Ação
      * Livre spends 0) and {@code CombatantSheet#getActionsThisRound()} ("a primeira vez... a cada
      * Rodada"), and folds a -1 into {@code difficultyReduction}. It is applied through {@code
-     * DifficultyLevel#easier} on the direct skill-roll path and by {@code AttackReceiver}; on the
-     * {@code AttackDelivery} flat-Defesa path it is reported on {@code
-     * DeliveredAttackResult#getUnappliedDifficultyReduction()} without being applied — a foe's
-     * authored Defesa has no tier to ease (the {@code AttackDelivery} "Open question").
+     * DifficultyLevel#easier} on the direct skill-roll path and by {@code AttackReceiver}, and on the
+     * {@code AttackDelivery} flat-Defesa path it eases the Defesa one tier, keeping its excess
+     * ({@code DifficultyLevel#shiftValue}).
      *
      * <p><b>The Vantagem rider is a deliberate simplification: not granted.</b> "Imediatamente
      * após sacar sua primeira arma, ou a primeira magia conjurada, <i>na Cena de Combate</i>" is

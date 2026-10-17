@@ -3,6 +3,7 @@ package org.aventyrs.core.character.services;
 import lombok.NonNull;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.feat.Feat;
+import org.aventyrs.core.feat.MobilidadeFeat;
 import org.aventyrs.core.item.Item;
 import org.aventyrs.core.modifier.ModifierResolver;
 import org.aventyrs.core.modifier.ModifierResolverImpl;
@@ -69,6 +70,48 @@ public class RepositionServiceImpl implements RepositionService {
             bonus += item.resolveEnhancementBonus(ModifierType.REPOSITION_DISTANCE, null, character);
         }
         return getBaseDistance(sheet) + Math.max(0, bonus);
+    }
+
+    @Override
+    public boolean canMoveAcrobatically(@NonNull final CombatantSheet sheet, final int turnNumber,
+                                        final SceneContext sceneContext) {
+        return acrobaticRefusalFor(sheet, turnNumber, sceneContext) == null;
+    }
+
+    @Override
+    public int getAcrobaticDistance(@NonNull final CombatantSheet sheet) {
+        return sheet.getAttributeTotal(org.aventyrs.core.character.AttributeDomain.DEXTERITY) / 2
+                + ACROBATIC_UD_PER_TITLE * sheet.getCharacter().getAllTitles().size();
+    }
+
+    @Override
+    public int beginAcrobatic(@NonNull final CombatantSheet sheet, final int turnNumber,
+                              final SceneContext sceneContext) {
+        String refusal = acrobaticRefusalFor(sheet, turnNumber, sceneContext);
+        if (refusal != null) {
+            throw new IllegalOperationException(refusal);
+        }
+        int distance = getAcrobaticDistance(sheet);
+        sheet.consumeRepositionThisRound();
+        sheet.recordAbilityActivation(MobilidadeFeat.MOVIMENTO_ACROBATICO);
+        return distance;
+    }
+
+    /** "A distância máxima aumenta em +2UD para cada Título Aventyr que você possuir". */
+    private static final int ACROBATIC_UD_PER_TITLE = 2;
+
+    private String acrobaticRefusalFor(final CombatantSheet sheet, final int turnNumber,
+                                       final SceneContext sceneContext) {
+        if (!sheet.getCharacter().getFeats().contains(MobilidadeFeat.MOVIMENTO_ACROBATICO)) {
+            return org.aventyrs.core.util.TranslatableMessages.ACROBATIC_MOVEMENT_NOT_HELD;
+        }
+        String refusal = refusalFor(sheet, turnNumber, sceneContext);
+        if (refusal != null) {
+            return refusal;
+        }
+        // "Apenas uma vez por Rodada" — one Turn per Rodada, so the per-Turn activation count answers it.
+        return sheet.countActivationsThisTurn(MobilidadeFeat.MOVIMENTO_ACROBATICO) > 0
+                ? org.aventyrs.core.util.TranslatableMessages.ACROBATIC_MOVEMENT_ALREADY_USED : null;
     }
 
     /**

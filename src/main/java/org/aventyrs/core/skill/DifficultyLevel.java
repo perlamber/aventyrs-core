@@ -37,6 +37,22 @@ public enum DifficultyLevel {
     }
 
     /**
+     * value — a flat number such as a Defesa — moved steps níveis (positive harder, negative
+     * easier). It is read as the tier it reaches plus the excess over that tier's base, the shape
+     * a foe's Defesa is built in (Esquiva e Aparar GD + modifiers); the tier shifts and the excess
+     * rides along, so Médio+2 (20) one nível easier is Fácil+2 (16). A value below {@link
+     * #VERY_EASY} reaches no tier and is returned unchanged (table ruling 2026-10-17).
+     */
+    public static int shiftValue(final int value, final int steps) {
+        if (steps == 0) {
+            return value;
+        }
+        return reachedBy(value)
+                .map(tier -> tier.shift(steps).getBaseValue() + value - tier.getBaseValue())
+                .orElse(value);
+    }
+
+    /**
      * The highest tier a roll totaling total reaches, judged against {@link #getBaseValue()}
      * — or empty if total falls short of even {@link #VERY_EASY}. Deliberately doesn't
      * consider {@link #getExpertValue()} (the easier threshold a matching Especialização

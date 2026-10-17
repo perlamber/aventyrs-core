@@ -29,9 +29,7 @@ import java.util.List;
  *   <li><b>Nothing fires a Reação.</b> This core has no mechanism for one: {@link ReactionsService}
  *   computes a combatant's <em>maximum</em> and nothing anywhere tracks how many they have spent.
  *   So the returned list is the opportunity, not the act, and a reactor's remaining Reações are
- *   deliberately not consulted — the caller adjudicates. Real, exact, unapplied data, the same
- *   discipline {@code org.aventyrs.core.combat.AttackDelivery}'s {@code
- *   unappliedDifficultyReduction} follows.</li>
+ *   deliberately not consulted — the caller adjudicates. Real, exact, unapplied data.</li>
  *   <li><b>It answers about where the mover is <em>now</em>.</b> A movement's path and distance are
  *   not recorded anywhere in this core — {@code CombatantSheet#consumeMovementThisRound()} counts
  *   movements and nothing else — so a caller that cares about ground crossed asks once per step

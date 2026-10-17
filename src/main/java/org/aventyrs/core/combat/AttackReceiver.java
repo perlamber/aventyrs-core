@@ -180,6 +180,8 @@ public class AttackReceiver {
                         ? org.aventyrs.core.skill.Skill.ADVANTAGE_BONUS : 0)
                 + (defenseRoll == null ? 0 : defenseRoll.getTotal())
                 + (attack.isAreaOfEffect() ? areaOfEffectDefenseBonus(defender) : 0)
+                // Esquiva: "+2 em suas Defesas para resistir à Reações de seus inimigos".
+                + ReactionDefense.bonus(defender, attack.getDefenseType(), attack.isReaction())
                 // The Aptidões Mágicas' DM against a Magia the defender can cast.
                 + SpellResistance.defenseBonus(defender, attack.getDefenseType(), attack.getAttackSource());
 

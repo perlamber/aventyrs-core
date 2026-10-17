@@ -74,15 +74,17 @@ public class MovementServiceImpl implements MovementService {
             total += ability.resolveRoundMovementIncrease(movementIndex);
         }
         for (Feat feat : character.getFeats()) {
-            total += feat.resolveRoundMovementIncrease(movementIndex, character);
+            total += feat.resolveRoundMovementIncrease(movementIndex, character, sheet);
         }
         for (Item item : character.getEquipment()) {
             total += item.resolveRoundMovementIncrease(movementIndex, character);
         }
         // Iniciativa a Zero's Passos Reduzidos (core 0.0.82) and Caído (core 0.1.5): "Movimento Base
         // reduzido à metade", rounded down, last — once however many say so, never quartered.
+        // Movimento Furtivo's price while Escondido (core 0.1.7.20) joins the same stage.
         if (sheet.hasEgoSetback(org.aventyrs.core.ego.EgoSetback.PASSOS_REDUZIDOS)
-                || sheet.getActiveConditions(null).stream().anyMatch(ConditionType::halvesMovementBase)) {
+                || sheet.getActiveConditions(null).stream().anyMatch(ConditionType::halvesMovementBase)
+                || character.getFeats().stream().anyMatch(feat -> feat.halvesCurrentMovementBase(character, sheet))) {
             total = total / 2;
         }
         return Math.max(0, total);

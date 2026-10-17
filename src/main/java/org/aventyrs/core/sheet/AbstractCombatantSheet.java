@@ -339,6 +339,14 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
     /** Recuos Defensivos taken since this combatant's Turn began — "Limitado a apenas uma vez por Rodada". */
     private int retreatsTakenThisRound = 0;
 
+    /** UD travelled since this combatant's Turn began — see {@link #recordDistanceMoved(int)}. */
+    @Getter(AccessLevel.NONE)
+    private int distanceMovedThisTurn = 0;
+
+    /** {@link #movementsTakenThisRound} when this Turn's latest action was recorded; -1 before any. */
+    @Getter(AccessLevel.NONE)
+    private int movementsAtLatestAction = -1;
+
     /** See {@link CombatantSheet#getAsphyxia()}; {@code null} while breathing. */
     @Getter(AccessLevel.NONE)
     private Asphyxia asphyxia;
@@ -2021,6 +2029,8 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
         movementsTakenThisRound = 0;
         repositionsTakenThisRound = 0;
         retreatsTakenThisRound = 0;
+        distanceMovedThisTurn = 0;
+        movementsAtLatestAction = -1;
         actionCountAtTurnStart = actionsThisRound.size();
         actionsOfLatestOwnTurn.clear();
         inOwnTurn = true;
@@ -2625,6 +2635,7 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
         }
         actionsThisRound.add(action);
         actionsThisCena.add(action);
+        movementsAtLatestAction = movementsTakenThisRound;
         if (inOwnTurn) {
             actionsOfLatestOwnTurn.add(action);
         }
@@ -2697,6 +2708,26 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
     @Override
     public int consumeRepositionThisRound() {
         return repositionsTakenThisRound++;
+    }
+
+    @Override
+    public void recordDistanceMoved(final int ud) {
+        distanceMovedThisTurn += Math.max(0, ud);
+    }
+
+    @Override
+    public int getDistanceMovedThisTurn() {
+        return distanceMovedThisTurn;
+    }
+
+    @Override
+    public boolean hasMovedThisTurn() {
+        return movementsTakenThisRound > 0 || repositionsTakenThisRound > 0 || distanceMovedThisTurn > 0;
+    }
+
+    @Override
+    public int getMovementsAtLatestAction() {
+        return movementsAtLatestAction;
     }
     // --- Condições / Malefícios ---------------------------------------------------------------
 

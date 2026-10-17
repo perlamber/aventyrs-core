@@ -133,6 +133,13 @@ public class DeliveredAttack {
     private final boolean intercepted;
 
     /**
+     * This attack is made as a Reação — Defender o Perímetro, Impedir Conjuração, a fired Preparação, a Título reaction
+     * attack (core 0.1.7.18). What {@code Feat#resolveReactionDefenseBonus} ({@code MobilidadeFeat#ESQUIVA}) reads.
+     * {@code false} by default.
+     */
+    private final boolean reaction;
+
+    /**
      * Targets this attack affects <b>beyond</b> {@link #defender}, each with their own Defesa —
      * empty for every ordinary attack. What {@code
      * ArtesMarciaisFeat#DOMINAR_ARTE_MARCIAL_ARTE_FLUIDA}'s "seus ataques afetam um alvo
@@ -187,6 +194,14 @@ public class DeliveredAttack {
      */
     @Singular
     private final List<CriticalEffectType> additionalCriticalEffectTypes;
+
+    /**
+     * Níveis the caller eases this one attack by on top of what the roll itself resolves — an
+     * activation's {@code EmpoweredAttack#difficultyReduction} (Fúria dos Deuses), folded in by the
+     * caller like {@link #additionalCriticalEffectTypes}. Summed with the roll's own and applied to
+     * every target's flat Defesa as a tier step ({@code DifficultyLevel#shiftValue}).
+     */
+    private final int difficultyReduction;
 
     /**
      * Where the Efeitos Críticos' own dice come from — Amaldiçoar's 1d6 Rodadas, Oferenda Maldita's

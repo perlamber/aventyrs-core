@@ -345,8 +345,8 @@ class ChargeServiceImplTest {
 
     /**
      * {@code MobilidadeFeat#INVESTIDA_SELVAGEM} — "Redução de Danos Sofridos igual ao número de
-     * Títulos Aventyrs que você possuir". Reported on the result, never granted onto the sheet:
-     * "durante o movimento da investida" is shorter than the shortest {@code TemporaryBonus}.
+     * Títulos Aventyrs que você possuir". Reported here and granted for the movement by {@code
+     * ChargeService#openMovementWard} (core 0.1.7.22).
      */
     @Test
     void investidaSelvagemReportsOnePointPerTituloHeld() {

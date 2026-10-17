@@ -92,14 +92,13 @@ class AttackDeliveryTest {
     }
 
     /**
-     * SAQUE_RELAMPAGO's "-1 nível" reaches an attack roll's {@code difficultyReduction}, but a
-     * foe's flat Defesa has no tier to ease — so on this path it is reported on {@code
-     * unappliedDifficultyReduction} and the required total is untouched (Option B / the
-     * "Open question" this class documents).
+     * SAQUE_RELAMPAGO's "-1 nível" reaches an attack roll's {@code difficultyReduction}, and the
+     * foe's flat Defesa is eased by it as a tier plus its excess — Brutamontes' 17 is Fácil+3, one
+     * nível easier Muito Fácil+3 (table ruling 2026-10-17).
      */
     @Test
-    void saqueRelampagosReductionIsReportedUnappliedAgainstAFlatDefesa() {
-        MonsterSheet capanga = GenericMonster.CAPANGA.spawn(new Player());
+    void saqueRelampagosReductionEasesAFlatDefesaByOneTier() {
+        MonsterSheet capanga = GenericMonster.BRUTAMONTES.spawn(new Player());
         CharacterSkill skill = CharacterSkillFixture.blank(CharacterSkillFixture.ATAQUE_CORPO_A_CORPO_1).build();
         skill.increaseGraduation(3);
         Character character = CharacterFixture.blank(CharacterFixture.BLANK)
@@ -119,8 +118,9 @@ class AttackDeliveryTest {
                 .attackRoll(new SkillRoll(List.of(3, 3, 3), null, null, ActionCost.ofActionPoints(1)))
                 .build());
 
-        assertEquals(1, result.getUnappliedDifficultyReduction());
-        assertEquals(capanga.getPhysicalDefense(), result.getRequiredTotal());
+        assertEquals(1, result.getDifficultyReduction());
+        assertEquals(17, capanga.getPhysicalDefense());
+        assertEquals(15, result.getRequiredTotal());
     }
 
     @Test
@@ -278,20 +278,61 @@ class AttackDeliveryTest {
     }
 
     /**
-     * The attacker's GD reduction is denominated in níveis and the foe's Defesa is a flat
-     * number, so it's reported rather than applied — see AttackDelivery's javadoc.
+     * The attacker's GD reduction is denominated in níveis; the foe's flat Defesa is read as a tier
+     * plus its excess, the tier steps down and the excess stays — see AttackDelivery's javadoc.
      */
     @Test
-    void theAttackersDifficultyReductionIsReportedButNotApplied() {
-        MonsterSheet capanga = GenericMonster.CAPANGA.spawn(new Player());
+    void theAttackersDifficultyReductionEasesTheDefesaKeepingItsExcess() {
+        MonsterSheet brutamontes = GenericMonster.BRUTAMONTES.spawn(new Player());
         // Graduação 7 unlocks Ataque Corpo a Corpo's PRODIGIO (-1 nível).
+        CharacterSheet hero = attacker(1, 7);
+
+        DeliveredAttackResult result = attackDelivery.resolve(attackOn(brutamontes, hero)
+                .attackRoll(new SkillRoll(List.of(1, 1, 3)))
+                .build());
+
+        assertEquals(1, result.getDifficultyReduction());
+        assertEquals(15, result.getRequiredTotal());
+    }
+
+    /** A caller-folded nível (an EmpoweredAttack's) adds to the roll's own: Fácil+3 two níveis easier clamps at Muito Fácil+3. */
+    @Test
+    void aCallerSuppliedNivelAddsToTheRollsOwn() {
+        MonsterSheet brutamontes = GenericMonster.BRUTAMONTES.spawn(new Player());
+        CharacterSheet hero = attacker(1, 7);
+
+        DeliveredAttackResult result = attackDelivery.resolve(attackOn(brutamontes, hero)
+                .attackRoll(new SkillRoll(List.of(1, 1, 3)))
+                .difficultyReduction(1)
+                .build());
+
+        assertEquals(2, result.getDifficultyReduction());
+        assertEquals(15, result.getRequiredTotal());
+
+        MonsterSheet conjurador = GenericMonster.CONJURADOR.spawn(new Player());
+        DeliveredAttackResult againstMagic = attackDelivery.resolve(DeliveredAttack.from(conjurador, DefenseType.MAGIC)
+                .attacker(attacker(1, 1))
+                .attackSkill(SkillType.ATAQUE_CORPO_A_CORPO)
+                .attackRoll(new SkillRoll(List.of(1, 1, 3)))
+                .difficultyReduction(1)
+                .build());
+
+        // DM 19 = Médio+1, one nível easier Fácil+1.
+        assertEquals(19, conjurador.getDefense(DefenseType.MAGIC));
+        assertEquals(15, againstMagic.getRequiredTotal());
+    }
+
+    /** Muito Fácil is the lowest tier: a Defesa already there has nowhere easier to go. */
+    @Test
+    void aDefesaInTheLowestTierIsNotEasedFurther() {
+        MonsterSheet capanga = GenericMonster.CAPANGA.spawn(new Player());
         CharacterSheet hero = attacker(1, 7);
 
         DeliveredAttackResult result = attackDelivery.resolve(attackOn(capanga, hero)
                 .attackRoll(new SkillRoll(List.of(1, 1, 3)))
                 .build());
 
-        assertEquals(1, result.getUnappliedDifficultyReduction());
+        assertEquals(1, result.getDifficultyReduction());
         assertEquals(capanga.getPhysicalDefense(), result.getRequiredTotal());
     }
 

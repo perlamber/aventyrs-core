@@ -179,14 +179,13 @@ public class MovementReactionServiceImpl implements MovementReactionService {
      * The mover's Perfil de Ação exempts a whole movement through {@link ActionProfile#exemptsMovementFromReactions}
      * (Consciência Defensiva's odd Rodadas); its window over a movement's first hexes is {@link #reactionFreeSteps}.
      *
-     * <p>There is no {@code Feat} pass. No Talento states a movement-Reação exemption that is
-     * expressible yet: {@code MobilidadeFeat#MOVIMENTO_ACROBATICO}'s "sem provocar Reações" is
-     * scoped to the Reposicionar manoeuvre, which provokes nothing anyway. Add the pass with the
-     * first clause that can actually use it.
+     * <p>There is no {@code Feat} pass: {@code MobilidadeFeat#MOVIMENTO_ACROBATICO}'s "sem provocar Reações" is its
+     * own manoeuvre, {@link Manoeuvre#MOVIMENTO_ACROBATICO}, exempt here like the Reposicionar it replaces.
      */
     private boolean isExempt(final Character mover, final Manoeuvre manoeuvre, final SceneContext sceneContext) {
         // A Reposicionar never provokes: the manoeuvre's own rule, held by nobody.
-        if (manoeuvre == Manoeuvre.REPOSICIONAR || manoeuvre == Manoeuvre.RECUO_DEFENSIVO) {
+        if (manoeuvre == Manoeuvre.REPOSICIONAR || manoeuvre == Manoeuvre.MOVIMENTO_ACROBATICO
+                || manoeuvre == Manoeuvre.RECUO_DEFENSIVO) {
             return true;
         }
         ActionProfile profile = mover.getActionProfile();

@@ -1705,6 +1705,34 @@ public interface CombatantSheet extends Interactable<CombatantSheet> {
     int consumeRepositionThisRound();
 
     /**
+     * Records ud Unidades de Distância travelled this Turn (core 0.1.7.17) — every kind of movement: one bought with
+     * Pontos de Ação, a manoeuvre's, a Reposicionar, an Investida's, a granted one. This core does no geometry, so the
+     * caller states the distance; reset by {@link #startTurn}. A non-positive ud records nothing.
+     */
+    void recordDistanceMoved(int ud);
+
+    /**
+     * The Unidades de Distância travelled since this combatant's Turn began — what {@code
+     * MobilidadeFeat#SE_MOVER_E_ATACAR}'s "após se mover por uma Distância Curta ou superior" reads (3UD or more in
+     * total this Turn, table ruling 2026-10-17).
+     */
+    int getDistanceMovedThisTurn();
+
+    /**
+     * Whether this combatant moved at all this Turn — a movement bought, a Reposicionar declared or any distance
+     * recorded. {@code MobilidadeFeat#ESQUIVA}'s "se você se moveu em seu último Turno", read as the Turn ends.
+     */
+    boolean hasMovedThisTurn();
+
+    /**
+     * {@link #getMovementsTakenThisRound()} as it stood when the latest action of this Turn was recorded, or
+     * {@code -1} when no action was recorded this Turn. A movement whose index equals it is the first one bought
+     * after that action — {@code MobilidadeFeat#SE_MOVER_E_ATACAR}'s "imediatamente após efetuar uma Rolagem de
+     * Perícia de Ataque".
+     */
+    int getMovementsAtLatestAction();
+
+    /**
      * Whether an unexpired {@link TemporaryEffect} of type is running on this combatant — for a marker
      * effect whose presence is the whole fact ({@link CarmillaPresence}).
      */

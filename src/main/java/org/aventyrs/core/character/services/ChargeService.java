@@ -7,7 +7,10 @@ import org.aventyrs.core.scene.SceneContext;
 import org.aventyrs.core.sheet.CombatantSheet;
 import org.aventyrs.core.sheet.IllegalOperationException;
 import org.aventyrs.core.sheet.TemporaryBonus;
+import org.aventyrs.core.sheet.TemporaryEffect;
 import org.aventyrs.core.skill.Skill;
+
+import java.util.List;
 
 /**
  * The Investida — a movement and an Ataque Corpo-a-Corpo bought as one action.
@@ -208,4 +211,32 @@ public interface ChargeService {
     java.util.Optional<String> refusalForLine(CombatantSheet sheet, org.aventyrs.core.scene.grid.GridPosition from,
                                               org.aventyrs.core.scene.grid.GridPosition landing,
                                               org.aventyrs.core.scene.grid.MovementMap map);
+
+    /** The source a movement ward is granted under — see {@link #openMovementWard}. */
+    String MOVEMENT_WARD_SOURCE = "INVESTIDA:MOVIMENTO";
+
+    /**
+     * Grants the charger the Redução de Danos Sofridos {@link #getMovementDamageReduction} reports, for the length of
+     * the charge's movement — {@code MobilidadeFeat#INVESTIDA_SELVAGEM}'s "Durante o movimento da investida você recebe
+     * Redução de Danos Sofridos" (core 0.1.7.22). Open-ended and sourced, so the caller closes it ({@link
+     * #closeMovementWard}) once the movement ends — at the charge's attack or when it is abandoned — and a second
+     * opening replaces the first. Its RDS is {@code Resistance#RDS} instances of that figure.
+     *
+     * @return the granted bonus, or {@code null} when the charger has no such reduction
+     */
+    TemporaryBonus openMovementWard(CombatantSheet sheet);
+
+    /** Ends the ward {@link #openMovementWard} granted; nothing when none is open. */
+    void closeMovementWard(CombatantSheet sheet);
+
+    /**
+     * Applies what the charger's Talentos grant after an Investida's area attack ({@code
+     * Feat#resolveChargeAftermathEffects} — Investida Selvagem Solar/Lunar), given the enemies the explosion hit and
+     * how many of them actually lost PV (core 0.1.7.22). Caller-driven, like {@link #applyOutcome}: the caller counts
+     * once every target's damage has been applied.
+     *
+     * @return the effects applied, empty when nothing qualified
+     */
+    List<TemporaryEffect> applySavageAftermath(CombatantSheet sheet, Weapon chargeWeapon, int enemiesHit,
+                                               int enemiesDamaged);
 }

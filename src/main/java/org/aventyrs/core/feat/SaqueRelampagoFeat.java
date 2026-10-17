@@ -22,10 +22,8 @@ import java.util.Optional;
  * AcertoCriticoAprimoradoFeat} keeps against {@code AssassinoFeat#ACERTO_CRITICO_APRIMORADO}.
  *
  * <p>The "-1 nível" half is applied through {@code DifficultyLevel#easier} on the direct
- * skill-roll path and by {@code AttackReceiver}; on the {@code AttackDelivery} flat-Defesa path
- * it is reported on {@code DeliveredAttackResult#getUnappliedDifficultyReduction()} without being
- * applied, since a foe's authored Defesa has no tier to ease (the {@code AttackDelivery} "Open
- * question").
+ * skill-roll path and by {@code AttackReceiver}, and on the {@code AttackDelivery} flat-Defesa path
+ * it eases the Defesa one tier, keeping its excess ({@code DifficultyLevel#shiftValue}).
  *
  * <p>The <b>Vantagem rider</b> ("imediatamente após sacar sua primeira arma, ou a primeira magia
  * conjurada, na Cena de Combate") is granted through {@link Feat#resolveSkillRollBonus}'s {@code

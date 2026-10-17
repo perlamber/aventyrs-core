@@ -104,6 +104,38 @@ public class ChargeServiceImpl implements ChargeService {
                 MISS_DEFENSE_MALUS_ROUNDS, TargetScope.SELF, MISS_PENALTY_SOURCE));
     }
 
+    @Override
+    public TemporaryBonus openMovementWard(@NonNull final CombatantSheet sheet) {
+        int reduction = getMovementDamageReduction(sheet.getCharacter());
+        if (reduction <= 0) {
+            return null;
+        }
+        TemporaryBonus ward = TemporaryBonus.openEnded(ModifierType.DAMAGE_TAKEN_REDUCTION,
+                org.aventyrs.core.character.Resistance.RDS.instances(reduction), MOVEMENT_WARD_SOURCE);
+        sheet.applyEffect(ward);
+        return ward;
+    }
+
+    @Override
+    public void closeMovementWard(@NonNull final CombatantSheet sheet) {
+        sheet.removeEffectsFrom(MOVEMENT_WARD_SOURCE);
+    }
+
+    @Override
+    public java.util.List<org.aventyrs.core.sheet.TemporaryEffect> applySavageAftermath(
+            @NonNull final CombatantSheet sheet, final Weapon chargeWeapon, final int enemiesHit,
+            final int enemiesDamaged) {
+        java.util.List<org.aventyrs.core.sheet.TemporaryEffect> applied = new java.util.ArrayList<>();
+        for (Feat feat : sheet.getCharacter().getFeats()) {
+            for (org.aventyrs.core.sheet.TemporaryEffect effect
+                    : feat.resolveChargeAftermathEffects(sheet, chargeWeapon, enemiesHit, enemiesDamaged)) {
+                sheet.applyEffect(effect);
+                applied.add(effect);
+            }
+        }
+        return applied;
+    }
+
     private boolean waivesMissPenalty(final Character character) {
         return character.getAttributeAbilities().stream()
                 .anyMatch(AttributeAbility::waivesChargeMissDefensePenalty);

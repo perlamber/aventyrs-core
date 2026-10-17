@@ -43,6 +43,14 @@ public enum Manoeuvre {
     REPOSICIONAR(ActionKind.MOVEMENT),
 
     /**
+     * Movimento Acrobático ({@code MobilidadeFeat#MOVIMENTO_ACROBATICO}, core 0.1.7.20) — taken in place of a
+     * Reposicionar (table ruling 2026-10-17): the same Ação Livre and exclusion with Pontos de Ação movement, once per
+     * Rodada, reaching half the Destreza total in UD plus 2UD per Título, and provoking no Reações ({@code
+     * RepositionService#beginAcrobatic}).
+     */
+    MOVIMENTO_ACROBATICO(ActionKind.MOVEMENT),
+
+    /**
      * Agarrar — 2PA, an Ataque Corpo-a-Corpo against the target's Defesa that deals no damage and
      * triggers no Efeito Crítico or Corrente; success leaves the target Agarrado with the captor as
      * the source ({@code GrappleService}). Every character may do it (table ruling, 2026-10-07).

@@ -88,6 +88,10 @@ public class TranslatableMessages {
      * (an Investida included) — the two exclude each other (table ruling).
      */
     public static final String REPOSITION_AFTER_MOVEMENT = "REPOSITION_AFTER_MOVEMENT";
+    /** Movimento Acrobático (core 0.1.7.20): the holder lacks the Talento. */
+    public static final String ACROBATIC_MOVEMENT_NOT_HELD = "ACROBATIC_MOVEMENT_NOT_HELD";
+    /** Movimento Acrobático: "apenas uma vez por Rodada". */
+    public static final String ACROBATIC_MOVEMENT_ALREADY_USED = "ACROBATIC_MOVEMENT_ALREADY_USED";
 
     /** The attacker cannot presently attack with this weapon at all — a Forma suppressing it. */
     public static final String CANNOT_ATTACK_WITH_WEAPON = "CANNOT_ATTACK_WITH_WEAPON";

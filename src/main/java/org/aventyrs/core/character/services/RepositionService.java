@@ -67,4 +67,28 @@ public interface RepositionService {
      *         REPOSITION_IN_DIFFICULT_TERRAIN})
      */
     int begin(CombatantSheet sheet, int turnNumber, SceneContext sceneContext);
+
+    /**
+     * Whether sheet may make a Movimento Acrobático now ({@code MobilidadeFeat#MOVIMENTO_ACROBATICO}, core 0.1.7.20):
+     * they hold the Talento, could Reposicionar ({@link #canReposition}) — "apenas quando puder fazer uma Ação de
+     * Reposicionar" — and have not made one this Rodada.
+     */
+    boolean canMoveAcrobatically(CombatantSheet sheet, int turnNumber, SceneContext sceneContext);
+
+    /**
+     * How far sheet's Movimento Acrobático reaches, in UD — "igual à Metade da Destreza UD, … +2UD para cada Título
+     * Aventyr que você possuir": half the Destreza total, rounded down, plus 2 per Título held.
+     */
+    int getAcrobaticDistance(CombatantSheet sheet);
+
+    /**
+     * Declares a Movimento Acrobático in place of a Reposicionar (table ruling 2026-10-17), returning the UD the
+     * caller may move sheet ({@link #getAcrobaticDistance}). It claims this Rodada's next Reposicionar — so it
+     * excludes Pontos de Ação movement exactly as one does — and the once-per-Rodada use. It provokes no Reações
+     * ({@code Manoeuvre#MOVIMENTO_ACROBATICO}).
+     *
+     * @throws IllegalOperationException with {@link #begin}'s refusals, or {@code ACROBATIC_MOVEMENT_NOT_HELD} /
+     *         {@code ACROBATIC_MOVEMENT_ALREADY_USED}
+     */
+    int beginAcrobatic(CombatantSheet sheet, int turnNumber, SceneContext sceneContext);
 }

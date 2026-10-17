@@ -11,8 +11,8 @@ import org.aventyrs.core.sheet.InteractionResult;
  * <p>What it changes is the <b>attacker's</b> next roll, so it marks the attacker's sheet ({@code
  * CombatantSheet#openDefensesOf}): that attacker's next Perícia de Ataque roll against this target is {@link
  * #DIFFICULTY_REDUCTION_LEVELS} nível easier ({@code AbstractSkillInteraction}), and the mark is spent when an attack
- * naming the target is recorded ({@code CombatantSheet#recordAction}). On {@code AttackDelivery} that nível joins
- * the reported {@code unappliedDifficultyReduction}, like every attacker-side nível there.
+ * naming the target is recorded ({@code CombatantSheet#recordAction}). On {@code AttackDelivery} that nível eases
+ * the flat Defesa one tier, like every attacker-side nível there.
  */
 public class EscancararDefesas extends AbstractEffect implements EffectChain {
 

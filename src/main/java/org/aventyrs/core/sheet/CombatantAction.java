@@ -52,11 +52,15 @@ import java.util.UUID;
  *                       CombatantSheet#countFeatActivationsThisRound}), and what a follow-up attack
  *                       reads to know what the one before it was ({@code DuelistaFeat#UM_DOIS},
  *                       {@code DuelistaFeat#COMBATER_COM_2_ARMAS}).
+ * @param manoeuvre      the {@code Manoeuvre} the roll was made for, or {@code null} — {@code Manoeuvre#NADAR}'s
+ *                       Atletismo roll is what {@code MobilidadeFeat#INVESTIDA_AQUATICA}'s "imediatamente após ser
+ *                       bem-sucedido em rolagens de Atletismo para Natação" reads (core 0.1.7.19).
  */
 public record CombatantAction(SkillType skill, AttributeDomain governingDomain,
                               AttackSource attackSource, ActionCost cost,
                               int turnNumber, ActionOutcome outcome,
-                              UUID targetId, Set<Feat> activatedFeats) {
+                              UUID targetId, Set<Feat> activatedFeats,
+                              org.aventyrs.core.action.Manoeuvre manoeuvre) {
 
     public CombatantAction {
         if (cost != null && cost.isDynamic()) {
@@ -65,12 +69,25 @@ public record CombatantAction(SkillType skill, AttributeDomain governingDomain,
         activatedFeats = activatedFeats == null ? Set.of() : Set.copyOf(activatedFeats);
     }
 
+    /** An action made for no particular manoeuvre — every log entry before 0.1.7.19. */
+    public CombatantAction(final SkillType skill, final AttributeDomain governingDomain,
+                           final AttackSource attackSource, final ActionCost cost,
+                           final int turnNumber, final ActionOutcome outcome,
+                           final UUID targetId, final Set<Feat> activatedFeats) {
+        this(skill, governingDomain, attackSource, cost, turnNumber, outcome, targetId, activatedFeats, null);
+    }
+
     /** An action aimed at nobody in particular, with no Talento spent on it — every log entry
      * before 0.0.70. */
     public CombatantAction(final SkillType skill, final AttributeDomain governingDomain,
                            final AttackSource attackSource, final ActionCost cost,
                            final int turnNumber, final ActionOutcome outcome) {
         this(skill, governingDomain, attackSource, cost, turnNumber, outcome, null, Set.of());
+    }
+
+    /** Whether this was a roll made for manoeuvre that succeeded — a {@code null} verdict is not a success. */
+    public boolean succeededAt(final org.aventyrs.core.action.Manoeuvre manoeuvre) {
+        return this.manoeuvre == manoeuvre && outcome != null && Boolean.TRUE.equals(outcome.succeeded());
     }
 
     /** Whether feat was spent on this action. */

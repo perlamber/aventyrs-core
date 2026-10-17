@@ -191,18 +191,20 @@ class MetamagicoWiringTest {
     }
 
     @Test
-    void attackDeliveryReportsTheNivelUnapplied() {
+    void attackDeliveryHardensTheFlatDefesaByTheNivel() {
         DeliveredAttackResult result = attackDelivery.resolve(DeliveredAttack.builder()
                 .attacker(plain())
                 .defender(holding(MetamagicoFeat.APTIDAO_MAGICA_SUPREMA))
                 .attackSkill(SkillType.ATAQUE_A_DISTANCIA)
                 .attackSource(KNOWN)
                 .defenseType(DefenseType.MAGIC)
-                .defenseValue(10)
+                .defenseValue(20)
                 .attackRoll(new SkillRoll(List.of(3, 3, 3)))
                 .build());
 
-        assertEquals(1, result.getUnappliedSpellResistanceReduction());
+        assertEquals(1, result.getSpellResistanceReduction());
+        // Médio+2, one nível harder: Difícil+2.
+        assertEquals(25, result.getRequiredTotal());
     }
 
     // ---------- Dracônica's immunity ----------

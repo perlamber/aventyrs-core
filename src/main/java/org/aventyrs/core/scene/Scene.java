@@ -153,6 +153,9 @@ public class Scene {
     private final List<InitiativeEntry> activeEntries = new ArrayList<>();
     private final List<InitiativeEntry> pendingEntries = new ArrayList<>();
     private final Map<CombatantSheet, List<TemporaryBonus>> grantedBlessings = new HashMap<>();
+
+    /** What {@link #applyFirstToActBlessings} granted, so a second call revokes exactly these. */
+    private final Map<CombatantSheet, List<TemporaryBonus>> firstToActBlessings = new LinkedHashMap<>();
     private final List<ActiveAreaSpellEffect> activeAreaSpellEffects = new ArrayList<>();
     private final List<ActiveAura> activeAuras = new ArrayList<>();
 
@@ -733,6 +736,101 @@ public class Scene {
                 }
             }
         }
+    }
+
+    /**
+     * {@link #applyInitiativeBlessings(CombatantSheet, List)} for every member of every winning group at once (core
+     * 0.1.7.21): revokes every earlier grant, then grants each winner its own resolved Blessings — {@code
+     * InitiativeBlessingService#resolveBlessings(sheet.getCharacter())}, handed in as resolver — and every
+     * {@link TargetScope#SELF_AND_ALLIES}-scoped one to that winner's allies. What a caller holding a whole table
+     * calls as combat starts, so two holders in one group (two Liderar o Avanço) each keep their own. A participant
+     * whose group did not win gets nothing.
+     *
+     * @return what was granted, by recipient
+     */
+    public Map<CombatantSheet, List<TemporaryBonus>> applyInitiativeBlessings(
+            @lombok.NonNull final java.util.function.Function<CombatantSheet, List<Blessing>> resolver) {
+        revokeActiveBlessings();
+        List<Blessing> allyScoped = new ArrayList<>();
+        for (InitiativeEntry entry : allEntries().toList()) {
+            CombatantSheet winner = entry.getCombatantSheet();
+            if (!wonInitiative(winner)) {
+                continue;
+            }
+            for (Blessing blessing : resolver.apply(winner)) {
+                grantBlessing(winner, blessing);
+                if (blessing.getScope() == TargetScope.SELF_AND_ALLIES) {
+                    allyScoped.add(blessing);
+                    getAllies(winner).forEach(ally -> grantBlessing(ally, blessing));
+                }
+            }
+        }
+        activeBlessings = allyScoped;
+        Map<CombatantSheet, List<TemporaryBonus>> granted = new LinkedHashMap<>();
+        grantedBlessings.forEach((sheet, bonuses) -> granted.put(sheet, List.copyOf(bonuses)));
+        return granted;
+    }
+
+    /**
+     * Grants the Blessings of whoever holds the first slot of the turn order — {@code
+     * Feat#resolveFirstToActBlessings} ({@code MobilidadeFeat#PORTA_ESTANDARTE}'s +2PA / +1PA), to that holder and,
+     * when ally-scoped, to each of its allies. Call once as combat starts, after the order is set; a second call
+     * revokes what the first granted before granting again (core 0.1.7.21).
+     *
+     * @return what was granted, by recipient
+     */
+    public Map<CombatantSheet, List<TemporaryBonus>> applyFirstToActBlessings() {
+        firstToActBlessings.forEach((sheet, bonuses) -> bonuses.forEach(sheet::removeEffect));
+        firstToActBlessings.clear();
+        List<CombatantSheet> order = getParticipantsInInitiativeOrder();
+        if (order.isEmpty()) {
+            return Map.of();
+        }
+        CombatantSheet first = order.get(0);
+        for (org.aventyrs.core.feat.Feat feat : first.getCharacter().getFeats()) {
+            for (Blessing blessing : feat.resolveFirstToActBlessings(first)) {
+                firstToActBlessings.computeIfAbsent(first, key -> new ArrayList<>()).add(first.grantBlessing(blessing));
+                if (blessing.getScope() == TargetScope.SELF_AND_ALLIES) {
+                    for (CombatantSheet ally : getAllies(first)) {
+                        firstToActBlessings.computeIfAbsent(ally, key -> new ArrayList<>())
+                                .add(ally.grantBlessing(blessing));
+                    }
+                }
+            }
+        }
+        Map<CombatantSheet, List<TemporaryBonus>> granted = new LinkedHashMap<>();
+        firstToActBlessings.forEach((sheet, bonuses) -> granted.put(sheet, List.copyOf(bonuses)));
+        return granted;
+    }
+
+    /**
+     * Extra UD per Ponto de Ação mover's movement earns for where it heads (core 0.1.7.21) — {@code
+     * MobilidadeFeat#PORTA_ESTANDARTE}: the mover's own {@code Feat#resolveApproachMovementIncrease} when the move
+     * nears an enemy, plus the largest {@code Feat#resolveAllyApproachMovementIncrease} among the allies it nears.
+     * Each side counts once however many it nears. 0 outside a Cena de Combate. The caller adds it to the
+     * movement's allowance ({@code MovementService#getMovementBase}), since only it knows the path.
+     */
+    public int getHeadingMovementBonus(@lombok.NonNull final CombatantSheet mover, final MovementHeading heading) {
+        if (!combatScene || heading == null || heading.approachedSheetIds().isEmpty()) {
+            return 0;
+        }
+        int bonus = 0;
+        if (getEnemies(mover).stream().anyMatch(heading::approaches)) {
+            boolean first = initiativePositionOf(mover) == InitiativePosition.FIRST;
+            bonus += mover.getCharacter().getFeats().stream()
+                    .mapToInt(feat -> feat.resolveApproachMovementIncrease(mover, currentRound, first))
+                    .max().orElse(0);
+        }
+        bonus += getAllies(mover).stream()
+                .filter(heading::approaches)
+                .mapToInt(ally -> {
+                    boolean first = initiativePositionOf(ally) == InitiativePosition.FIRST;
+                    return ally.getCharacter().getFeats().stream()
+                            .mapToInt(feat -> feat.resolveAllyApproachMovementIncrease(ally, currentRound, first))
+                            .max().orElse(0);
+                })
+                .max().orElse(0);
+        return Math.max(0, bonus);
     }
 
     private void revokeActiveBlessings() {

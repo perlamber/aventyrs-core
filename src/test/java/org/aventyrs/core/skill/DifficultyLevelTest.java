@@ -98,4 +98,21 @@ class DifficultyLevelTest {
         assertEquals(Optional.of(DifficultyLevel.EASY), DifficultyLevel.reachedBy(17));
         assertEquals(Optional.of(DifficultyLevel.MEDIUM), DifficultyLevel.reachedByAsExpert(17));
     }
+
+    /** A flat value moves as tier + excess: Médio+2 (20) is Fácil+2 easier and Difícil+2 harder. */
+    @Test
+    void shiftValueMovesTheTierAndKeepsTheExcess() {
+        assertEquals(16, DifficultyLevel.shiftValue(20, -1));
+        assertEquals(14, DifficultyLevel.shiftValue(20, -2));
+        assertEquals(25, DifficultyLevel.shiftValue(20, 1));
+        assertEquals(20, DifficultyLevel.shiftValue(20, 0));
+    }
+
+    @Test
+    void shiftValueClampsAtTheEndTiersAndLeavesATierlessValueAlone() {
+        assertEquals(13, DifficultyLevel.shiftValue(13, -1));
+        assertEquals(65, DifficultyLevel.shiftValue(65, 1));
+        assertEquals(11, DifficultyLevel.shiftValue(11, -1));
+        assertEquals(11, DifficultyLevel.shiftValue(11, 1));
+    }
 }

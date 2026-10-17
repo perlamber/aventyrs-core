@@ -42,8 +42,7 @@ public record ChargeResult(
          *
          * <p><b>Unapplied, and named so.</b> The window is shorter than a Rodada, which is the
          * shortest a {@code TemporaryBonus} can last, so granting one would go on protecting the
-         * charger after the charge had landed. Exact data whose application is blocked, exactly as
-         * {@code AttackDelivery} reports an attacker's {@code unappliedDifficultyReduction}. 0 when
+         * charger after the charge had landed. Exact data whose application is blocked. 0 when
          * no Talento grants any.
          */
         int unappliedMovementDamageReduction,
