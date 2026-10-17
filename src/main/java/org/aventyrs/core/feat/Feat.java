@@ -1621,6 +1621,36 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
     }
 
     /**
+     * PD its holder pays to activate this Talento on a roll — the Determinação twin of {@link
+     * #resolveActivationManaCost}: {@code BestialFeat#HERANCA_CETACEA}'s Ecolocalização, "Você pode gastar 2PD para
+     * reduzir a GD de testes de Atenção em -1 nível" (core 0.1.7.23). Summed by {@code AbstractSkillInteraction} and
+     * reported on {@code InteractionResult#getActivationDeterminationCost()} for the caller to spend. Zero by default.
+     */
+    default int resolveActivationDeterminationCost(final SkillType skillType) {
+        return 0;
+    }
+
+    /**
+     * Whether this Talento lets its holder breathe under water — {@code BestialFeat#HERANCA_ANFIBIA}'s "podem respirar
+     * dentro e fora d'agua normalmente". Asked by {@code AsphyxiaService#stopBreathing(CombatantSheet, boolean)} when
+     * the holder is submerged: such a holder never starts the Asfixia clock there (core 0.1.7.23). Never consulted for
+     * any other way of losing one's breath — strangling, smoke, a vacuum. {@code false} by default.
+     */
+    default boolean breathesUnderwater(final Character character) {
+        return false;
+    }
+
+    /**
+     * How many times longer its holder holds their breath while submerged — {@code BestialFeat#HERANCA_CETACEA}'s
+     * "podem permanecer submersos, sem respirar, pelo dobro do tempo" is 2. Read by {@code
+     * AsphyxiaService#getRoundsPerInstance}, which multiplies the Rodadas between Asfixia instances by the largest
+     * held figure, and only while the Asfixia began under water (core 0.1.7.23). 1 by default.
+     */
+    default int resolveSubmergedBreathMultiplier(final Character character) {
+        return 1;
+    }
+
+    /**
      * Roubo de Vida this Talento grants against one particular target — {@code DevotoFeat#BENCAO_DE_SURT_ELDUR}'s
      * "Roubo de Vida 1 em seus ataques efetuados contra personagens devotos de outras Divindades". Added by {@code
      * AttackDelivery} to the attacker's standing Roubo de Vida ({@code LifeStealService#getTotalLifeSteal}) for that

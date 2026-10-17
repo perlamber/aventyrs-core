@@ -489,6 +489,9 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
                 // Golpe Sobrenatural's "gastar 1PM" — reported for the caller to spend, like a roll's PA.
                 .activationManaCost(skillRoll == null ? null : nullIfZero(skillRoll.getActivatedFeats().stream()
                         .mapToInt(feat -> feat.resolveActivationManaCost(skillType)).sum()))
+                // Ecolocalização's "gastar 2PD" — the same, in Determinação.
+                .activationDeterminationCost(skillRoll == null ? null : nullIfZero(skillRoll.getActivatedFeats().stream()
+                        .mapToInt(feat -> feat.resolveActivationDeterminationCost(skillType)).sum()))
                 .governingAttributeDomain(skillRoll != null ? attributeDomain : null);
 
         // Cego: "Deve rolar 1d6 sempre que efetuar uma rolagem de perícia" — reported so the caller

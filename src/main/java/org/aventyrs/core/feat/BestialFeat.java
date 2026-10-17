@@ -8,6 +8,9 @@ import org.aventyrs.core.character.Character;
 import java.util.Optional;
 import org.aventyrs.core.skill.SkillType;
 import org.aventyrs.core.skill.SkillTrait;
+import org.aventyrs.core.skill.SkillTraitKind;
+import org.aventyrs.core.skill.SkillTraitCatalog;
+import org.aventyrs.core.skill.SkillRoll;
 import org.aventyrs.core.skill.Skill;
 import org.aventyrs.core.skill.AttackSource;
 import org.aventyrs.core.sheet.FormType;
@@ -25,12 +28,11 @@ import org.aventyrs.core.race.Bestial;
  * Talentos Bestiais — seven <b>Heranças</b>, each grafting one animal lineage onto the holder,
  * plus two Aventyr-tier Talentos that draw on however many Heranças are held.
  *
- * <p><b>Most of this tree is still inert</b>, and that is not seven separate accidents: every
- * Herança is built from the same four clauses, and two of the four are blocked. The two now
- * real are the <b>Atributo bonus</b> — every Herança grants its +1 through {@code
- * Feat#resolveAttributeBonus} — and the <b>Arma Natural</b> grant, where {@link #HERANCA_BOVIDEA}/
- * {@link #HERANCA_CANINA}/{@link #HERANCA_FELINA} hand their holder a {@link NaturalWeapon}
- * through {@code Feat#getGrantedNaturalWeapons}, surfaced by {@code Character#getNaturalWeapons()}.
+ * <p><b>Every Herança is built from the same four clauses, and all four are real</b> (core 0.1.7.23): the Atributo
+ * bonus, the Arma Natural, the movement mode and the free Perícia trait. What each Herança adds beyond them is real
+ * too, except Felina's Visão no Escuro (no senses concept). A Herança is held as {@link HerancaBestialFeat}, which
+ * records the picked trait and forwards every clause below; the bare constant declares its pick and is refused by
+ * {@code FeatService#grantFeat}.
  *
  * <ul>
  *   <li><b>"+1 de bônus racial em &lt;Atributo&gt;"</b> — <b>now real</b>, through {@code
@@ -55,15 +57,16 @@ import org.aventyrs.core.race.Bestial;
  *   the acquired form that records which trait the player picked. A granted {@code
  *   SkillCompetencyAbility} joins {@code SkillCompetencyAbility#allFor}, a granted {@code
  *   SkillSpecialization} joins {@code Character#getSpecializations(SkillType)}, so both reach the
- *   roll path with no service change. This closed what was the single most-cited blocker of the
- *   racial catalog. Nothing validates that the pick belongs to the Perícia the Herança names —
- *   the usual builders-aren't-gatekeepers restraint.</li>
+ *   roll path with no service change. Each Herança declares its pick ({@code Feat#resolveRequiredChoices},
+ *   offered from {@code SkillTraitCatalog} minus what the holder already has), so a client discovers it and the
+ *   bare constant cannot be granted plain; {@code HerancaBestialFeat}'s constructor still does not check the pick
+ *   belongs to the Perícia — the usual builders-aren't-gatekeepers restraint.</li>
  * </ul>
  *
- * <p>What the tree <i>does</i> deliver is a fully enforced prerequisite ladder: {@link
- * #ACEITAR_A_LACERTO} counts three held Heranças through {@code
- * FeatRequirements#requiredFeatCategory}, so the tree's own internal progression is real even
- * where its effects are not.
+ * <p>The prerequisite ladder is enforced: {@link #ACEITAR_A_LACERTO} counts three held Heranças through {@code
+ * FeatRequirements#requiredFeatCategory}. ⚠️ The Heranças' "+1 de bônus racial" does <b>not</b> count toward another
+ * Talento's Atributo Pré-requisito: {@code FeatRequirements} reads Base plus the race's own Bônus Racial (table
+ * ruling, 2026-10-09), and a Talento grant is neither.
  */
 public enum BestialFeat implements Feat {
 
@@ -79,9 +82,10 @@ public enum BestialFeat implements Feat {
     // The Movimento Base de Natação is real (Feat#grantsMovementMode).
     // The Vantagem to resist grapples is real (core 0.1.5): the Esquiva e Aparar against an Agarrar,
     // and the rolls to Libertar-se do Agarrão / da Imobilização ("se livrar de cordas … que te prendam").
-    // TODO: "lugares apertados" names no roll at all.
-    // TODO: breathing underwater has no state to toggle — nothing tracks breathing (CLAUDE.md's
-    //  "Fadiga/asfixia" row).
+    // "Lugares apertados" names no roll of its own: a squeeze the Narrador asks for is one of those two
+    // escapes, or nothing this core prices.
+    // Breathing under water is real (core 0.1.7.23): Feat#breathesUnderwater keeps a submerged holder off
+    // the Asfixia clock (AsphyxiaService#stopBreathing(sheet, true)).
     HERANCA_ANFIBIA(
             "Receba +1 de bônus racial em Vigor e Movimento Base de Natação. Personagens com este "
                     + "talento podem respirar dentro e fora d'agua normalmente e possuem pele "
@@ -101,6 +105,18 @@ public enum BestialFeat implements Feat {
         @Override
         public int resolveAttributeBonus(final AttributeDomain domain, final Character character) {
             return domain == AttributeDomain.VIGOR ? HERANCA_ATTRIBUTE_BONUS : 0;
+        }
+
+        /** "Podem respirar dentro e fora d'agua normalmente." */
+        @Override
+        public boolean breathesUnderwater(final Character character) {
+            return true;
+        }
+
+        /** "Uma Habilidade de Competência de Furtividade." */
+        @Override
+        public List<FeatChoice<?>> resolveRequiredChoices(final Character holder) {
+            return traitChoices(holder, SkillType.FURTIVIDADE, SkillTraitKind.COMPETENCY_ABILITY);
         }
 
         @Override
@@ -147,6 +163,12 @@ public enum BestialFeat implements Feat {
             return domain == AttributeDomain.FOCUS ? HERANCA_ATTRIBUTE_BONUS : 0;
         }
 
+        /** "Uma Habilidade de Competência de Persuasão." */
+        @Override
+        public List<FeatChoice<?>> resolveRequiredChoices(final Character holder) {
+            return traitChoices(holder, SkillType.PERSUASAO, SkillTraitKind.COMPETENCY_ABILITY);
+        }
+
         /** "Em Cenas de Combate voar exige o uso de 2PA e 3PD … 1d6 Rodadas, +1 Rodada para cada Talento de Herança." */
         @Override
         public java.util.Optional<org.aventyrs.core.character.FlightActivation> resolveFlightActivation(
@@ -180,6 +202,12 @@ public enum BestialFeat implements Feat {
         public List<NaturalWeapon> getGrantedNaturalWeapons(final Character character) {
             return List.of(NaturalWeapon.CHIFRES_PODEROSOS);
         }
+
+        /** "Uma Habilidade de Competência de Atletismo." */
+        @Override
+        public List<FeatChoice<?>> resolveRequiredChoices(final Character holder) {
+            return traitChoices(holder, SkillType.ATLETISMO, SkillTraitKind.COMPETENCY_ABILITY);
+        }
     },
 
     /**
@@ -191,15 +219,11 @@ public enum BestialFeat implements Feat {
      */
     // The free Especialização/Habilidade de Competência de Atenção is real, recorded on
     // HerancaBestialFeat — one hook carries both kinds, exactly as this clause offers both.
-    // TODO: Faro Apurado is a Vantagem on Atenção scoped to a narrative purpose ("a partir do
-    //  olfato"), which CLAUDE.md records as unmodellable — this core never tracks what a roll
-    //  is for, so Feat#resolveSkillRollBonus (which is real) has nothing to test. Granting it on
-    //  every Atenção roll would be wider than the clause. Every flat roll bonus in this core is
-    //  a @Modifier method on an ability, and Talentos are outside every ModifierResolver scan.
-    //  Note the scoping alone would not have blocked it: AvianosRacialAbility
-    //  #VISAO_ALEM_DO_ALCANCE grants its own purpose-scoped Atenção Vantagem broadly with the
-    //  simplification documented, following DirigirECavalgarCompetencyAbility#CONTROLAR_ANIMAIS.
-    //  It is the missing hook that blocks this one.
+    // Faro Apurado is real (core 0.1.7.23), with a documented simplification: ⚠️ the Vantagem lands on
+    // every Atenção roll, not only one "para perceber ameaças a partir do olfato" — this core never
+    // tracks what a roll is for (CLAUDE.md, "never tracks what a roll is for"). The same broad reading
+    // AvianosRacialAbility#VISAO_ALEM_DO_ALCANCE and QualidadeFeat#SENTIDO_SUPERIOR_MENOR take of their own
+    // sense-scoped Atenção Vantagem; the Narrador withholds it from a roll no nose could help.
     HERANCA_CANINA(
             "Você recebe +1 de bônus racial em Instinto, Arma Natural Presas Longas e Faro "
                     + "Apurado – Vantagem em rolagens de Atenção para perceber ameaças a partir do "
@@ -217,6 +241,20 @@ public enum BestialFeat implements Feat {
         public List<NaturalWeapon> getGrantedNaturalWeapons(final Character character) {
             return List.of(NaturalWeapon.PRESAS_LONGAS);
         }
+
+        /** Faro Apurado — "Vantagem em rolagens de Atenção" (read broadly; see above). */
+        @Override
+        public int resolveSkillRollBonus(final SkillType skillType, final SceneContext sceneContext,
+                                         final SkillTrait requestedAbility, final Character character) {
+            return skillType == SkillType.ATTENTION ? Skill.ADVANTAGE_BONUS : 0;
+        }
+
+        /** "Uma Especialização e uma Habilidade de Competência de 'Atenção'" — two picks, one of each. */
+        @Override
+        public List<FeatChoice<?>> resolveRequiredChoices(final Character holder) {
+            return traitChoices(holder, SkillType.ATTENTION, SkillTraitKind.SPECIALIZATION,
+                    SkillTraitKind.COMPETENCY_ABILITY);
+        }
     },
 
     /**
@@ -226,11 +264,14 @@ public enum BestialFeat implements Feat {
      * <p>The Gnose +1 is <b>real</b>, through {@link Feat#resolveAttributeBonus}.
      */
     // The free Especialização is real, recorded on HerancaBestialFeat.
-    // TODO: Ecolocalização's GD reduction is *bought with a resource*, which is exactly the shape
-    //  Feat#resolveDifficultyReduction excludes — that hook is for an unconditional reduction, and
-    //  nothing converts a PD spend into a per-roll effect. Contrast GnomoFeat#FAVORITOS_DE_TESLA,
-    //  which is unconditional and therefore real.
-    // TODO: mapping the terrain in Distância Média needs geometry this core never does.
+    // Ecolocalização is real (core 0.1.7.23): the Talento is activated on an Atenção roll
+    // (SkillRoll#getActivatedFeats), which takes -1 nível off its GD (the roll-taking
+    // Feat#resolveDifficultyReduction) and reports 2PD on InteractionResult#getActivationDeterminationCost for
+    // the caller to spend — the Golpe Sobrenatural shape, in PD.
+    // "Você mapeia todo o terreno (sem precisão de detalhes) em Distância Média" is interpretative (table
+    // ruling, 2026-10-17): the Narrador describes what is there. Nothing in this core reveals the map.
+    // The doubled breath under water is real: Feat#resolveSubmergedBreathMultiplier doubles the Rodadas
+    // between Asfixia instances while submerged (AsphyxiaService#getRoundsPerInstance).
     HERANCA_CETACEA(
             "Você recebe +1 de bônus racial no atributo Gnose e a habilidade Ecolocalização – "
                     + "Você pode gastar 2PD para reduzir a GD de testes de Atenção em -1 nível, "
@@ -245,6 +286,39 @@ public enum BestialFeat implements Feat {
         public int resolveAttributeBonus(final AttributeDomain domain, final Character character) {
             return domain == AttributeDomain.GNOSE ? HERANCA_ATTRIBUTE_BONUS : 0;
         }
+
+        /** Ecolocalização is spent on an Atenção roll and nothing else. */
+        @Override
+        public boolean permitsActivation(final SkillType skillType, final SkillRoll skillRoll,
+                                         final AttackSource attackSource, final CombatantSheet holder) {
+            return skillType == SkillType.ATTENTION;
+        }
+
+        /** "Reduzir a GD de testes de Atenção em -1 nível", on the roll it was activated on. */
+        @Override
+        public int resolveDifficultyReduction(final SkillType skillType, final Character character,
+                                              final SceneContext sceneContext, final SkillRoll skillRoll) {
+            return skillType == SkillType.ATTENTION && skillRoll != null && skillRoll.activated(this)
+                    ? ECOLOCALIZACAO_DIFFICULTY_REDUCTION : 0;
+        }
+
+        /** "Você pode gastar 2PD." */
+        @Override
+        public int resolveActivationDeterminationCost(final SkillType skillType) {
+            return skillType == SkillType.ATTENTION ? ECOLOCALIZACAO_COST : 0;
+        }
+
+        /** "Podem permanecer submersos, sem respirar, pelo dobro do tempo." */
+        @Override
+        public int resolveSubmergedBreathMultiplier(final Character character) {
+            return 2;
+        }
+
+        /** "Uma Especialização adicional de 'Persuasão'." */
+        @Override
+        public List<FeatChoice<?>> resolveRequiredChoices(final Character holder) {
+            return traitChoices(holder, SkillType.PERSUASAO, SkillTraitKind.SPECIALIZATION);
+        }
     },
 
     /**
@@ -254,8 +328,8 @@ public enum BestialFeat implements Feat {
      * Arma Natural through {@link NaturalWeapon#GARRAS_AFIADAS}.
      */
     // The free Habilidade de Competência de Furtividade is real, recorded on HerancaBestialFeat.
-    // TODO: see the class
-    //  javadoc. Visão no Escuro additionally needs a vision/senses concept.
+    // TODO: Visão no Escuro needs a vision/senses concept, which this core has none of (the same gap every
+    //  race's Visão no Escuro cites — Anao, Elfo, Indomito).
     HERANCA_FELINA(
             "Receba +1 de bônus racial em Destreza, Visão no Escuro e Arma Natural Garras "
                     + "Afiadas. Bestiais Felinos recebem uma Habilidade de Competência adicional "
@@ -271,6 +345,12 @@ public enum BestialFeat implements Feat {
         @Override
         public List<NaturalWeapon> getGrantedNaturalWeapons(final Character character) {
             return List.of(NaturalWeapon.GARRAS_AFIADAS);
+        }
+
+        /** "Uma Habilidade de Competência adicional de 'Furtividade'." */
+        @Override
+        public List<FeatChoice<?>> resolveRequiredChoices(final Character holder) {
+            return traitChoices(holder, SkillType.FURTIVIDADE, SkillTraitKind.COMPETENCY_ABILITY);
         }
     },
 
@@ -296,6 +376,12 @@ public enum BestialFeat implements Feat {
         @Override
         public int resolveAttributeBonus(final AttributeDomain domain, final Character character) {
             return domain == AttributeDomain.CHARISMA ? HERANCA_ATTRIBUTE_BONUS : 0;
+        }
+
+        /** "Uma Especialização adicional de 'Atletismo'." */
+        @Override
+        public List<FeatChoice<?>> resolveRequiredChoices(final Character holder) {
+            return traitChoices(holder, SkillType.ATLETISMO, SkillTraitKind.SPECIALIZATION);
         }
     },
 
@@ -341,8 +427,8 @@ public enum BestialFeat implements Feat {
     // this one a figure, only MetamorfoseSelvagemActiveAbility changes.
     //
     // "Um animal que pertence a uma categoria de Talento Bestial que você possua" is enforced by
-    // offering the transformation only to a holder of at least one Herança — see
-    // resolveActiveAbilities below. Which animal is flavour: no clause varies by it.
+    // MetamorfoseSelvagemActiveAbility#isUsableBy: activation is refused with no Herança held (core
+    // 0.1.7.23 — before, the comment claimed it and nothing checked). Which animal is flavour.
     METAMORFOSE_SELVAGEM(
             "Você pode gastar 2PD para se transformar em um animal que pertence a uma categoria "
                     + "de Talento Bestial que você possua. Enquanto transformado em animal seu "
@@ -356,10 +442,9 @@ public enum BestialFeat implements Feat {
         private final ActiveAbility transformation = new MetamorfoseSelvagemActiveAbility();
 
         /**
-         * Offered only to a holder of at least one Herança — "um animal que pertence a uma
-         * categoria de Talento Bestial que você possua". With none held there is no animal to
-         * become, so the transformation simply is not among the character's active abilities and
-         * {@code ActiveAbilityService#activate} refuses it as not held.
+         * The transformation, refused to a holder of no Herança by its own {@code
+         * MetamorfoseSelvagemActiveAbility#isUsableBy} — "um animal que pertence a uma categoria de Talento
+         * Bestial que você possua". With none held there is no animal to become.
          */
         @Override
         public List<ActiveAbility> resolveActiveAbilities() {
@@ -417,6 +502,31 @@ public enum BestialFeat implements Feat {
     private static boolean withNaturalWeapon(final Character character, final AttackSource attackSource) {
         return attackSource instanceof Weapon weapon && character.treatsAsNaturalWeapon(weapon);
     }
+
+    /**
+     * The trait picks a Herança owes — one {@link FeatChoice} of one {@link SkillTrait} per kind, in the order given
+     * (Canina's Especialização, then its Habilidade de Competência), each from skill's own traits ({@link
+     * SkillTraitCatalog}) minus those holder already has, since a trait held twice buys nothing. What {@link
+     * HerancaBestialFeat#of(BestialFeat, List)} takes back, in the same order.
+     */
+    static List<FeatChoice<?>> traitChoices(final Character holder, final SkillType skill,
+                                            final SkillTraitKind... kinds) {
+        java.util.Set<SkillTrait> held = new java.util.HashSet<>(holder.getSpecializations(skill));
+        held.addAll(org.aventyrs.core.skill.SkillCompetencyAbility.allFor(holder));
+        List<FeatChoice<?>> choices = new java.util.ArrayList<>();
+        for (SkillTraitKind kind : kinds) {
+            choices.add(FeatChoice.ofOne(SkillTrait.class, SkillTraitCatalog.traitsOf(skill, kind).stream()
+                    .filter(trait -> !held.contains(trait))
+                    .toList()));
+        }
+        return List.copyOf(choices);
+    }
+
+    /** Ecolocalização's "-1 nível". */
+    private static final int ECOLOCALIZACAO_DIFFICULTY_REDUCTION = 1;
+
+    /** Ecolocalização's "gastar 2PD". */
+    private static final int ECOLOCALIZACAO_COST = 2;
 
     /** METAMORFOSE_SELVAGEM's own "+2 nas Defesas". */
     private static final int METAMORFOSE_DEFENSE_BONUS = 2;

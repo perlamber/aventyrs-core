@@ -272,6 +272,13 @@ public class InteractionResult {
     Integer activationManaCost;
 
     /**
+     * PD the Talentos activated on this roll cost ({@code Feat#resolveActivationDeterminationCost} — Herança
+     * Cetácea's Ecolocalização, 2PD, core 0.1.7.23). Reported for the caller to spend, never deducted here. {@code
+     * null} when there is none.
+     */
+    Integer activationDeterminationCost;
+
+    /**
      * How far, in UD, this stage pushes its target back from the attacker — {@code effect.Rugido}'s
      * "Alvo é empurrado 1UD para trás". Reported, never applied: this core holds no positions, so the
      * caller moves the token. {@code null} for everything that pushes nobody.

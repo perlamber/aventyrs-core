@@ -150,9 +150,19 @@ class RacialFeatEffectIntegrationTest {
                 assertTrue(feat.isEligible(character, sheet), String.valueOf(feat));
                 character.grantFeat(feat);
             } else {
-                featService.grantFeat(character, sheet, feat);
+                featService.grantFeat(character, sheet, inheritedForm(character, feat));
             }
         }
+    }
+
+    /** A Herança Bestial in its acquired form, picking the first trait each of its choices offers. */
+    private static Feat inheritedForm(final Character character, final Feat feat) {
+        if (!(feat instanceof BestialFeat heranca) || heranca.resolveRequiredChoices(character).isEmpty()) {
+            return feat;
+        }
+        return HerancaBestialFeat.of(heranca, heranca.resolveRequiredChoices(character).stream()
+                .map(choice -> (org.aventyrs.core.skill.SkillTrait) choice.options().get(0))
+                .toList());
     }
 
     // ---------- Anão ----------

@@ -31,13 +31,18 @@ public class AsphyxiaServiceImpl implements AsphyxiaService {
     }
 
     @Override
-    public void stopBreathing(@NonNull final CombatantSheet sheet) {
+    public void stopBreathing(@NonNull final CombatantSheet sheet, final boolean submerged) {
         // "Os Mortos não precisam … respirar" — the Anatomia de Morto-Vivo (core 0.1.6.23).
         if (sheet.hasUndeadAnatomy()) {
             return;
         }
+        // Herança Anfíbia: "podem respirar dentro e fora d'agua normalmente" (core 0.1.7.23).
+        if (submerged && sheet.getCharacter() != null && sheet.getCharacter().getFeats().stream()
+                .anyMatch(feat -> feat.breathesUnderwater(sheet.getCharacter()))) {
+            return;
+        }
         if (sheet.getAsphyxia().isEmpty()) {
-            sheet.setAsphyxia(Asphyxia.STARTED);
+            sheet.setAsphyxia(submerged ? Asphyxia.STARTED_SUBMERGED : Asphyxia.STARTED);
         }
     }
 
@@ -53,7 +58,15 @@ public class AsphyxiaServiceImpl implements AsphyxiaService {
 
     @Override
     public int getRoundsPerInstance(@NonNull final CombatantSheet sheet) {
-        return Math.max(1, sheet.getAttributeTotal(AttributeDomain.VIGOR));
+        int rounds = Math.max(1, sheet.getAttributeTotal(AttributeDomain.VIGOR));
+        // Herança Cetácea: "podem permanecer submersos, sem respirar, pelo dobro do tempo" (core 0.1.7.23).
+        boolean submerged = sheet.getAsphyxia().map(Asphyxia::submerged).orElse(false);
+        if (submerged && sheet.getCharacter() != null) {
+            rounds *= sheet.getCharacter().getFeats().stream()
+                    .mapToInt(feat -> feat.resolveSubmergedBreathMultiplier(sheet.getCharacter()))
+                    .max().orElse(1);
+        }
+        return rounds;
     }
 
     @Override
@@ -65,14 +78,14 @@ public class AsphyxiaServiceImpl implements AsphyxiaService {
         }
         int rounds = held.breathlessRounds() + 1;
         if (rounds % getRoundsPerInstance(sheet) != 0) {
-            sheet.setAsphyxia(new Asphyxia(rounds, held.instancesSuffered()));
+            sheet.setAsphyxia(held.advanced(rounds, held.instancesSuffered()));
             return new AsphyxiaTick(rounds, 0, 0, 0, false, false);
         }
         int instance = held.instancesSuffered() + 1;
         if (instance >= LETHAL_INSTANCE) {
             sheet.applyCurseDamage(LETHAL_DAMAGE_MULTIPLIER
                     * hitPointsService.getMaxHitPoints(sheet.getCharacter(), sheet));
-            sheet.setAsphyxia(new Asphyxia(rounds, instance));
+            sheet.setAsphyxia(held.advanced(rounds, instance));
             return new AsphyxiaTick(rounds, instance, 0, 0, false, true);
         }
         if (dice == null) {
@@ -86,7 +99,7 @@ public class AsphyxiaServiceImpl implements AsphyxiaService {
             sheet.removeCondition(ConditionType.FERIDAS_DOLOROSAS);
             sheet.applyEffectUntilRest(new Condition(ConditionType.FERIDAS_DOLOROSAS, null), PAINFUL_WOUNDS_UNTIL);
         }
-        sheet.setAsphyxia(new Asphyxia(rounds, instance));
+        sheet.setAsphyxia(held.advanced(rounds, instance));
         return new AsphyxiaTick(rounds, instance, count, damage, painful, false);
     }
 }

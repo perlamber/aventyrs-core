@@ -63,6 +63,15 @@ final class MetamorfoseSelvagemActiveAbility implements ActiveAbility {
         return null;
     }
 
+    /**
+     * "Um animal que pertence a uma categoria de Talento Bestial que você possua": with no Herança held there is no
+     * animal to become, so {@code ActiveAbilityService#activate} refuses it before anything is paid (core 0.1.7.23).
+     */
+    @Override
+    public boolean isUsableBy(final org.aventyrs.core.sheet.CombatantSheet activator) {
+        return activator.getCharacter() != null && BestialFeat.heldHerancas(activator.getCharacter()) > 0;
+    }
+
     @Override
     public FormType resolveGrantedForm(final Character character) {
         return FormType.ANIMAL;

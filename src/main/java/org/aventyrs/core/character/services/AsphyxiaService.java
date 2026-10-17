@@ -24,8 +24,18 @@ public interface AsphyxiaService {
     /** "Na sexta instância … morte instantânea". */
     int LETHAL_INSTANCE = 6;
 
-    /** Breathing stops; a combatant already without air keeps its count. */
-    void stopBreathing(CombatantSheet sheet);
+    /** Breathing stops out of the water (a gas, strangling); a combatant already without air keeps its count. */
+    default void stopBreathing(CombatantSheet sheet) {
+        stopBreathing(sheet, false);
+    }
+
+    /**
+     * Breathing stops — submerged when the air is lost under water. A holder of a Talento that breathes under water
+     * ({@code Feat#breathesUnderwater} — Herança Anfíbia) is left alone when submerged, and a submerged count is the
+     * one a held {@code Feat#resolveSubmergedBreathMultiplier} stretches (Herança Cetácea). A combatant already
+     * without air keeps its count (core 0.1.7.23).
+     */
+    void stopBreathing(CombatantSheet sheet, boolean submerged);
 
     /** Breathing again — "encerrando assim o ciclo de asfixia". */
     void breathe(CombatantSheet sheet);
@@ -33,7 +43,10 @@ public interface AsphyxiaService {
     /** Whether sheet is currently without air. */
     boolean isBreathless(CombatantSheet sheet);
 
-    /** How many Rodadas pass between two instances for sheet — its Vigor, at least 1. */
+    /**
+     * How many Rodadas pass between two instances for sheet — its Vigor, at least 1, times the largest held {@code
+     * Feat#resolveSubmergedBreathMultiplier} while the air was lost under water.
+     */
     int getRoundsPerInstance(CombatantSheet sheet);
 
     /**
