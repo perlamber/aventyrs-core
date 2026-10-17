@@ -293,7 +293,8 @@ class FeatRequirementsGateTest {
     }
 
     /**
-     * Every Atributo clause reads Base plus the race's Bônus Racial (table ruling, 2026-10-09) —
+     * Every Atributo clause reads Base plus the race's Bônus Racial (table ruling, 2026-10-09; Talento grants too —
+     * see the next test) —
      * Vitalidade's "Vigor 4" is met by Base 3 with a racial +1, dictated or chosen alike; a
      * Variável bonus still doesn't count.
      */
@@ -310,6 +311,28 @@ class FeatRequirementsGateTest {
         assertTrue(featRequiring(FeatRequirements.builder().requiredAnyAttributeValue(4).build()).isEligible(dictated));
         assertFalse(featRequiring(FeatRequirements.builder()
                 .maximumAttributeDomain(AttributeDomain.VIGOR).maximumAttributeValue(3).build()).isEligible(dictated));
+    }
+
+    /**
+     * And a held Talento's permanent Atributo grant counts too (table ruling, 2026-10-17): Herança Anfíbia's "+1 de
+     * bônus racial em Vigor" lifts Base 3 to Vitalidade's "Vigor 4", and past a ceiling of 3.
+     */
+    @Test
+    void attributeClausesCountATalentosAtributoGrant() {
+        Feat anfibia = HerancaBestialFeat.of(BestialFeat.HERANCA_ANFIBIA,
+                org.aventyrs.core.skill.SkillTraitCatalog.competencyAbilitiesOf(
+                        org.aventyrs.core.skill.SkillType.FURTIVIDADE).get(0));
+        Character inherited = character()
+                .attributes(CharacterAttributes.builder()
+                        .vigor(AttributeValue.builder().domain(AttributeDomain.VIGOR).base(3).build()).build())
+                .feats(new ArrayList<>(List.of(anfibia)))
+                .build();
+
+        assertEquals(4, inherited.getPrerequisiteAttributeValue(AttributeDomain.VIGOR));
+        assertTrue(SobrevivenciaFeat.VITALIDADE.isEligible(inherited));
+        assertTrue(featRequiring(FeatRequirements.builder().requiredAnyAttributeValue(4).build()).isEligible(inherited));
+        assertFalse(featRequiring(FeatRequirements.builder()
+                .maximumAttributeDomain(AttributeDomain.VIGOR).maximumAttributeValue(3).build()).isEligible(inherited));
     }
 
     private static Character withVigor(final AttributeValue.AttributeValueBuilder vigor) {

@@ -398,7 +398,7 @@ the racial catalog. **Built in batch 6** for the Perícia-roll path (every `Best
 Conjuração, Rest, `EsquivaEApararInteraction`, `ItemRequirements`, `SpellDurationService`, the
 half-Atributo effect maths, the melee ½-Força dano term. `getBase()` readers (Graduação cap,
 Habilidade slot count) deliberately stay put, and `FeatRequirements` reads Base + the race's
-Bônus Racial (`getBaseWithRacialBonus()`, 0.1.6) — still no Talento grant; `AbstractSkillInteraction`
+Bônus Racial and the held Talentos' grants (`Character#getPrerequisiteAttributeValue`, 0.1.7.24); `AbstractSkillInteraction`
 keeps its equivalent inline sum (routing `getValueForRoll` would double-count). So
 `HERANCA_ANFIBIA`'s Vigor +1 — once "computed but unobservable" — now moves max PV.
 `HERANCA_CANINA`'s *Faro Apurado* clause remains withheld: it is purpose-scoped ("a partir do

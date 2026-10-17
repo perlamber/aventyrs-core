@@ -202,14 +202,14 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
     private static boolean satisfies(final FeatRequirements requirements, final Character character,
                                       final CharacterSheet sheet) {
         boolean attributeSatisfied = requirements.attributeDomain() == null
-                || character.getAttributes().getAttribute(requirements.attributeDomain()).getBaseWithRacialBonus()
+                || character.getPrerequisiteAttributeValue(requirements.attributeDomain())
                         >= requirements.requiredAttributeValue();
 
         // A *maximum* — the clause the character must stay under ("Força igual ou inferior à 2").
         // Its own pair of fields rather than a signed reuse of the minimum: a Talento naming both
         // names two different Atributos.
         boolean attributeMaximumSatisfied = requirements.maximumAttributeDomain() == null
-                || character.getAttributes().getAttribute(requirements.maximumAttributeDomain()).getBaseWithRacialBonus()
+                || character.getPrerequisiteAttributeValue(requirements.maximumAttributeDomain())
                         <= requirements.maximumAttributeValue();
 
         boolean anyAttributeSatisfied = requirements.requiredAnyAttributeValue() <= 0
@@ -316,7 +316,7 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
     }
 
     /**
-     * Whether some Atributo's Base plus Bônus Racial reaches value — the "Atributo 3 ou Superior" shape,
+     * Whether some Atributo's prerequisite value ({@code Character#getPrerequisiteAttributeValue}) reaches value — the "Atributo 3 ou Superior" shape,
      * which names no domain. When racialBonusOnly, only Atributos actually receiving a Bônus
      * Racial count, which is the narrower clause {@code MonstruosoFeat#ALFA} names.
      */
@@ -324,7 +324,8 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
                                                 final boolean racialBonusOnly) {
         for (AttributeDomain domain : AttributeDomain.values()) {
             AttributeValue attribute = character.getAttributes().getAttribute(domain);
-            if (attribute.getBaseWithRacialBonus() >= value && (!racialBonusOnly || attribute.getRacialBonus() > 0)) {
+            if (character.getPrerequisiteAttributeValue(domain) >= value
+                    && (!racialBonusOnly || attribute.getRacialBonus() > 0)) {
                 return true;
             }
         }
@@ -1988,8 +1989,8 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
      * half-Atributo effect maths, the melee ½-Força dano term. It does <b>not</b> reach {@code
      * AttributeValue#getBase()} readers — the Graduação cap, the Habilidade slot count, {@code
      * CharacterAttributeService#upgradeBase} — which gate on invested base, nor {@code
-     * FeatRequirements}, which reads {@code AttributeValue#getBaseWithRacialBonus()} (the race's
-     * own Bônus Racial, never a Talento's grant). Zero by default.
+     * FeatRequirements}, which reads {@code Character#getPrerequisiteAttributeValue} — Base, the
+     * race's Bônus Racial <em>and</em> this grant (table ruling, 2026-10-17). Zero by default.
      *
      * <p>Only for a <b>fixed</b> Atributo. A clause of the "escolha um Atributo" shape grants
      * {@code AtributoRacialEscolhidoFeat} in place of the constant ({@code HumanoFeat

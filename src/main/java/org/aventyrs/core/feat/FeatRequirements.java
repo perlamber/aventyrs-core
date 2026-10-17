@@ -37,11 +37,12 @@ import java.util.Set;
  * FeatService#grantFeat} always has the sheet, so the authoritative check never skips anything.
  *
  * @param attributeDomain           which Attribute {@code requiredAttributeValue} tests, unset
- *                                  to skip. Tests {@code AttributeValue#getBaseWithRacialBonus()}
- *                                  — the invested Base plus the race's Bônus Racial (table
- *                                  ruling, 2026-10-09; before 0.1.6 it was Base alone), not
- *                                  {@code getTotal()}: a Variável bonus or a Talento's own
- *                                  Atributo grant never counts, deliberately unlike {@code
+ *                                  to skip. Tests {@code Character#getPrerequisiteAttributeValue}
+ *                                  — the invested Base, the race's Bônus Racial (table ruling,
+ *                                  2026-10-09; before 0.1.6 it was Base alone) and every held
+ *                                  Talento's Atributo grant (table ruling, 2026-10-17, core
+ *                                  0.1.7.24), not {@code getTotal()}: a Variável bonus, Equipamento
+ *                                  or a round-scoped bonus never counts, deliberately unlike {@code
  *                                  org.aventyrs.core.item.ItemRequirements}. Every Atributo
  *                                  clause below reads the same figure.
  * @param requiredAttributeValue    minimum Base + Bônus Racial of {@code attributeDomain}.

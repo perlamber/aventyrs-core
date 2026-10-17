@@ -64,9 +64,8 @@ import org.aventyrs.core.race.Bestial;
  * </ul>
  *
  * <p>The prerequisite ladder is enforced: {@link #ACEITAR_A_LACERTO} counts three held Heranças through {@code
- * FeatRequirements#requiredFeatCategory}. ⚠️ The Heranças' "+1 de bônus racial" does <b>not</b> count toward another
- * Talento's Atributo Pré-requisito: {@code FeatRequirements} reads Base plus the race's own Bônus Racial (table
- * ruling, 2026-10-09), and a Talento grant is neither.
+ * FeatRequirements#requiredFeatCategory}. The Heranças' "+1 de bônus racial" <b>does</b> count toward another
+ * Talento's Atributo Pré-requisito ({@code Character#getPrerequisiteAttributeValue}, table ruling 2026-10-17).
  */
 public enum BestialFeat implements Feat {
 

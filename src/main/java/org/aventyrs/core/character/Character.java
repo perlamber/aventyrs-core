@@ -419,6 +419,18 @@ public class Character {
     }
 
     /**
+     * The Atributo a Talento Pré-requisito reads (table rulings 2026-10-09 and 2026-10-17): the invested Base, the
+     * race's Bônus Racial, and every held Talento's permanent grant ({@code Feat#resolveAttributeBonus} — a Herança
+     * Bestial's "+1 de bônus racial", Mestre Vampiro's). The Variável part, Equipamento and any round-scoped bonus
+     * stay out: a Pré-requisito asks what the character <i>is</i>, not what it carries or what is running right now.
+     * Read by {@code Feat#isEligible} for every Atributo clause and by Prodígio's floor.
+     */
+    public int getPrerequisiteAttributeValue(final AttributeDomain domain) {
+        return attributes.getAttribute(domain).getBaseWithRacialBonus()
+                + getFeats().stream().mapToInt(feat -> feat.resolveAttributeBonus(domain, this)).sum();
+    }
+
+    /**
      * The Atributo the worn Equipamento adds right now — a bound Pedra do Poder's Efeito Base ("Vigor +1", "Destreza
      * +1"), typed as that Atributo's {@code <ATTR>_BONUS} on the stone ({@code PowerStoneType}). Summed into {@link
      * #getEffectiveAttributeTotal(AttributeDomain, org.aventyrs.core.sheet.CombatantSheet)}, and read on its own by the

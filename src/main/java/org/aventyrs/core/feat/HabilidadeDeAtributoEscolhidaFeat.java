@@ -79,14 +79,14 @@ public final class HabilidadeDeAtributoEscolhidaFeat extends AbstractFeat {
         return new HabilidadeDeAtributoEscolhidaFeat(talento, chosenAbility);
     }
 
-    /** Prodígio's floor: Base + Bônus Racial ≥ 2. */
+    /** Prodígio's floor: the prerequisite value (Base + Bônus Racial + Talento grants) ≥ 2. */
     static final int PRODIGIO_ATTRIBUTE_FLOOR = 2;
 
     /** Whether domain may supply talento's Habilidade: Prodígio's Base 2 floor, else a first slot's base. */
     static boolean meetsFloor(final Character holder, final DestinoFeat talento, final AttributeDomain domain) {
         var value = holder.getAttributes().getAttribute(domain);
         return talento == DestinoFeat.PRODIGIO
-                ? value.getBaseWithRacialBonus() >= PRODIGIO_ATTRIBUTE_FLOOR
+                ? holder.getPrerequisiteAttributeValue(domain) >= PRODIGIO_ATTRIBUTE_FLOOR
                 : value.getBase() >= AttributeAbilityService.FIRST_ABILITY_ATTRIBUTE_BASE;
     }
 
