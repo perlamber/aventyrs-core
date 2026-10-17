@@ -150,4 +150,10 @@ public class Condition extends TemporaryEffect {
         Range distance = sceneContext.getDistanceTo(source);
         return distance != null && distance.isWithin(within);
     }
+
+    /** A Condição harms its holder unless it is Escondido — {@link ConditionType#isHarmful()}. */
+    @Override
+    public boolean isHarmful() {
+        return getType().isHarmful();
+    }
 }

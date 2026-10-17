@@ -599,7 +599,10 @@ public class Character {
     @Builder.Default
     protected Map<RegaliaGrade, Integer> regaliasCraftedByGrade = new EnumMap<>(RegaliaGrade.class);
 
-    @NonNull
+    /**
+     * The Perfil de Ação picked at creation — {@code null} for a foe whose stat block names none ({@code
+     * MonsterTemplate#DEFAULT_ACTION_PROFILE}), which every reader treats as no adjustment and no exemption.
+     */
     protected ActionProfile actionProfile;
 
     /**
@@ -763,6 +766,22 @@ public class Character {
         return getRace() != null
                 && getRace().isImmuneToEnchantments()
                 && getFeats().stream().noneMatch(Feat::suppressesEnchantmentImmunity);
+    }
+
+    /**
+     * The Categoria de Peso weightClass counts as <em>for this character's benefit</em> — one lighter per {@code
+     * AttributeAbility#resolveCarriedWeightClassShift} ({@code StrengthAbility#BESTA_DE_CARGA}: "Pesados são
+     * considerados Médios, Médios são considerados Leves"), never below Leve. "Não muda a Categoria Base do
+     * Equipamento": read only where lighter is better — the Destreza burden on Esquiva e Aparar, the two-hand budget,
+     * and the Talentos asking for a Leve weapon — never by Especializações, the Aprimoramento cap or a clause rewarding
+     * a heavy one.
+     */
+    public org.aventyrs.core.item.ItemWeightClass carriedWeightClassOf(
+            @NonNull final org.aventyrs.core.item.ItemWeightClass weightClass) {
+        int shift = getAttributeAbilities().stream()
+                .mapToInt(org.aventyrs.core.ability.AttributeAbility::resolveCarriedWeightClassShift)
+                .sum();
+        return shift == 0 ? weightClass : weightClass.adjustedBy(-shift);
     }
 
     /**

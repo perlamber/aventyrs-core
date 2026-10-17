@@ -66,7 +66,7 @@ public class AutocontroleEgoServiceImpl implements AutocontroleEgoService {
     @Override
     public int recoverAsLongRest(@NonNull final CombatantSheet sheet) {
         pay(sheet, EgoPointType.TEMPORARY);
-        return recover(sheet, RestType.LONGO, restService.getRecoveredHitPoints(sheet.getCharacter(), RestType.LONGO));
+        return recover(sheet, RestType.LONGO, restService.getRecoveredHitPoints(sheet.getCharacter(), RestType.LONGO, org.aventyrs.core.rest.RecoveryOrigin.EQUIVALENTE));
     }
 
     @Override
@@ -99,8 +99,8 @@ public class AutocontroleEgoServiceImpl implements AutocontroleEgoService {
 
     /** PM and PD as restType gives, and hitPoints PV — healed as an Ego spend, so the fallen limits apply. */
     private int recover(final CombatantSheet sheet, final RestType restType, final int hitPoints) {
-        sheet.recoverMagicPoints(restService.getRecoveredMagicPoints(sheet.getCharacter(), restType));
-        sheet.recoverDeterminationPoints(restService.getRecoveredDeterminationPoints(sheet.getCharacter(), restType));
+        sheet.recoverMagicPoints(restService.getRecoveredMagicPoints(sheet.getCharacter(), restType, org.aventyrs.core.rest.RecoveryOrigin.EQUIVALENTE));
+        sheet.recoverDeterminationPoints(restService.getRecoveredDeterminationPoints(sheet.getCharacter(), restType, org.aventyrs.core.rest.RecoveryOrigin.EQUIVALENTE));
         int before = sheet.getDamageTaken();
         sheet.heal(hitPoints, HealingSource.egoSpend(sheet.getCharacter().getEgoAdvantage(EgoDomain.AUTOCONTROLE), sheet));
         return before - sheet.getDamageTaken();

@@ -76,8 +76,19 @@ public interface MovementReactionService {
      * — the charge's target cannot Defender o Perímetro — unless a Talento it holds lets it react
      * anyway. chargeTarget is ignored for any other manoeuvre, and {@code null} names nobody.
      */
+    default List<CombatantSheet> getProvokedReactors(CombatantSheet mover, SceneContext sceneContext,
+                                                     Manoeuvre manoeuvre, CombatantSheet chargeTarget) {
+        return getProvokedReactors(mover, sceneContext, manoeuvre, chargeTarget, null);
+    }
+
+    /**
+     * Same as the four-argument form, judged where a movement starts: progress names which movement of the Rodada
+     * this is, so a window over its first hexes ({@code ActionProfile#resolveReactionFreeSteps}) that has not yet
+     * closed exempts the snapshot. {@code null} is "not told", which exempts nothing.
+     */
     List<CombatantSheet> getProvokedReactors(CombatantSheet mover, SceneContext sceneContext, Manoeuvre manoeuvre,
-                                             CombatantSheet chargeTarget);
+                                             CombatantSheet chargeTarget,
+                                             org.aventyrs.core.action.MovementProgress progress);
 
     /**
      * Where along route the movement provokes Defender o Perímetro, and from whom (core 0.1.6.17; table ruling
@@ -102,11 +113,41 @@ public interface MovementReactionService {
      * it here. A hostile in knownReachUd threatens a position whose gap is within that figure; any other is judged by
      * the weapons on its sheet.
      */
+    default java.util.List<org.aventyrs.core.action.ReactionCheckpoint> getRouteCheckpoints(
+            CombatantSheet mover, java.util.List<org.aventyrs.core.scene.grid.BoardPosition> route, Manoeuvre manoeuvre,
+            SceneContext moverContext,
+            java.util.Map<CombatantSheet, org.aventyrs.core.scene.grid.BoardPosition> positions,
+            CombatantSheet chargeTarget, java.util.Map<CombatantSheet, Integer> knownReachUd) {
+        return getRouteCheckpoints(mover, route, manoeuvre, moverContext, positions, chargeTarget, knownReachUd, null);
+    }
+
+    /**
+     * The same, told where the route begins among the mover's movements this Rodada, so a window over a movement's
+     * first hexes applies ({@code ActionProfile#resolveReactionFreeSteps} — Consciência Defensiva's first 2UD of the
+     * first movement; table rulings 2026-10-16). Step k of the route goes from position k-1 to position k, and the
+     * first f steps still inside the window provoke nothing. A position provokes for the step into it or the step
+     * out of it, so a hostile reacts at the first position its reach covers from index f on — the mover pausing
+     * there before its first unexempt step — and a route ending at index f, or before it, provokes nothing in the
+     * window. A hostile whose reach covered only exempt positions does not react. {@code null} progress is "not
+     * told", which opens no window.
+     */
     java.util.List<org.aventyrs.core.action.ReactionCheckpoint> getRouteCheckpoints(
             CombatantSheet mover, java.util.List<org.aventyrs.core.scene.grid.BoardPosition> route, Manoeuvre manoeuvre,
             SceneContext moverContext,
             java.util.Map<CombatantSheet, org.aventyrs.core.scene.grid.BoardPosition> positions,
-            CombatantSheet chargeTarget, java.util.Map<CombatantSheet, Integer> knownReachUd);
+            CombatantSheet chargeTarget, java.util.Map<CombatantSheet, Integer> knownReachUd,
+            org.aventyrs.core.action.MovementProgress progress);
+
+    /**
+     * The hostiles whose melee reach covers subject where it stands — no movement involved, so no movement exemption
+     * applies (a Reposicionar, Implacável, Posicionamento Estratégico, Consciência Defensiva). What an action taken
+     * in place asks: Impedir Conjuração's {@code ENEMY_CASTS_IN_REACH}. Same reach rules and knownReachUd as
+     * {@link #getRouteCheckpoints}; empty with no context.
+     */
+    List<CombatantSheet> getHostilesInReach(CombatantSheet subject, org.aventyrs.core.scene.grid.BoardPosition at,
+                                            SceneContext subjectContext,
+                                            java.util.Map<CombatantSheet, org.aventyrs.core.scene.grid.BoardPosition> positions,
+                                            java.util.Map<CombatantSheet, Integer> knownReachUd);
 
     /**
      * How far sheet's melee reach extends, in UD, from the weapons it holds ready — drawn ones and Armas Naturais

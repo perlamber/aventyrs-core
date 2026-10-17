@@ -44,7 +44,12 @@ public class ObjectAttackServiceImpl implements ObjectAttackService {
                     rolled.result());
         }
         // "reduzidos à metade (efeito de Meio-Dano)", then the item's own reductions.
-        int landed = item.applyDamage(Math.max(0, rawDamage) / 2);
+        // Estilhaçador's Vantagem em Danos contra objetos, on a roll Força governed.
+        org.aventyrs.core.character.AttributeDomain governing = rolled.result().getGoverningAttributeDomain();
+        int objectBonus = attacker.getCharacter().getAttributeAbilities().stream()
+                .mapToInt(ability -> ability.resolveObjectDamageBonus(governing))
+                .sum();
+        int landed = item.applyDamage(Math.max(0, rawDamage + objectBonus) / 2);
         boolean disarmed = false;
         if (rolled.total() - required >= effectChainService.getRequiredMargin(attacker, null, target, null)
                 && !item.isDestroyed()) {

@@ -156,7 +156,7 @@ final class MonsterAuraLedger {
             for (CombatantSheet target : covered(holder, aura, holderContext)) {
                 int ud = target == holder ? 0 : distanceOf(target, holderContext, distanceUd);
                 int heal = pulse.healAsRest() == null ? 0
-                        : new RestServiceImpl().getRecoveredHitPoints(target.getCharacter(), pulse.healAsRest());
+                        : new RestServiceImpl().getRecoveredHitPoints(target.getCharacter(), pulse.healAsRest(), org.aventyrs.core.rest.RecoveryOrigin.EQUIVALENTE);
                 hits.add(new AuraHit(target, target == holder ? 0 : pulse.damageAt(rolled, ud), pulse.descriptor(),
                         heal, target == holder ? List.of() : pulse.conditions(), pulse.conditionRounds(),
                         target == holder ? 0 : pulse.autocontroleLoss(),

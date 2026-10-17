@@ -59,7 +59,8 @@ public class ReactionsServiceImpl implements ReactionsService {
         for (org.aventyrs.core.feat.Feat feat : character.getFeats()) {
             baseline += feat.resolveReactionsIncrease(character, sceneContext);
         }
-        return Math.max(0, character.getActionProfile().adjustReactions(baseline, turnNumber, sceneContext));
+        org.aventyrs.core.action.ActionProfile profile = character.getActionProfile();
+        return Math.max(0, profile == null ? baseline : profile.adjustReactions(baseline, turnNumber, sceneContext));
     }
 
     /**

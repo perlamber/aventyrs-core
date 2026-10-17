@@ -170,9 +170,9 @@
  * <h2>Creating a foe instead</h2>
  *
  * None of the above applies to a monster. It has no player, allocates no points, picks no
- * Vantagens de Ego and no {@code ActionProfile} of its own (it carries {@code
- * MonsterTemplate.DEFAULT_ACTION_PROFILE}, the one profile that adjusts none of the three
- * counters, unless its stat block says otherwise) — its stats come from {@code
+ * Vantagens de Ego and no {@code ActionProfile} of its own ({@code
+ * MonsterTemplate.DEFAULT_ACTION_PROFILE} is {@code null} — no adjustment, no exemption — unless
+ * its stat block says otherwise) — its stats come from {@code
  * criacao-de-monstros.txt}'s own budgets and ceilings, not the ones step 2 enforces. Build one
  * through {@code org.aventyrs.core.monster.MonsterBlueprint} instead:
  *

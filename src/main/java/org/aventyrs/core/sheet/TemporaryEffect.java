@@ -90,6 +90,17 @@ public abstract class TemporaryEffect {
         return null;
     }
 
+    /**
+     * Whether this is a harmful effect on its holder — what {@code VigorAbility#RECUPERACAO_ASSOMBROSA} caps at 3
+     * Rodadas, and the split the client's status panel draws between buffs and debuffs (table ruling, 2026-10-16).
+     * By default, a harmful continuous effect ({@link #getContinuousNature()} — Sangramento, Purga-Mana, Definhar,
+     * Veneno…). Overridden by {@link Condition} (every Condição but Escondido), {@link TemporaryBonus} (a malus), and
+     * every harmful {@link Enchantment}.
+     */
+    public boolean isHarmful() {
+        return getContinuousNature() != null;
+    }
+
     /** True once a finite effect has no Rodadas left — an open-ended one never expires this way. */
     public boolean isExpired() {
         return remainingRounds != null && remainingRounds <= 0;

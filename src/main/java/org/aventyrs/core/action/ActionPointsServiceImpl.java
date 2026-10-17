@@ -32,8 +32,9 @@ public class ActionPointsServiceImpl implements ActionPointsService {
 
     @Override
     public int getMaxActionPoints(final Character character, final int turnNumber) {
-        return Math.max(0, character.getActionProfile()
-                .adjustActionPoints(actionPointsBeforeProfile(character, turnNumber), turnNumber));
+        int baseline = actionPointsBeforeProfile(character, turnNumber);
+        ActionProfile profile = character.getActionProfile();
+        return Math.max(0, profile == null ? baseline : profile.adjustActionPoints(baseline, turnNumber));
     }
 
     @Override
@@ -65,7 +66,8 @@ public class ActionPointsServiceImpl implements ActionPointsService {
                 && sheet.hasEgoSetback(org.aventyrs.core.ego.EgoSetback.FRAQUEZA)) {
             baseline -= 1;
         }
-        return Math.max(0, character.getActionProfile().adjustActionPoints(baseline, turnNumber, sceneContext));
+        ActionProfile profile = character.getActionProfile();
+        return Math.max(0, profile == null ? baseline : profile.adjustActionPoints(baseline, turnNumber, sceneContext));
     }
 
     /**
@@ -113,8 +115,9 @@ public class ActionPointsServiceImpl implements ActionPointsService {
     @Override
     public int getSkillRollCost(final Character character, final int turnNumber) {
         int adjustment = modifierResolver.sumModifiers(character.getAttributeAbilities(), ModifierType.SKILL_ROLL_COST);
-        int adjusted = character.getActionProfile()
-                .adjustSkillRollCost(DEFAULT_SKILL_ROLL_COST + adjustment, turnNumber);
+        ActionProfile profile = character.getActionProfile();
+        int cost = DEFAULT_SKILL_ROLL_COST + adjustment;
+        int adjusted = profile == null ? cost : profile.adjustSkillRollCost(cost, turnNumber);
         return Math.max(0, adjusted);
     }
 
@@ -155,6 +158,31 @@ public class ActionPointsServiceImpl implements ActionPointsService {
     public ActionCost getSkillRollCost(final CombatantSheet roller, final SkillType skill,
                                        final Set<Feat> activatedFeats, final int turnNumber,
                                        final SceneContext sceneContext) {
+        return getSkillRollCost(roller, skill, activatedFeats, turnNumber, sceneContext, false);
+    }
+
+    @Override
+    public int getBoughtReductionCost(final CombatantSheet roller, final SkillType skill) {
+        org.aventyrs.core.character.AttributeDomain governing = skill.newSkillInstance().getAttributeDomain();
+        int cost = roller.getCharacter().getAttributeAbilities().stream()
+                .filter(ability -> ability.resolveBoughtSkillRollActionPointReduction(governing) > 0)
+                .mapToInt(org.aventyrs.core.ability.AttributeAbility::resolveBoughtSkillRollDeterminationCost)
+                .min().orElse(0);
+        return cost > 0 && new org.aventyrs.core.character.services.DeterminationPointsServiceImpl()
+                .getCurrentDeterminationPoints(roller.getCharacter(), roller) >= cost ? cost : 0;
+    }
+
+    @Override
+    public ActionCost getSkillRollCost(final CombatantSheet roller, final SkillType skill,
+                                       final Set<Feat> activatedFeats, final int turnNumber,
+                                       final SceneContext sceneContext, final boolean buyReduction) {
+        // Voz de Ouro's bought -1PA rides the reductions, so it too stops at 1PA.
+        int bought = buyReduction && getBoughtReductionCost(roller, skill) > 0
+                ? roller.getCharacter().getAttributeAbilities().stream()
+                        .mapToInt(ability -> ability.resolveBoughtSkillRollActionPointReduction(
+                                skill.newSkillInstance().getAttributeDomain()))
+                        .max().orElse(0)
+                : 0;
         Set<Feat> spent = activatedFeats == null ? Set.of() : activatedFeats;
         List<Feat> held = roller.getCharacter().getFeats();
         Integer override = lowest(held.stream()
@@ -162,8 +190,10 @@ public class ActionPointsServiceImpl implements ActionPointsService {
         return price(roller, skill, spent, turnNumber, sceneContext, override, java.util.stream.IntStream.concat(
                 held.stream().mapToInt(feat -> feat.resolveSkillRollActionPointAdjustment(skill, roller, spent, sceneContext)),
                 // Bom Doutor's -1PA with a kit in hand.
-                org.aventyrs.core.skill.SkillCompetencyAbility.allFor(roller.getCharacter(), roller).stream()
-                        .mapToInt(ability -> ability.resolveSkillRollActionPointAdjustment(skill, roller))));
+                java.util.stream.IntStream.concat(
+                        org.aventyrs.core.skill.SkillCompetencyAbility.allFor(roller.getCharacter(), roller).stream()
+                                .mapToInt(ability -> ability.resolveSkillRollActionPointAdjustment(skill, roller)),
+                        bought > 0 ? java.util.stream.IntStream.of(-bought) : java.util.stream.IntStream.empty())));
     }
 
     private static Integer lowest(final java.util.stream.Stream<Integer> overrides) {

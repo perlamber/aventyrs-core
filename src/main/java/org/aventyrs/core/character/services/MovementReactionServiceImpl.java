@@ -1,5 +1,7 @@
 package org.aventyrs.core.character.services;
 
+import org.aventyrs.core.action.ActionProfile;
+import org.aventyrs.core.action.MovementProgress;
 import org.aventyrs.core.action.ReactionCheckpoint;
 import org.aventyrs.core.scene.grid.BoardPosition;
 import org.aventyrs.core.scene.grid.HexGrid;
@@ -37,8 +39,10 @@ public class MovementReactionServiceImpl implements MovementReactionService {
     public List<CombatantSheet> getProvokedReactors(@NonNull final CombatantSheet mover,
                                                      final SceneContext sceneContext,
                                                      final Manoeuvre manoeuvre,
-                                                     final CombatantSheet chargeTarget) {
-        if (sceneContext == null || isExempt(mover.getCharacter(), manoeuvre, sceneContext)) {
+                                                     final CombatantSheet chargeTarget,
+                                                     final MovementProgress progress) {
+        if (sceneContext == null || isExempt(mover.getCharacter(), manoeuvre, sceneContext)
+                || reactionFreeSteps(mover.getCharacter(), manoeuvre, progress) > 0) {
             return List.of();
         }
         List<CombatantSheet> reactors = new ArrayList<>();
@@ -78,10 +82,61 @@ public class MovementReactionServiceImpl implements MovementReactionService {
                                                         final Manoeuvre manoeuvre, final SceneContext moverContext,
                                                         @NonNull final Map<CombatantSheet, BoardPosition> positions,
                                                         final CombatantSheet chargeTarget,
-                                                        @NonNull final Map<CombatantSheet, Integer> knownReachUd) {
+                                                        @NonNull final Map<CombatantSheet, Integer> knownReachUd,
+                                                        final MovementProgress progress) {
         if (moverContext == null || route.isEmpty() || isExempt(mover.getCharacter(), manoeuvre, moverContext)) {
             return List.of();
         }
+        return checkpoints(mover, route, manoeuvre, moverContext, positions, chargeTarget, knownReachUd,
+                firstProvokingIndex(route, reactionFreeSteps(mover.getCharacter(), manoeuvre, progress)));
+    }
+
+    @Override
+    public List<CombatantSheet> getHostilesInReach(@NonNull final CombatantSheet subject, @NonNull final BoardPosition at,
+                                                   final SceneContext subjectContext,
+                                                   @NonNull final Map<CombatantSheet, BoardPosition> positions,
+                                                   @NonNull final Map<CombatantSheet, Integer> knownReachUd) {
+        if (subjectContext == null) {
+            return List.of();
+        }
+        return checkpoints(subject, List.of(at), null, subjectContext, positions, null, knownReachUd, 0).stream()
+                .flatMap(checkpoint -> checkpoint.reactors().stream())
+                .toList();
+    }
+
+    /**
+     * The route's first position that may provoke once freeSteps of its steps are exempt: step k enters position k,
+     * and a position provokes for the step into it or the step out of it. So index freeSteps provokes unless the
+     * route ends there, and a route no longer than the window yields an index past its end — nobody reacts.
+     */
+    private static int firstProvokingIndex(final List<BoardPosition> route, final int freeSteps) {
+        if (freeSteps <= 0) {
+            return 0;
+        }
+        int last = route.size() - 1;
+        return freeSteps < last ? freeSteps : route.size();
+    }
+
+    /**
+     * How many of this movement's steps still sit inside the mover's Perfil de Ação window ({@code
+     * ActionProfile#resolveReactionFreeSteps}), less what progress says was travelled already; 0 when not told, when
+     * the act is not a movement, or for a combatant with no Perfil de Ação.
+     */
+    private static int reactionFreeSteps(final Character mover, final Manoeuvre manoeuvre,
+                                         final MovementProgress progress) {
+        ActionProfile profile = mover.getActionProfile();
+        if (progress == null || profile == null || !Manoeuvre.isMovement(manoeuvre)) {
+            return 0;
+        }
+        return Math.max(0, profile.resolveReactionFreeSteps(progress.movementIndex()) - progress.stepsTravelled());
+    }
+
+    private List<ReactionCheckpoint> checkpoints(final CombatantSheet mover, final List<BoardPosition> route,
+                                                 final Manoeuvre manoeuvre, final SceneContext moverContext,
+                                                 final Map<CombatantSheet, BoardPosition> positions,
+                                                 final CombatantSheet chargeTarget,
+                                                 final Map<CombatantSheet, Integer> knownReachUd,
+                                                 final int fromIndex) {
         int moverRadius = sizeService.getEffectiveSizeCategory(mover).getBodyRadius();
         Map<Integer, List<CombatantSheet>> byIndex = new TreeMap<>();
         for (CombatantSheet enemy : moverContext.getEnemies()) {
@@ -91,7 +146,7 @@ public class MovementReactionServiceImpl implements MovementReactionService {
                 continue;
             }
             int enemyRadius = sizeService.getEffectiveSizeCategory(enemy).getBodyRadius();
-            for (int i = 0; i < route.size(); i++) {
+            for (int i = fromIndex; i < route.size(); i++) {
                 int gap = Math.max(1, HexGrid.distance3d(route.get(i), at) - moverRadius - enemyRadius);
                 // Correr: "terá sua Área de Ataque Corpo-a-Corpo reduzida para adjacente".
                 if (manoeuvre == Manoeuvre.CORRER && gap > 1) {
@@ -121,15 +176,21 @@ public class MovementReactionServiceImpl implements MovementReactionService {
      * the ones a Talento granted; Vantagens through {@link EgoAdvantage#exemptsFromMovementReactions}, which may read
      * the Scene ({@code InitiativeAdvantage#POSICIONAMENTO_ESTRATEGICO}'s first two Rodadas, core 0.1.6.4).
      *
+     * The mover's Perfil de Ação exempts a whole movement through {@link ActionProfile#exemptsMovementFromReactions}
+     * (Consciência Defensiva's odd Rodadas); its window over a movement's first hexes is {@link #reactionFreeSteps}.
+     *
      * <p>There is no {@code Feat} pass. No Talento states a movement-Reação exemption that is
      * expressible yet: {@code MobilidadeFeat#MOVIMENTO_ACROBATICO}'s "sem provocar Reações" is
-     * scoped to the Reposicionar manoeuvre, which provokes nothing anyway, and {@code
-     * ActionProfile#CONSCIENCIA_DEFENSIVA}'s is scoped to a movement's first 2UD, a distance
-     * nothing records. Add the pass with the first clause that can actually use it.
+     * scoped to the Reposicionar manoeuvre, which provokes nothing anyway. Add the pass with the
+     * first clause that can actually use it.
      */
     private boolean isExempt(final Character mover, final Manoeuvre manoeuvre, final SceneContext sceneContext) {
         // A Reposicionar never provokes: the manoeuvre's own rule, held by nobody.
         if (manoeuvre == Manoeuvre.REPOSICIONAR || manoeuvre == Manoeuvre.RECUO_DEFENSIVO) {
+            return true;
+        }
+        ActionProfile profile = mover.getActionProfile();
+        if (profile != null && profile.exemptsMovementFromReactions(manoeuvre, sceneContext)) {
             return true;
         }
         return mover.getAttributeAbilities().stream()

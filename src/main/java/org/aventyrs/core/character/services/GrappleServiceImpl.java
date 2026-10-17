@@ -260,7 +260,7 @@ public class GrappleServiceImpl implements GrappleService {
     private static int handsInUse(final CombatantSheet captor) {
         Character character = captor.getCharacter();
         int items = character == null ? 0
-                : HandBudget.handsUsed(character.getDrawnWeapons())
+                : HandBudget.handsUsed(character.getDrawnWeapons(), character)
                 + (int) character.getEquipment().stream()
                         .filter((Item item) -> item.getCategory() == ItemCategory.SHIELD)
                         .count();

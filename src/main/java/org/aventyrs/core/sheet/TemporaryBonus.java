@@ -128,4 +128,19 @@ public class TemporaryBonus extends TemporaryEffect {
     Object stackingKey() {
         return source == null ? null : java.util.List.of(source, type);
     }
+
+    /** A malus — {@link #isHarmful(ModifierType, int)} of this bonus's type and value. */
+    @Override
+    public boolean isHarmful() {
+        return isHarmful(type, value);
+    }
+
+    /**
+     * Whether a bonus of type worth value harms its holder: any negative value, except {@link
+     * ModifierType#SKILL_ROLL_COST}, where a <em>higher</em> price is the harm. The split the client's status panel
+     * draws on the summed bonuses (table ruling, 2026-10-16).
+     */
+    public static boolean isHarmful(final ModifierType type, final int value) {
+        return type == ModifierType.SKILL_ROLL_COST ? value > 0 : value < 0;
+    }
 }

@@ -129,6 +129,21 @@ public interface ActionPointsService {
                                 SceneContext sceneContext);
 
     /**
+     * {@link #getSkillRollCost(CombatantSheet, SkillType, Set, int, SceneContext)} with the PD-bought reduction
+     * taken when buyReduction — {@code CharismaAbility#VOZ_DE_OURO}'s "gastar 2PD para reduzir em -1PA o Tempo" of
+     * a Carisma-based action, never below 1PA. Ignored when {@link #getBoughtReductionCost} offers none. The caller
+     * spends the PD ({@code CombatantSheet#spendDeterminationPoints}).
+     */
+    ActionCost getSkillRollCost(CombatantSheet roller, SkillType skill, Set<Feat> activatedFeats, int turnNumber,
+                                SceneContext sceneContext, boolean buyReduction);
+
+    /**
+     * The PD roller pays to cut a roll of skill by a held Habilidade's PA reduction — 2 for {@code
+     * CharismaAbility#VOZ_DE_OURO} on a Perícia governed by Carisma, 0 when nothing offers one or roller cannot pay.
+     */
+    int getBoughtReductionCost(CombatantSheet roller, SkillType skill);
+
+    /**
      * Whether the character has enough PA on the given Turn to pay that Turn's
      * {@link #getSkillRollCost(Character, int)}.
      */

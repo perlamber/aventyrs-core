@@ -80,12 +80,15 @@ public class ChargeServiceImpl implements ChargeService {
         // (DexterityAbility#PASSOS_LONGOS, MobilidadeFeat#VELOCISTA) applies to *this* movement,
         // which is the one consumeMovementThisRound is about to number.
         int allowance = getMovementAllowance(sheet);
+        // A charge is always a fresh movement, judged from where it starts (Consciência Defensiva's window).
+        org.aventyrs.core.action.MovementProgress progress =
+                org.aventyrs.core.action.MovementProgress.startOf(sheet.getMovementsTakenThisRound());
         sheet.consumeMovementThisRound();
         return new ChargeResult(
                 getActionPointCost(sheet.getCharacter()).plusSurcharge(sheet.getActionPointSurcharge(sceneContext)),
                 allowance,
                 getMovementDamageReduction(sheet.getCharacter()),
-                movementReactionService.getProvokedReactors(sheet, sceneContext, Manoeuvre.INVESTIDA, target));
+                movementReactionService.getProvokedReactors(sheet, sceneContext, Manoeuvre.INVESTIDA, target, progress));
     }
 
     @Override

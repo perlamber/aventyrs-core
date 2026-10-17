@@ -3,7 +3,6 @@ package org.aventyrs.core.character.fixture;
 import br.com.six2six.fixturefactory.Fixture;
 import br.com.six2six.fixturefactory.Rule;
 import org.aventyrs.core.action.ActionPointsService;
-import org.aventyrs.core.action.ActionProfile;
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Alignment;
 import org.aventyrs.core.character.AttributeValue;
@@ -124,9 +123,9 @@ public class CharacterFixture extends SimpleFixture {
                 this.add("secondaryTitle", null);
                 this.add("tertiaryTitle", null);
                 this.add("centelhaSuperiorSelected", false);
-                // CONSCIENCIA_DEFENSIVA is the one profile that adjusts none of PA/Reações/Ações
-                // Livres, so a fixture-built Character carries no hidden Perfil de Ação bonus.
-                this.add("actionProfile", ActionProfile.CONSCIENCIA_DEFENSIVA);
+                // No Perfil de Ação — like a foe whose stat block names none — so a fixture-built
+                // Character carries no hidden PA/Reação/Ação Livre adjustment or movement exemption.
+                this.add("actionProfile", null);
                 this.add("actionPoints", ActionPointsService.DEFAULT_ACTION_POINTS);
                 this.add("temporaryActionPointsBonus", 0);
                 this.add("reactions", ReactionsService.DEFAULT_REACTIONS);
@@ -221,9 +220,9 @@ public class CharacterFixture extends SimpleFixture {
                 this.add("secondaryTitle", null);
                 this.add("tertiaryTitle", null);
                 this.add("centelhaSuperiorSelected", false);
-                // CONSCIENCIA_DEFENSIVA is the one profile that adjusts none of PA/Reações/Ações
-                // Livres, so a fixture-built Character carries no hidden Perfil de Ação bonus.
-                this.add("actionProfile", ActionProfile.CONSCIENCIA_DEFENSIVA);
+                // No Perfil de Ação — like a foe whose stat block names none — so a fixture-built
+                // Character carries no hidden PA/Reação/Ação Livre adjustment or movement exemption.
+                this.add("actionProfile", null);
                 this.add("actionPoints", ActionPointsService.DEFAULT_ACTION_POINTS);
                 this.add("temporaryActionPointsBonus", 0);
                 this.add("reactions", ReactionsService.DEFAULT_REACTIONS);

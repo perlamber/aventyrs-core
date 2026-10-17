@@ -73,7 +73,7 @@ public class DonsDoCurandeiroInteraction extends AbstractTitleAbilityInteraction
     public static int healTarget(final CombatantSheet target, final HealingSource source, final boolean beijoDeBoros) {
         RestType equivalent = beijoDeBoros ? RestType.LONGO : RestType.CURTO;
         int damageBefore = target.getDamageTaken();
-        target.heal(new RestServiceImpl().getRecoveredHitPoints(target.getCharacter(), equivalent), source);
+        target.heal(new RestServiceImpl().getRecoveredHitPoints(target.getCharacter(), equivalent, org.aventyrs.core.rest.RecoveryOrigin.EQUIVALENTE), source);
         return damageBefore - target.getDamageTaken();
     }
 

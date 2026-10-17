@@ -34,17 +34,19 @@ public enum InstinctAbility implements AttributeAbility {
         }
     },
 
-    // TODO: activated ability (2PD cost, once per Scene) letting you act before Initiative at
-    // scene start. The 2PD spend itself is already mechanically possible
-    // (CombatantSheet#spendDeterminationPoints), but two real pieces are still missing: a
-    // once-per-Cena usage tracker (this core has none anywhere — FurtividadeExcellency's own
-    // "três vezes por Cena" TODO cites the identical gap), and a way to insert an action
-    // *before* Initiative at a Scene's start — Scene's turn order (activeEntries/
-    // pendingEntries/startNewRound) only ever lets a participant join the normal
-    // Initiative-ordered rotation, never act ahead of it.
+    // Real: a Rodada 0.0 before Rodada 0 (table ruling, 2026-10-16). resolvePreInitiativeActionCost prices it;
+    // character.services.PreInitiativeService pays it once per combat ("uma vez a cada Cena" is per combat, the
+    // house reading — skill.UseWindow); Scene#beginPreInitiativeTurn/#permitsPreInitiativeAction hold the one
+    // action of Tempo ≤ 2PA, Ação Livre or Reação, ignoring Iniciativa. The API orders the takers and the client
+    // offers it as combat starts.
     PARANOIA_SAUDAVEL("Ao custo de 2PD e apenas uma vez a cada Cena, você pode optar por fazer uma ação com " +
             "Tempo de até 2PA, Ação Livre ou Reação no início da cena. Esta Vantagem deve ser ativada no início " +
-            "da Cena, antes da ação do primeiro personagem, ignorando as Iniciativas."),
+            "da Cena, antes da ação do primeiro personagem, ignorando as Iniciativas.") {
+        @Override
+        public java.util.OptionalInt resolvePreInitiativeActionCost() {
+            return java.util.OptionalInt.of(2);
+        }
+    },
 
     OBSTINADO("Seu multiplicador de PD aumenta em +1.") {
         @Modifier(ModifierType.DETERMINATION_MULTIPLIER)
@@ -53,15 +55,22 @@ public enum InstinctAbility implements AttributeAbility {
         }
     },
 
-    // Real via resolveRestDeterminationPointsBonus below, for the one PD-recovery mechanism
-    // that actually exists (RestServiceImpl#getRecoveredDeterminationPoints) — the rules
-    // text's broader "efeitos que te permitam recuperar PD" is written to cover any future
-    // PD-recovery effect too, but Rest is the only one this core has today.
+    // Real for both halves: a real Descanso pays 1PD (+2 more from a Longo) via
+    // resolveRestDeterminationPointsBonus, and an effect recovering PD "como se passasse por um
+    // Descanso" (a Magia de cura, an Autocontrole spend, Medicina) pays the 1PD via
+    // resolveRestEquivalentDeterminationPointsBonus — "Efeitos que te permitam recuperar PD" names
+    // every recovery effect, while the Longo half names a Descanso. A PD recovery that isn't
+    // Descanso-shaped (Oprimir's steal, a Título's grant) still reaches neither.
     SUPERMOTIVADO("Efeitos que te permitam recuperar PD o fazem recuperar 1PD adicional. Descansos longos ou " +
             "superiores adicionalmente te permitem recuperar 2PD adicionais (totalizando 3PD adicionais).") {
         @Override
         public int resolveRestDeterminationPointsBonus(final RestType restType) {
             return BASE_REST_DETERMINATION_BONUS + (restType.isAtLeast(RestType.LONGO) ? EXTRA_LONGO_DETERMINATION_BONUS : 0);
+        }
+
+        @Override
+        public int resolveRestEquivalentDeterminationPointsBonus(final RestType restType) {
+            return BASE_REST_DETERMINATION_BONUS;
         }
     },
 

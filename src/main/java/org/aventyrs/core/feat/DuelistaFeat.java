@@ -276,7 +276,8 @@ public enum DuelistaFeat implements Feat {
                 return Optional.empty();
             }
             boolean anyLight = actor.getDrawnWeapons().stream()
-                    .anyMatch(weapon -> weapon.getEffectiveWeightClass() == ItemWeightClass.LIGHT);
+                    .anyMatch(weapon -> actor.carriedWeightClassOf(weapon.getEffectiveWeightClass())
+                            == ItemWeightClass.LIGHT);
             return anyLight ? Optional.empty()
                     : Optional.of(new DamageBonus(Skill.DISADVANTAGE_MALUS, DamageType.FISICO));
         }

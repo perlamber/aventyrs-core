@@ -116,4 +116,15 @@ public enum Manoeuvre {
     public ActionKind getActionKind() {
         return actionKind;
     }
+
+    /**
+     * Whether a combatant acting under manoeuvre is making one of their movements — what a clause about "seus
+     * movimentos" reads ({@link ActionProfile#CONSCIENCIA_DEFENSIVA}). An ordinary movement ({@code null}), an
+     * Investida, an Encontrão and every {@link ActionKind#MOVEMENT} manoeuvre are; Levantar-se and the attack
+     * manoeuvres are not.
+     */
+    public static boolean isMovement(final Manoeuvre manoeuvre) {
+        return manoeuvre == null || manoeuvre == INVESTIDA || manoeuvre == ENCONTRAO
+                || manoeuvre.getActionKind() == ActionKind.MOVEMENT;
+    }
 }

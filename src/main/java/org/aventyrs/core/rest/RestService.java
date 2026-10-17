@@ -16,12 +16,23 @@ public interface RestService {
     int getRecoveredHitPoints(Character character, RestType restType);
 
     /**
+     * {@link #getRecoveredHitPoints(Character, RestType)} for a recovery of the given origin. A
+     * {@link RecoveryOrigin#EQUIVALENTE} (a heal "como se passasse por um Descanso") pays no Descanso
+     * bonus — only {@code AttributeAbility}/{@code Feat#resolveRestEquivalentHitPointsBonus}. The
+     * two-argument form is {@link RecoveryOrigin#DESCANSO}.
+     */
+    int getRecoveredHitPoints(Character character, RestType restType, RecoveryOrigin origin);
+
+    /**
      * PM recovered: Foco's total value times the Rest's Attribute multiplier, plus any
      * {@link org.aventyrs.core.ability.AttributeAbility#resolveRestMagicPointsBonus} bonus
      * (e.g. {@code FocusAbility#CANALIZADOR_DE_MANA}'s own +2PM on Longo/Total Rests) across
      * {@code character.getAttributeAbilities()}.
      */
     int getRecoveredMagicPoints(Character character, RestType restType);
+
+    /** {@link #getRecoveredHitPoints(Character, RestType, RecoveryOrigin)}'s PM twin. */
+    int getRecoveredMagicPoints(Character character, RestType restType, RecoveryOrigin origin);
 
     /**
      * PD recovered: Instinto's total value times the Rest's Attribute multiplier, plus any
@@ -32,6 +43,9 @@ public interface RestService {
      * character.getFeats()}.
      */
     int getRecoveredDeterminationPoints(Character character, RestType restType);
+
+    /** {@link #getRecoveredHitPoints(Character, RestType, RecoveryOrigin)}'s PD twin. */
+    int getRecoveredDeterminationPoints(Character character, RestType restType, RecoveryOrigin origin);
 
     /**
      * Applies a Rest's PV, PM and PD recovery to the character's sheet in one step, and

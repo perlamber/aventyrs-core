@@ -28,20 +28,12 @@ public enum VigorAbility implements AttributeAbility {
         }
     },
 
-    // Two of the three branches are real now. The rest-recovery branch ("Descansos Verdadeiros
-    // Longos ou superiores... +3PV") is real via resolveRestHitPointsBonus below — same
-    // "Descanso Verdadeiro" == this codebase's own RestType tiers inference
-    // FocusAbility#CANALIZADOR_DE_MANA's identical branch already makes (not confirmed rules
-    // text). The "+1 non-cumulative Roubo de Vida" branch is real too, via
-    // resolveLifeStealBonus below, now that org.aventyrs.core.sheet.LifeSteal exists —
-    // LifeStealService#getTotalLifeSteal only ever adds this once, regardless of how many
-    // active LifeSteal effects there are, and only when that total is already positive (this
-    // ability doesn't grant Roubo de Vida on its own, only amplifies an already-active one).
-    // TODO: the remaining "+2PV on spell/Título Aventyr PV healing" branch is still unbuilt —
-    // needs a way to know a given CombatantSheet#heal call came from a spell or Título Aventyr
-    // ability specifically (no healing-spell-effect representation exists, and no Título
-    // Aventyr concept exists at all) — the identical gap FocusAbility#CANALIZADOR_DE_MANA's own
-    // matching branch is still blocked on.
+    // All three branches are real. The rest branch via resolveRestHitPointsBonus — a real Descanso
+    // only (RecoveryOrigin#DESCANSO): a Magia healing "como se passasse por um Descanso" doesn't pay
+    // it (table ruling, 2026-10-16). The +2PV via resolveHealingReceivedBonus, added in
+    // AbstractCombatantSheet#heal for a heal whose HealingSource is a Magia or a Habilidade de Título
+    // (never Roubo de Vida, which takes healFromLifeSteal). The +1 Roubo de Vida via
+    // resolveLifeStealBonus, which LifeStealService adds once, and only to an already-positive total.
     METABOLISMO_RAPIDO("Descansos Verdadeiros Longos ou superiores permitem que você recupere +3PV adicionais. " +
             "Magias e Habilidades de Títulos Aventyr que te façam recuperar PV recuperam +2PV adicionais (não " +
             "aplicável a efeitos de Roubo de Vida). Personagens sob efeitos de Roubo de Vida têm seu efeito de " +
@@ -54,6 +46,11 @@ public enum VigorAbility implements AttributeAbility {
         @Override
         public int resolveLifeStealBonus() {
             return LIFE_STEAL_BONUS;
+        }
+
+        @Override
+        public int resolveHealingReceivedBonus(final org.aventyrs.core.sheet.HealingSource source) {
+            return source != null && source.isMagiaOrTituloAbility() ? SPELL_HEALING_BONUS : 0;
         }
     },
     // The base -1 applies to any Dano Físico regardless of source (even an unknown attacker —
@@ -77,13 +74,28 @@ public enum VigorAbility implements AttributeAbility {
         }
     },
 
-    // TODO
+    // Real via resolveHarmfulDurationCap: every harmful effect (TemporaryEffect#isHarmful — a Condição but
+    // Escondido, a malus, a continuous-damage effect, a harmful Encantamento) landing with more than 3 counted
+    // Rodadas is cut to 3 as it lands. "Efeitos permanentes" are the open-ended ones and those scoped to the
+    // combat or a Descanso (table ruling, 2026-10-16); a countdown started later on an already-held effect
+    // (Sustained trailing Rodadas) is not re-judged.
     RECUPERACAO_ASSOMBROSA("Os Efeitos Críticos, Correntes de Efeitos, e Efeitos de Magias e de Habilidades " +
             "nocivas que possuam Duração maior do que 3 Rodadas são encerradas em 3 Rodadas. Esta Habilidade não " +
-            "afeta efeitos permanentes.");
+            "afeta efeitos permanentes.") {
+        @Override
+        public java.util.OptionalInt resolveHarmfulDurationCap() {
+            return java.util.OptionalInt.of(HARMFUL_DURATION_CAP);
+        }
+    };
+
+    /** RECUPERACAO_ASSOMBROSA's ceiling on a harmful effect's Duração, in Rodadas. */
+    private static final int HARMFUL_DURATION_CAP = 3;
 
     /** METABOLISMO_RAPIDO's own extra PV recovered on a Descanso Longo or better. */
     private static final int REST_HIT_POINTS_BONUS = 3;
+
+    /** METABOLISMO_RAPIDO's own extra PV on a heal from a Magia or a Habilidade de Título. */
+    private static final int SPELL_HEALING_BONUS = 2;
 
     /** METABOLISMO_RAPIDO's own flat, non-stacking bonus to an already-active Roubo de Vida. */
     private static final int LIFE_STEAL_BONUS = 1;

@@ -85,6 +85,14 @@ public class DeliveredAttackResult {
     private final int lockedSelfDamage;
 
     /**
+     * Raw damage this hit deals to the primary target's worn Escudo, else Armadura — {@code
+     * AttributeAbility#resolveDefensiveEquipmentDamageOnHit}, {@code StrengthAbility#ESTILHACADOR}'s 2. 0 on a miss
+     * or with nothing to deal. Reported, never dealt: the target's owner applies it with {@code
+     * ShieldBreak#against(target, amount).apply()}.
+     */
+    private final int defensiveEquipmentDamage;
+
+    /**
      * The projectile this shot fired ({@code DeliveredAttack#getProjectile()}), and how many of it — 1, plus one per
      * extra projectile a Tiro Duplo/Múltiplo fires. Reported whether or not the shot landed: an arrow loosed is spent.
      * The caller spends them with {@code AmmunitionService#consume}; {@code null}/0 when nothing was fired or on the

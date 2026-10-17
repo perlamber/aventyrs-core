@@ -13,36 +13,64 @@ public class RestServiceImpl implements RestService {
 
     @Override
     public int getRecoveredHitPoints(final Character character, final RestType restType) {
+        return getRecoveredHitPoints(character, restType, RecoveryOrigin.DESCANSO);
+    }
+
+    @Override
+    public int getRecoveredHitPoints(final Character character, final RestType restType, final RecoveryOrigin origin) {
+        boolean real = origin == RecoveryOrigin.DESCANSO;
         int bonus = character.getAttributeAbilities().stream()
-                .mapToInt(ability -> ability.resolveRestHitPointsBonus(restType))
+                .mapToInt(ability -> real ? ability.resolveRestHitPointsBonus(restType)
+                        : ability.resolveRestEquivalentHitPointsBonus(restType))
                 .sum();
         int featBonus = character.getFeats().stream()
-                .mapToInt(feat -> feat.resolveRestHitPointsBonus(restType, character))
+                // A Talento's Descanso bonus (Saúde de Ferro, Mente Expandida, Coração de Ferro do Destino)
+                // is a Descanso's alone; no Talento yet writes one for any recovery effect.
+                .mapToInt(feat -> real ? feat.resolveRestHitPointsBonus(restType, character) : 0)
                 .sum();
         return recovered(character.getEffectiveAttributeTotal(AttributeDomain.VIGOR), restType) + bonus + featBonus;
     }
 
     @Override
     public int getRecoveredMagicPoints(final Character character, final RestType restType) {
+        return getRecoveredMagicPoints(character, restType, RecoveryOrigin.DESCANSO);
+    }
+
+    @Override
+    public int getRecoveredMagicPoints(final Character character, final RestType restType, final RecoveryOrigin origin) {
         if (prevented(character, ResourceType.MAGIC_POINTS)) {
             return 0;
         }
+        boolean real = origin == RecoveryOrigin.DESCANSO;
         int bonus = character.getAttributeAbilities().stream()
-                .mapToInt(ability -> ability.resolveRestMagicPointsBonus(restType))
+                .mapToInt(ability -> real ? ability.resolveRestMagicPointsBonus(restType)
+                        : ability.resolveRestEquivalentMagicPointsBonus(restType))
                 .sum();
         int featBonus = character.getFeats().stream()
-                .mapToInt(feat -> feat.resolveRestMagicPointsBonus(restType, character))
+                // A Talento's Descanso bonus (Saúde de Ferro, Mente Expandida, Coração de Ferro do Destino)
+                // is a Descanso's alone; no Talento yet writes one for any recovery effect.
+                .mapToInt(feat -> real ? feat.resolveRestMagicPointsBonus(restType, character) : 0)
                 .sum();
         return recovered(character.getEffectiveAttributeTotal(AttributeDomain.FOCUS), restType) + bonus + featBonus;
     }
 
     @Override
     public int getRecoveredDeterminationPoints(final Character character, final RestType restType) {
+        return getRecoveredDeterminationPoints(character, restType, RecoveryOrigin.DESCANSO);
+    }
+
+    @Override
+    public int getRecoveredDeterminationPoints(final Character character, final RestType restType,
+                                               final RecoveryOrigin origin) {
+        boolean real = origin == RecoveryOrigin.DESCANSO;
         int bonus = character.getAttributeAbilities().stream()
-                .mapToInt(ability -> ability.resolveRestDeterminationPointsBonus(restType))
+                .mapToInt(ability -> real ? ability.resolveRestDeterminationPointsBonus(restType)
+                        : ability.resolveRestEquivalentDeterminationPointsBonus(restType))
                 .sum();
         int featBonus = character.getFeats().stream()
-                .mapToInt(feat -> feat.resolveRestDeterminationPointsBonus(restType, character))
+                // A Talento's Descanso bonus (Saúde de Ferro, Mente Expandida, Coração de Ferro do Destino)
+                // is a Descanso's alone; no Talento yet writes one for any recovery effect.
+                .mapToInt(feat -> real ? feat.resolveRestDeterminationPointsBonus(restType, character) : 0)
                 .sum();
         return recovered(character.getEffectiveAttributeTotal(AttributeDomain.INSTINCT), restType) + bonus + featBonus;
     }

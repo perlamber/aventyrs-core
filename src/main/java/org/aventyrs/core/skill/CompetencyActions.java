@@ -157,11 +157,11 @@ public final class CompetencyActions {
         }
         RestService rest = new RestServiceImpl();
         int before = patient.getDamageTaken();
-        patient.heal(rest.getRecoveredHitPoints(patient.getCharacter(), RestType.CURTO),
+        patient.heal(rest.getRecoveredHitPoints(patient.getCharacter(), RestType.CURTO, org.aventyrs.core.rest.RecoveryOrigin.EQUIVALENTE),
                 new HealingSource(MILAGREIRO_KEY, false, null, null, null));
         if (milagreMaior) {
-            patient.recoverMagicPoints(rest.getRecoveredMagicPoints(patient.getCharacter(), RestType.CURTO));
-            patient.recoverDeterminationPoints(rest.getRecoveredDeterminationPoints(patient.getCharacter(), RestType.CURTO));
+            patient.recoverMagicPoints(rest.getRecoveredMagicPoints(patient.getCharacter(), RestType.CURTO, org.aventyrs.core.rest.RecoveryOrigin.EQUIVALENTE));
+            patient.recoverDeterminationPoints(rest.getRecoveredDeterminationPoints(patient.getCharacter(), RestType.CURTO, org.aventyrs.core.rest.RecoveryOrigin.EQUIVALENTE));
         }
         return before - patient.getDamageTaken();
     }

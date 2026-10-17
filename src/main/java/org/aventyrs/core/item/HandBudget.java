@@ -24,18 +24,32 @@ public final class HandBudget {
 
     /** How many hands item takes up while held — 0 for anything not held to fight with. */
     public static int handCost(@NonNull final Item item) {
+        return handCost(item, null);
+    }
+
+    /**
+     * {@link #handCost(Item)} for wielder — whose {@code Character#carriedWeightClassOf} may count a weapon lighter
+     * (Besta de Carga: a Médio weapon is Leve, so one hand). {@code null} reads the authored column alone.
+     */
+    public static int handCost(@NonNull final Item item, final org.aventyrs.core.character.Character wielder) {
         if (item.getCategory() == ItemCategory.SHIELD) {
             return 1;
         }
         if (item.getCategory() == ItemCategory.PROJECTILE || !(item instanceof Weapon weapon)) {
             return 0;
         }
-        return isTwoHanded(weapon) ? 2 : 1;
+        return isTwoHanded(weapon, wielder) ? 2 : 1;
     }
 
     /** The hands items take up together. */
     public static int handsUsed(@NonNull final List<? extends Item> items) {
-        return items.stream().mapToInt(HandBudget::handCost).sum();
+        return handsUsed(items, null);
+    }
+
+    /** {@link #handsUsed(List)} for wielder — see {@link #handCost(Item, org.aventyrs.core.character.Character)}. */
+    public static int handsUsed(@NonNull final List<? extends Item> items,
+                                final org.aventyrs.core.character.Character wielder) {
+        return items.stream().mapToInt(item -> handCost(item, wielder)).sum();
     }
 
     /**
@@ -43,10 +57,18 @@ public final class HandBudget {
      * Peso "passa a exigir uso de ambas as mãos".
      */
     public static boolean isTwoHanded(@NonNull final Weapon weapon) {
+        return isTwoHanded(weapon, null);
+    }
+
+    /** {@link #isTwoHanded(Weapon)} with the weight class as wielder carries it ({@code null}: as authored). */
+    public static boolean isTwoHanded(@NonNull final Weapon weapon, final org.aventyrs.core.character.Character wielder) {
+        ItemWeightClass authored = weapon.getWeightClass();
+        ItemWeightClass weight = wielder == null || authored == null ? authored
+                : wielder.carriedWeightClassOf(authored);
         return weapon.getCategory() == ItemCategory.BOW
                 || weapon.getCategory() == ItemCategory.CROSSBOW
-                || weapon.getWeightClass() == ItemWeightClass.MEDIUM
-                || weapon.getWeightClass() == ItemWeightClass.HEAVY
+                || weight == ItemWeightClass.MEDIUM
+                || weight == ItemWeightClass.HEAVY
                 || WeaponEnhancements.offensiveImprovements(weapon.host()).stream()
                         .anyMatch(OffensiveImprovement::requiresBothHands);
     }

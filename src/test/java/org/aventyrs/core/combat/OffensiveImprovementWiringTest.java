@@ -166,6 +166,21 @@ class OffensiveImprovementWiringTest {
     }
 
     @Test
+    void canalizadorDeManaAmplifiesAWeaponsRouboDeManaOnce() {
+        AbstractWeapon blessed = melee(OffensiveImprovement.BENCAO_ELDURIANA);
+        CharacterSheet hero = attacker(blessed);
+        CharacterSheet channel = CharacterSheet.of(hero.getCharacter().toBuilder()
+                .attributeAbility(org.aventyrs.core.ability.FocusAbility.CANALIZADOR_DE_MANA).build(), new Player());
+
+        assertEquals(2, find(stages(head(attack(channel, blessed))), RouboDeMana.class).getAmount());
+        // Amplify, never grant: no weapon steal, no stage.
+        AbstractWeapon plain = melee(null);
+        CharacterSheet bare = CharacterSheet.of(attacker(plain).getCharacter().toBuilder()
+                .attributeAbility(org.aventyrs.core.ability.FocusAbility.CANALIZADOR_DE_MANA).build(), new Player());
+        assertFalse(stages(head(attack(bare, plain))).stream().anyMatch(RouboDeMana.class::isInstance));
+    }
+
+    @Test
     void aCorrenteOnlyFiresPastTheThreshold() {
         AbstractWeapon blessed = melee(OffensiveImprovement.BENCAO_ELDURIANA);
         CharacterSheet hero = attacker(blessed);

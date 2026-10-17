@@ -418,7 +418,7 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
         bonus += sumEgoAdvantageRollBonuses(character.getAllEgoAdvantages(), sceneContext);
         bonus += sumEgoAdvantageSkillSpecificRollBonuses(character.getAllEgoAdvantages(), sceneContext, target);
         bonus += sizeCategoryRollBonus(characterSizeService.getEffectiveSizeCategory(target));
-        bonus += sumAttributeDomainRollBonuses(character.getAttributeAbilities(), attributeDomain, character);
+        bonus += sumAttributeDomainRollBonuses(character.getAttributeAbilities(), attributeDomain, character, target);
         for (SkillCompetencyAbility ability : skillCompetencyAbilities) {
             bonus += ability.resolveGoverningAttributeRollBonus(attributeDomain, target);
         }
@@ -429,7 +429,7 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
             bonus += character.getRace().resolveGoverningAttributeRollBonus(attributeDomain, target, sceneContext,
                     sheet -> characterSizeService.getEffectiveSizeCategory(sheet).getCategory());
         }
-        bonus += sumManoeuvreRollBonuses(character.getAttributeAbilities(), skillRoll);
+        bonus += sumManoeuvreRollBonuses(character.getAttributeAbilities(), skillRoll, attributeDomain);
         if (skillRoll != null && target.isFirstRollOfTurnFor(attributeDomain)) {
             bonus += sumFirstRollOfTurnBonuses(character.getAttributeAbilities(), attributeDomain);
         }
@@ -945,9 +945,11 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
      * unconditionally on every roll, not gated behind {@code CombatantSheet
      * #isFirstRollOfTurnFor}.
      */
-    private int sumAttributeDomainRollBonuses(final Collection<AttributeAbility> attributeAbilities, final AttributeDomain rolledDomain, final Character character) {
+    private int sumAttributeDomainRollBonuses(final Collection<AttributeAbility> attributeAbilities,
+                                              final AttributeDomain rolledDomain, final Character character,
+                                              final CombatantSheet holder) {
         return attributeAbilities.stream()
-                .mapToInt(ability -> ability.resolveAttributeDomainRollBonus(rolledDomain, character))
+                .mapToInt(ability -> ability.resolveAttributeDomainRollBonus(rolledDomain, character, holder))
                 .sum();
     }
 
@@ -1126,6 +1128,12 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
                                 sceneContext))
                         .sum());
 
+        // A Habilidade de Atributo reading the target (Subjugar's Caído/Desprevenido); 0 until one is known.
+        int attribute = addFlat(contributions, DamageContributionSource.ATTRIBUTE_ABILITY,
+                character.getAttributeAbilities().stream()
+                        .mapToInt(ability -> ability.resolveDamageRollBonus(skillType, target, attackTarget,
+                                sceneContext))
+                        .sum());
         // The weapon's Danos columns, and Alcance Estendido's +1 once a target is known not to be adjacent.
         int weapon = addFlat(contributions, DamageContributionSource.WEAPON_ENHANCEMENT,
                 org.aventyrs.core.item.WeaponEnhancements.damageRollBonus(attackSource)
@@ -1136,7 +1144,7 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
         // A Cavaleiro's "Vantagem em … Dano" (core 0.0.92).
         int subordinate = addFlat(contributions, DamageContributionSource.SUBORDINATE,
                 Skill.ADVANTAGE_BONUS * org.aventyrs.core.subordinate.SubordinateBenefits.count(target, sceneContext, org.aventyrs.core.subordinate.SubordinateBenefit.CAVALEIRO_DAMAGE));
-        int flat = temporary + condition + meiaForca + manoeuvre + title + subordinate + weapon + armour;
+        int flat = temporary + condition + meiaForca + manoeuvre + title + subordinate + weapon + armour + attribute;
         return new DamageSum(DamageBonus.total(typed, flat), new DamageBonusBreakdown(contributions));
     }
 
@@ -1200,10 +1208,10 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
      * declared yet.
      */
     private int sumManoeuvreRollBonuses(final Collection<AttributeAbility> attributeAbilities,
-                                        final SkillRoll skillRoll) {
+                                        final SkillRoll skillRoll, final AttributeDomain governingDomain) {
         Manoeuvre manoeuvre = skillRoll == null ? null : skillRoll.getManoeuvre();
         return attributeAbilities.stream()
-                .mapToInt(ability -> ability.resolveManoeuvreRollBonus(manoeuvre, skillType))
+                .mapToInt(ability -> ability.resolveManoeuvreRollBonus(manoeuvre, skillType, governingDomain))
                 .sum();
     }
 

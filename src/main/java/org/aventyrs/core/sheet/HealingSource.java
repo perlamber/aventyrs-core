@@ -153,6 +153,16 @@ public record HealingSource(@NonNull Object key, boolean repeatableInComa, Comba
         return new HealingSource(regeneration, false, null, null, null);
     }
 
+    /**
+     * Whether this heal comes from a Magia (its own heal or a Corrente riding it) or a Habilidade de
+     * Título — "Magias e Habilidades de Títulos Aventyr que te façam recuperar PV" ({@code
+     * VigorAbility#METABOLISMO_RAPIDO}, {@code FocusAbility#CANALIZADOR_DE_MANA}) and Tocado por Undine
+     * e Haloi's two rungs ({@code DevotoFeat}). A relayed heal keeps both markers.
+     */
+    public boolean isMagiaOrTituloAbility() {
+        return spell != null || titleAbility != null;
+    }
+
     /** Whether this heal is a Magia whose tree carries any of types. */
     public boolean isSpellOfType(final MagicType... types) {
         return spell != null && Arrays.stream(types).anyMatch(type -> spell.getTree().hasMagicType(type));

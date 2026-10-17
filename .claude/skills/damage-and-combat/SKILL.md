@@ -278,9 +278,15 @@ if they hold a **drawn** melee weapon — or an Arma Natural, which cannot be sh
 - **Nothing fires a Reação.** `ReactionsService` computes a maximum and nothing tracks spent ones,
   so the count is deliberately not consulted and the caller adjudicates. A clause exempting a
   movement is still exempt from nothing that *happens* — cite that, not "no mechanism exists".
-- Exemption is `AttributeAbility#exemptsFromMovementReactions(Manoeuvre)`. **No `Feat` twin yet**:
-  `MOVIMENTO_ACROBATICO` is scoped to Reposicionar and `CONSCIENCIA_DEFENSIVA` to a movement's first
-  2UD, neither of which this core has.
+- Exemption is `AttributeAbility#exemptsFromMovementReactions(Manoeuvre)`, `EgoAdvantage`'s twin, and the
+  mover's `ActionProfile` (0.1.7.9): `exemptsMovementFromReactions` for a whole movement, and
+  `resolveReactionFreeSteps` for a window over a movement's first hexes, which needs the caller's
+  `action.MovementProgress` (movement index + hexes already travelled) on the longest
+  `getRouteCheckpoints`/`getProvokedReactors`. Step k enters position k; with f free steps the first
+  position that may provoke is index f, unless the route ends there. Only a movement
+  (`Manoeuvre#isMovement` — not Levantar-se) is ever exempt. **Casting in reach is not a movement**:
+  ask `getHostilesInReach`, which applies no exemption. **No `Feat` twin yet**: `MOVIMENTO_ACROBATICO`
+  is scoped to Reposicionar, which provokes nothing anyway.
 
 ### Efeito Crítico immunity — `CriticalEffect#applicableTo`
 

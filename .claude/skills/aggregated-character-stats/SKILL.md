@@ -1,6 +1,6 @@
 ---
 name: aggregated-character-stats
-description: This skill should be used for any work on a Character-level counter that is a fixed base plus an ability-summed total — Reações (`ReactionsService`), Ações Livres (`FreeActionsService`), Pontos de Ação (`ActionPointsService`), Iniciativa (`InitiativeService`), Movimento Base (`MovementService`) — including their per-Round `CombatantSheet` overloads, the `ActionProfile` adjustment hooks (`adjustActionPoints`/`adjustReactions`/`adjustFreeActions`/`adjustSkillRollCost`), the three-source `@Modifier`/`ModifierType` scan, adding a new such counter, or wiring a `@Modifier` method for `REACTIONS`/`MOVEMENT`/`ACTION_POINTS`/`INITIATIVE`. Also use it when asked why `Character` holds only a plain counter, why the `Character` and `CombatantSheet` overloads don't cascade, or why a fixture template uses `CONSCIENCIA_DEFENSIVA`.
+description: This skill should be used for any work on a Character-level counter that is a fixed base plus an ability-summed total — Reações (`ReactionsService`), Ações Livres (`FreeActionsService`), Pontos de Ação (`ActionPointsService`), Iniciativa (`InitiativeService`), Movimento Base (`MovementService`) — including their per-Round `CombatantSheet` overloads, the `ActionProfile` adjustment hooks (`adjustActionPoints`/`adjustReactions`/`adjustFreeActions`/`adjustSkillRollCost`), the three-source `@Modifier`/`ModifierType` scan, adding a new such counter, or wiring a `@Modifier` method for `REACTIONS`/`MOVEMENT`/`ACTION_POINTS`/`INITIATIVE`. Also use it when asked why `Character` holds only a plain counter, why the `Character` and `CombatantSheet` overloads don't cascade, or why a fixture template and a silent foe carry no `ActionProfile` (`null`).
 ---
 
 # Character-level stats aggregated from abilities
@@ -107,17 +107,19 @@ for a hypothetical consumer.
 Four of the six profiles are fully real: `IMPULSIVO`/`CALCULISTA` (PA by Round),
 `MOVIMENTO_PLANEJADO` (0 Ações Livres on Turn 0, +1 from Turn 1 on), `REFLEXOS_RAPIDOS` (+1
 Reação every Round, *not* gated on combat) and `ESTRATEGISTA` (-1 PA / +1 Reação / +1 Ação
-Livre, all three gated on `isCombatScene`). `CONSCIENCIA_DEFENSIVA` is the one still TODO'd,
-and `adjustReactions` is the **wrong hook** for it, not a missing one — its clause exempts
-specific movements from *provoking* Reações, which is the movement-triggers-Reação gap, and
-never changes how many a character *has*.
+Livre, all three gated on `isCombatScene`). `CONSCIENCIA_DEFENSIVA` is real too (0.1.7.9), but
+through **two movement hooks, not these three** — `adjustReactions` is the wrong hook for it:
+its clause exempts movements from *provoking* Reações and never changes how many a character
+*has*. `resolveReactionFreeSteps(movementIndex)` (2 hexes of the Rodada's first movement) and
+`exemptsMovementFromReactions(manoeuvre, ctx)` (any movement on an odd Rodada,
+`SceneContext#isOddCombatRound`) are read by `MovementReactionService` — see `damage-and-combat`.
 
-Because it adjusts none of the three, `CONSCIENCIA_DEFENSIVA` is also what
-`MonsterTemplate.DEFAULT_ACTION_PROFILE` and `CharacterFixture`'s templates now use.
-**Both used to be `REFLEXOS_RAPIDOS`, chosen back when that constant was inert** — once it
-started granting a Reação for real, every fixture-built Character and every foe whose stat
-block is silent would have silently carried an extra one. Worth remembering when picking a
-placeholder constant: "does nothing today" is not a stable property.
+**A foe whose stat block is silent has no profile at all** — `MonsterTemplate.DEFAULT_ACTION_PROFILE`
+and `CharacterFixture`'s templates are `null`, and every reader treats `null` as no adjustment
+and no exemption. Both were `REFLEXOS_RAPIDOS` while that was inert, then `CONSCIENCIA_DEFENSIVA`
+while *that* was — each time the placeholder came alive, every fixture Character and silent foe
+would have silently carried it. "Does nothing today" is not a stable property, so there is no
+placeholder constant any more.
 
 ## Movimento Base — `MovementService#getMovementBase`
 

@@ -265,7 +265,7 @@ public class CharacterSheet extends AbstractCombatantSheet {
         if (countOfCategory(items, ItemCategory.SHIELD) > 1) {
             return TOO_MANY_SHIELDS;
         }
-        if (org.aventyrs.core.item.HandBudget.handsUsed(items) > AVAILABLE_HANDS) {
+        if (org.aventyrs.core.item.HandBudget.handsUsed(items, getCharacter()) > AVAILABLE_HANDS) {
             return NOT_ENOUGH_HANDS;
         }
         return null;

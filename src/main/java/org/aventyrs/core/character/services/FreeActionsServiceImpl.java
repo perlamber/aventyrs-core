@@ -52,7 +52,8 @@ public class FreeActionsServiceImpl implements FreeActionsService {
         for (org.aventyrs.core.feat.Feat feat : character.getFeats()) {
             baseline += feat.resolveFreeActionsIncrease(character, sceneContext);
         }
-        return Math.max(0, character.getActionProfile().adjustFreeActions(baseline, turnNumber, sceneContext));
+        org.aventyrs.core.action.ActionProfile profile = character.getActionProfile();
+        return Math.max(0, profile == null ? baseline : profile.adjustFreeActions(baseline, turnNumber, sceneContext));
     }
 
     /**

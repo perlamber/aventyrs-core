@@ -7,7 +7,10 @@ import org.aventyrs.core.scene.SceneContext;
 /**
  * The Perfil de Ação chosen once at character creation and never changed afterwards. It
  * shapes how a character's Pontos de Ação (PA), Reações and Ações Livres behave from Turn to
- * Turn. turnNumber is 0-based: 0 is the character's first Turn/Round.
+ * Turn, and which of its movements provoke Reações. turnNumber is 0-based: 0 is the character's first Turn/Round.
+ *
+ * <p>A foe whose stat block names no Perfil de Ação has none ({@code Character#getActionProfile()} is {@code null}),
+ * and every reader treats that as no adjustment.
  *
  * <h2>The three adjustment hooks</h2>
  *
@@ -29,17 +32,26 @@ import org.aventyrs.core.scene.SceneContext;
 @AllArgsConstructor
 public enum ActionProfile {
 
-    // TODO: first movement of each Turn (its first 2UD) and every movement on odd Turns
-    // don't provoke Reações — this core has no movement-triggers-Reação mechanism (the same
-    // gap EgoAdvantage's POSICIONAMENTO_ESTRATEGICO cites), so this profile's Reação *count*
-    // is untouched: it never grants or removes one, it exempts specific movements from
-    // provoking them. adjustReactions is the wrong hook for it, not a missing one.
-    // Identifying *which* movement is no longer part of the gap — CombatantSheet
-    // #consumeMovementThisRound() numbers them — but "nos 2 primeiros UD percorridos" needs a
-    // movement's distance tracked, which nothing records either.
+    /**
+     * Two exemptions from provoking Reações, read by {@code MovementReactionService} on every movement this
+     * profile's holder makes (table rulings, 2026-10-16): the first hexes of the Rodada's first movement ({@link
+     * #resolveReactionFreeSteps} — "UD percorridos" are hexes travelled, so a Terreno Difícil hex counts once), and
+     * the whole of any movement on an odd Rodada ({@link #exemptsMovementFromReactions} — the counter as shown, so
+     * the opening Rodada 0 is even). It never grants or removes a Reação: the count is untouched.
+     */
     CONSCIENCIA_DEFENSIVA("Em seu primeiro movimento de cada Rodada, nos 2 primeiros UD " +
             "percorridos, você não provoca Reações. Em Rodadas ímpares nenhum de seus " +
-            "movimentos provoca Reações."),
+            "movimentos provoca Reações.") {
+        @Override
+        public int resolveReactionFreeSteps(final int movementIndex) {
+            return movementIndex == 0 ? FIRST_MOVEMENT_REACTION_FREE_STEPS : 0;
+        }
+
+        @Override
+        public boolean exemptsMovementFromReactions(final Manoeuvre manoeuvre, final SceneContext sceneContext) {
+            return Manoeuvre.isMovement(manoeuvre) && sceneContext != null && sceneContext.isOddCombatRound();
+        }
+    },
 
     MOVIMENTO_PLANEJADO("Você não pode fazer Ações Livres em seu primeiro Turno; a partir " +
             "do segundo Turno você pode fazer uma Ação Livre adicional.") {
@@ -110,6 +122,9 @@ public enum ActionProfile {
         }
     };
 
+    /** Consciência Defensiva's "nos 2 primeiros UD percorridos" of the Rodada's first movement, in hexes. */
+    public static final int FIRST_MOVEMENT_REACTION_FREE_STEPS = 2;
+
     private final String description;
 
     /**
@@ -169,6 +184,23 @@ public enum ActionProfile {
      */
     public int adjustSkillRollCost(final int skillRollCost, final int turnNumber) {
         return skillRollCost;
+    }
+
+    /**
+     * How many hexes at the start of the movementIndex-th movement of the Rodada (0-based) provoke no Reação. The
+     * default is 0; {@link #CONSCIENCIA_DEFENSIVA} overrides it. Hexes rather than UD: the window is ground covered,
+     * not movement paid.
+     */
+    public int resolveReactionFreeSteps(final int movementIndex) {
+        return 0;
+    }
+
+    /**
+     * Whether a movement made under manoeuvre provokes no Reação at all right now. The default is {@code false};
+     * {@link #CONSCIENCIA_DEFENSIVA} overrides it. Only a movement ({@link Manoeuvre#isMovement}) may be exempt.
+     */
+    public boolean exemptsMovementFromReactions(final Manoeuvre manoeuvre, final SceneContext sceneContext) {
+        return false;
     }
 
     /**

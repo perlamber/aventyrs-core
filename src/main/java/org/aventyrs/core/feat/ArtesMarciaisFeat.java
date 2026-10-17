@@ -209,7 +209,7 @@ public enum ArtesMarciaisFeat implements Feat {
         @Override
         public boolean reclassifiesAsNaturalWeapon(final Weapon weapon, final Character character) {
             return !wieldsAShield(character)
-                    && weapon.getEffectiveWeightClass() == ItemWeightClass.LIGHT
+                    && character.carriedWeightClassOf(weapon.getEffectiveWeightClass()) == ItemWeightClass.LIGHT
                     && weapon.getSkillType() == SkillType.ATAQUE_CORPO_A_CORPO;
         }
     },

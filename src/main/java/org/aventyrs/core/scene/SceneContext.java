@@ -301,4 +301,12 @@ public class SceneContext {
     public boolean isWithinFirstCombatRounds(final int roundCount) {
         return combatScene && currentRound >= 1 && currentRound <= roundCount;
     }
+
+    /**
+     * Whether this is a Cena de Combate on an odd Rodada — the counter as shown (1, 3, 5…), so the opening Rodada 0
+     * is even (table ruling, 2026-10-16). Always {@code false} outside a Cena de Combate.
+     */
+    public boolean isOddCombatRound() {
+        return combatScene && currentRound % 2 == 1;
+    }
 }

@@ -72,14 +72,12 @@ public interface MonsterTemplate {
     Monstruoso MONSTER_RACE = new Monstruoso();
 
     /**
-     * The {@code ActionProfile} a foe uses unless its stat block says otherwise — deliberately
-     * the one profile with no numeric effect on any of PA/Reações/Ações Livres, so a foe whose
-     * stat block is silent about its Perfil de Ação gets exactly the counters it authored.
-     * Consciência Defensiva's own clause is about which movements provoke Reações, not how many
-     * a creature has, and this core has no movement-triggers-Reação mechanism at all (see
-     * {@link ActionProfile#CONSCIENCIA_DEFENSIVA}) — so it costs a foe nothing either.
+     * The {@code ActionProfile} a foe uses unless its stat block says otherwise: none ({@code null}), so a foe whose
+     * stat block is silent about its Perfil de Ação gets exactly the counters it authored and provokes Reações like
+     * anyone. Every profile now does something — this used to be {@link ActionProfile#CONSCIENCIA_DEFENSIVA} while
+     * that one was inert, and wiring its movement exemptions (core 0.1.7.9) would have handed it to every such foe.
      */
-    ActionProfile DEFAULT_ACTION_PROFILE = ActionProfile.CONSCIENCIA_DEFENSIVA;
+    ActionProfile DEFAULT_ACTION_PROFILE = null;
 
     String getName();
 

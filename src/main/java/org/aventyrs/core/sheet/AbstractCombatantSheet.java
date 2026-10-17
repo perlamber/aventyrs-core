@@ -708,6 +708,13 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
                     .mapToInt(feat -> feat.resolveHealingReceivedAdjustment(getCharacter(), source))
                     .sum());
         }
+        // Metabolismo Rápido: "Magias e Habilidades de Títulos Aventyr que te façam recuperar PV recuperam
+        // +2PV adicionais (não aplicável a efeitos de Roubo de Vida)" — before halving and the Coma cap.
+        if (!lifeSteal && amount > 0) {
+            offered += getCharacter().getAttributeAbilities().stream()
+                    .mapToInt(ability -> ability.resolveHealingReceivedBonus(source))
+                    .sum();
+        }
         if (offered > 0) {
             // "Efeitos de cura interrompem a perda de PV/PM/PD por rodada" — Sangramento's,
             // Purga-Mana's and Excruciante's clauses say it alike.
@@ -752,6 +759,15 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
         }
         int damageTaken = hitPoints.recover(recovered);
         observeStatus();
+        // Canalizador de Mana: such a heal "recupera +1PM adicional" — only once PV actually came back.
+        if (recovered > 0 && !lifeSteal) {
+            int mana = getCharacter().getAttributeAbilities().stream()
+                    .mapToInt(ability -> ability.resolveHealingReceivedManaBonus(source))
+                    .sum();
+            if (mana > 0) {
+                recoverMagicPoints(mana);
+            }
+        }
         // Tocado por Undine e Haloi's Fundamentalista: being healed by someone else's Magia or Habilidade.
         if (recovered > 0 && !lifeSteal) {
             getCharacter().getFeats().stream()
@@ -1513,6 +1529,14 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
      */
     @Override
     public void applyEffect(final TemporaryEffect effect) {
+        applyEffect(effect, true);
+    }
+
+    /**
+     * {@link #applyEffect(TemporaryEffect)}, saying whether a held cap on harmful Durações applies — false for an
+     * effect scoped to the combat or to a Descanso, which Recuperação Assombrosa treats as permanent.
+     */
+    private void applyEffect(final TemporaryEffect effect, final boolean capsHarmfulDuration) {
         // Autocontrole's Cena immunity to this kind.
         if (isCenaImmune(CenaImmunity.kindOf(effect))) {
             return;
@@ -1534,6 +1558,9 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
                 effect.shortenTo(shortened);
             }
         }
+        if (capsHarmfulDuration) {
+            capHarmfulDuration(effect);
+        }
         int ceiling = effect.maximumSimultaneous();
         if (ceiling < TemporaryEffect.UNLIMITED_SIMULTANEOUS) {
             // Drop the oldest of the same grant until this one fits under the ceiling. "The same
@@ -1550,6 +1577,29 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
             }
         }
         temporaryEffects.add(effect);
+    }
+
+    /**
+     * Recuperação Assombrosa: "Os Efeitos Críticos, Correntes de Efeitos, e Efeitos de Magias e de Habilidades nocivas
+     * que possuam Duração maior do que 3 Rodadas são encerradas em 3 Rodadas. Esta Habilidade não afeta efeitos
+     * permanentes." Cut as the effect lands, to the lowest cap a held Habilidade states; an open-ended effect is
+     * permanent and untouched (table ruling, 2026-10-16).
+     */
+    private void capHarmfulDuration(final TemporaryEffect effect) {
+        Character character = getCharacter();
+        if (character == null || effect.getRemainingRounds() == null || !effect.isHarmful()) {
+            return;
+        }
+        character.getAttributeAbilities().stream()
+                .map(org.aventyrs.core.ability.AttributeAbility::resolveHarmfulDurationCap)
+                .filter(java.util.OptionalInt::isPresent)
+                .mapToInt(java.util.OptionalInt::getAsInt)
+                .min()
+                .ifPresent(cap -> {
+                    if (effect.getRemainingRounds() > cap) {
+                        effect.shortenTo(cap);
+                    }
+                });
     }
 
     /**
@@ -2450,13 +2500,13 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
 
     @Override
     public void applyEffectUntilCombatEnds(final TemporaryEffect effect) {
-        applyEffect(effect);
+        applyEffect(effect, false);
         combatScopedEffects.add(effect);
     }
 
     @Override
     public void applyEffectUntilRest(final TemporaryEffect effect, final RestType restType) {
-        applyEffect(effect);
+        applyEffect(effect, false);
         restScopedEffects.put(effect, restType);
     }
 
@@ -2684,6 +2734,7 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
             }
             temporaryEffects.removeIf(effect -> effect instanceof Condition held && held.getType().isFear());
         }
+        capHarmfulDuration(condition);
         removeCondition(condition.getType());
         temporaryEffects.add(condition);
         // "Desacordado … aplica o Malefício Caído" — alongside, not implied: the Caído outlives it
@@ -3006,8 +3057,8 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
      * effective one throws). Read here only by {@link FormType#permitsOneHandedWeapons()}'s one
      * consumer (Lobo Dentes-de-Sabre).
      */
-    private static boolean isTwoHanded(final Weapon weapon) {
-        return org.aventyrs.core.item.HandBudget.isTwoHanded(weapon);
+    private boolean isTwoHanded(final Weapon weapon) {
+        return org.aventyrs.core.item.HandBudget.isTwoHanded(weapon, getCharacter());
     }
 
     /**
@@ -3732,7 +3783,7 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
 
     @Override
     public void applyEffectUntilTrueRest(@NonNull final TemporaryEffect effect, @NonNull final RestType restType) {
-        applyEffect(effect);
+        applyEffect(effect, false);
         trueRestScopedEffects.put(effect, restType);
     }
 

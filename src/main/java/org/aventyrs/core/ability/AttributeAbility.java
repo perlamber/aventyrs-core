@@ -197,7 +197,8 @@ public interface AttributeAbility {
      * SkillCompetencyAbility#resolveDamageBonus}/{@code #resolveAttackRollBonus} needing their
      * own explicit parameters instead of {@code @Modifier}. Summed by {@code
      * org.aventyrs.core.rest.RestService#getRecoveredMagicPoints} across {@code
-     * Character#getAttributeAbilities()}.
+     * Character#getAttributeAbilities()}. Paid only by a real Descanso ({@code
+     * RecoveryOrigin#DESCANSO}); see {@link #resolveRestEquivalentMagicPointsBonus}.
      */
     default int resolveRestMagicPointsBonus(RestType restType) {
         return 0;
@@ -211,7 +212,8 @@ public interface AttributeAbility {
      * instead of PM. Zero by default; only override on a constant whose rules text grants a
      * Rest-tier-conditioned PV bonus like this. Summed by {@code
      * org.aventyrs.core.rest.RestService#getRecoveredHitPoints} across {@code
-     * Character#getAttributeAbilities()}.
+     * Character#getAttributeAbilities()}. Paid only by a real Descanso ({@code
+     * RecoveryOrigin#DESCANSO}); see {@link #resolveRestEquivalentHitPointsBonus}.
      */
     default int resolveRestHitPointsBonus(RestType restType) {
         return 0;
@@ -225,9 +227,131 @@ public interface AttributeAbility {
      * shape/reasoning, on the PD side. Zero by default; only override on a constant whose
      * rules text grants a Rest-tier-conditioned PD bonus like this. Summed by {@code
      * org.aventyrs.core.rest.RestService#getRecoveredDeterminationPoints} across {@code
-     * Character#getAttributeAbilities()}.
+     * Character#getAttributeAbilities()}. Paid only by a real Descanso ({@code
+     * RecoveryOrigin#DESCANSO}); see {@link #resolveRestEquivalentDeterminationPointsBonus}.
      */
     default int resolveRestDeterminationPointsBonus(RestType restType) {
+        return 0;
+    }
+
+    /**
+     * Extra PV an effect recovering "como se passasse por um Descanso" of restType gives — {@code
+     * RestService#getRecoveredHitPoints} with {@code RecoveryOrigin#EQUIVALENTE}. Unlike {@link
+     * #resolveRestHitPointsBonus}, which pays only on a real Descanso (table ruling, 2026-10-16:
+     * Metabolismo Rápido's +3PV is a Descanso's, and a Magia's heal gets its +2PV through {@link
+     * #resolveHealingReceivedBonus} instead). Zero by default; override only for a clause written
+     * for <em>any</em> recovery effect.
+     */
+    default int resolveRestEquivalentHitPointsBonus(RestType restType) {
+        return 0;
+    }
+
+    /** {@link #resolveRestEquivalentHitPointsBonus}'s PM twin. Zero by default. */
+    default int resolveRestEquivalentMagicPointsBonus(RestType restType) {
+        return 0;
+    }
+
+    /**
+     * {@link #resolveRestEquivalentHitPointsBonus}'s PD twin — {@link InstinctAbility#SUPERMOTIVADO}'s
+     * "Efeitos que te permitam recuperar PD o fazem recuperar 1PD adicional", which names every
+     * recovery effect, not only a Descanso. Zero by default.
+     */
+    default int resolveRestEquivalentDeterminationPointsBonus(RestType restType) {
+        return 0;
+    }
+
+    /**
+     * A flat bonus on the holder's dano roll against attackTarget — {@link StrengthAbility#SUBJUGAR}'s
+     * "Vantagem em rolagens de Dano para atacar personagens caídos ou desprevenidos". Summed by {@code
+     * AbstractSkillInteraction}'s dano-bonus sum as {@code DamageContributionSource#ATTRIBUTE_ABILITY};
+     * attackTarget is {@code null} on the main pass, so a target-conditioned constant returns 0 until
+     * the attack-target pass. Zero by default.
+     */
+    default int resolveDamageRollBonus(final SkillType skillType, final CombatantSheet holder,
+                                       final CombatantSheet attackTarget, final SceneContext sceneContext) {
+        return 0;
+    }
+
+    /**
+     * Raw damage the holder's landed attack made with skillType deals to the primary target's worn Escudo, else
+     * Armadura — {@link StrengthAbility#ESTILHACADOR}'s 2 on an Ataque Corpo-a-Corpo. Reported by {@code
+     * AttackDelivery} on {@code DeliveredAttackResult#getDefensiveEquipmentDamage()} and resolved against the real
+     * sheet by {@code combat.ShieldBreak}. Zero by default.
+     */
+    default int resolveDefensiveEquipmentDamageOnHit(final SkillType skillType) {
+        return 0;
+    }
+
+    /**
+     * The most Rodadas a harmful effect with a counted Duração may last on the holder — {@link
+     * VigorAbility#RECUPERACAO_ASSOMBROSA}'s 3. Applied as the effect lands by {@code AbstractCombatantSheet} (both
+     * {@code applyEffect} and {@code applyCondition}), judged by {@code TemporaryEffect#isHarmful()}; an open-ended
+     * effect, or one scoped to the combat or a Descanso, counts as permanent and is never cut. Empty by default.
+     */
+    default java.util.OptionalInt resolveHarmfulDurationCap() {
+        return java.util.OptionalInt.empty();
+    }
+
+    /**
+     * How many Categorias de Peso lighter the holder's equipment counts for their benefit — {@link
+     * StrengthAbility#BESTA_DE_CARGA}'s 1. Summed by {@code Character#carriedWeightClassOf}. Zero by default.
+     */
+    default int resolveCarriedWeightClassShift() {
+        return 0;
+    }
+
+    /**
+     * PA the holder may <em>buy</em> off a Perícia roll governed by governingDomain — {@link
+     * CharismaAbility#VOZ_DE_OURO}'s "-1PA" on a Carisma-based action, paid with {@link
+     * #resolveBoughtSkillRollDeterminationCost}. Offered by {@code ActionPointsService#getBoughtReductionCost}, taken
+     * by its {@code getSkillRollCost(…, buyReduction)}. Zero by default.
+     */
+    default int resolveBoughtSkillRollActionPointReduction(final AttributeDomain governingDomain) {
+        return 0;
+    }
+
+    /** The PD {@link #resolveBoughtSkillRollActionPointReduction} costs — Voz de Ouro's 2. Zero by default. */
+    default int resolveBoughtSkillRollDeterminationCost() {
+        return 0;
+    }
+
+    /**
+     * The PD a Rodada 0.0 action costs the holder — {@link InstinctAbility#PARANOIA_SAUDAVEL}'s "Ao custo de 2PD e
+     * apenas uma vez a cada Cena" — or empty when this Habilidade offers none. Read by {@code
+     * character.services.PreInitiativeService}. Empty by default.
+     */
+    default OptionalInt resolvePreInitiativeActionCost() {
+        return OptionalInt.empty();
+    }
+
+    /**
+     * Extra PV a heal its holder <em>receives</em> recovers — {@link VigorAbility#METABOLISMO_RAPIDO}'s
+     * "+2PV adicionais" on a heal from a Magia or a Habilidade de Título ({@code
+     * HealingSource#isMagiaOrTituloAbility}). Added by {@code AbstractCombatantSheet#heal} beside the
+     * Talentos' recipient adjustment, so it is halved and Coma-capped like the rest of the heal, and
+     * never asked for Roubo de Vida. source may be {@code null} (an unsourced heal). Zero by default.
+     */
+    default int resolveHealingReceivedBonus(final org.aventyrs.core.sheet.HealingSource source) {
+        return 0;
+    }
+
+    /**
+     * PM a heal its holder receives also restores — {@link FocusAbility#CANALIZADOR_DE_MANA}'s "+1PM
+     * adicional" on a Magia's or Título's PV heal. Paid by {@code AbstractCombatantSheet#heal} only
+     * when PV actually came back, through {@code recoverMagicPoints} (so Feridas Dolorosas refuses it).
+     * Zero by default.
+     */
+    default int resolveHealingReceivedManaBonus(final org.aventyrs.core.sheet.HealingSource source) {
+        return 0;
+    }
+
+    /**
+     * The flat bonus this Habilidade adds to an already-present Roubo de Mana — {@link
+     * FocusAbility#CANALIZADOR_DE_MANA}'s "seu Roubo de Mana total aumenta em +1 (não cumulativo)".
+     * Read by {@code AttackDelivery} only when the attack already steals Mana, the same "amplify,
+     * never grant" rule as {@link #resolveLifeStealBonus}. Zero by default.
+     */
+    default int resolveManaStealBonus() {
         return 0;
     }
 
@@ -396,6 +520,18 @@ public interface AttributeAbility {
     }
 
     /**
+     * {@link #resolveAttributeDomainRollBonus(AttributeDomain, Character)} seeing the roller's sheet — its per-Turn
+     * action log, where "imediatamente após" lives: {@link CharismaAbility#AGRESSAO_ANUNCIADA} (a Força/Destreza roll
+     * right after a Carisma one) and {@link CharismaAbility#FLOREIO_ARCANO} (a Carisma roll right after a Magia). The
+     * roll being resolved is not yet logged, so the log's last entry is the action before it. holder is {@code null}
+     * on a sheet-less path, which reads as "condition not met". Defaults to the shorter form.
+     */
+    default int resolveAttributeDomainRollBonus(final AttributeDomain rolledDomain, final Character character,
+                                                final CombatantSheet holder) {
+        return resolveAttributeDomainRollBonus(rolledDomain, character);
+    }
+
+    /**
      * Same shape as {@link #resolveAttributeDomainRollBonus}, but for a GD reduction (a
      * difficulty-reduction step count, like {@code SkillCompetencyAbility#getDifficultyReduction}) —
      * e.g. {@link InstinctAbility#SENTIR_A_INTENCAO}'s own "reduz a GD da rolagem em -1 nível"
@@ -452,6 +588,27 @@ public interface AttributeAbility {
      * states a manoeuvre-scoped roll bonus; add one with its first consumer.
      */
     default int resolveManoeuvreRollBonus(Manoeuvre manoeuvre, SkillType skillType) {
+        return 0;
+    }
+
+    /**
+     * {@link #resolveManoeuvreRollBonus(Manoeuvre, SkillType)} knowing the Atributo that governs the roll
+     * once every substitution has run — {@link StrengthAbility#ESTILHACADOR}'s "Perícias de Ataque
+     * (baseadas em Força)" against objects. Defaults to the shorter form, so every existing override
+     * keeps working; override this one only when the governing Atributo matters.
+     */
+    default int resolveManoeuvreRollBonus(final Manoeuvre manoeuvre, final SkillType skillType,
+                                          final AttributeDomain governingDomain) {
+        return resolveManoeuvreRollBonus(manoeuvre, skillType);
+    }
+
+    /**
+     * A flat bonus on the holder's dano against an object it strikes ({@code ObjectAttackService#strike},
+     * {@code Manoeuvre#ATACAR_OBJETOS}) when the roll was governed by governingDomain — {@link
+     * StrengthAbility#ESTILHACADOR}'s Vantagem em Danos contra objetos. Added to the raw damage before
+     * the manoeuvre's Meio-Dano. Zero by default.
+     */
+    default int resolveObjectDamageBonus(final AttributeDomain governingDomain) {
         return 0;
     }
 

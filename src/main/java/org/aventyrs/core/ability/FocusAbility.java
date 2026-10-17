@@ -29,20 +29,12 @@ public enum FocusAbility implements AttributeAbility {
         }
     },
 
-    // The rest-recovery branch ("Descansos Verdadeiros Longos ou superiores... +2PM") is
-    // real, via resolveRestMagicPointsBonus below — treating "Descanso Verdadeiro" as this
-    // codebase's own RestType tiers themselves (RestServiceImpl.applyRest already always
-    // applies a Rest's recovery unconditionally/completely — there's no separate "attempted
-    // but interrupted" Rest concept for a "Verdadeiro" qualifier to distinguish from), an
-    // inference, not confirmed rules text, same as ArtesInteraction's own UNIMAGINABLE gap.
-    // TODO: the other two branches are still unbuilt. "+1PM on spell/Título Aventyr PV
-    // healing" needs a way to know a given CombatantSheet#heal call came from a spell or
-    // Título Aventyr ability specifically (no healing-spell-effect representation exists —
-    // SpellCastingService only resolves the delivery + Domínio do Mana rolls, not a healing
-    // effect; no Título Aventyr concept exists at all). "+1 non-cumulative Roubo de Mana"
-    // needs a Roubo de Mana effect to exist in the first place — only the unrelated opposite
-    // (ManaDrain/Purga-Mana, which drains a target's PM without transferring it to anyone)
-    // exists today.
+    // All three branches are real. The rest branch via resolveRestMagicPointsBonus — a real Descanso
+    // only (RecoveryOrigin#DESCANSO; "Verdadeiro" read as this core's RestType tiers, an inference).
+    // The +1PM via resolveHealingReceivedManaBonus, paid by AbstractCombatantSheet#heal once a Magia's
+    // or Título's heal actually restored PV. The +1 Roubo de Mana via resolveManaStealBonus, added
+    // once by AttackDelivery to a hit that already steals Mana (a weapon's Benção Elduriana) —
+    // "amplify, never grant", like Roubo de Vida.
     CANALIZADOR_DE_MANA("Descansos Verdadeiros Longos ou superiores permitem que você recupere +2PM adicionais. " +
             "Magias e Habilidades de Títulos Aventyr que te façam recuperar PV recuperam +1PM adicional (não " +
             "aplicável a efeitos de Roubo de Mana). Caso possua um ou mais efeitos de Roubo de Mana, seu Roubo " +
@@ -50,6 +42,16 @@ public enum FocusAbility implements AttributeAbility {
         @Override
         public int resolveRestMagicPointsBonus(final RestType restType) {
             return restType.isAtLeast(RestType.LONGO) ? 2 : 0;
+        }
+
+        @Override
+        public int resolveHealingReceivedManaBonus(final org.aventyrs.core.sheet.HealingSource source) {
+            return source != null && source.isMagiaOrTituloAbility() ? 1 : 0;
+        }
+
+        @Override
+        public int resolveManaStealBonus() {
+            return 1;
         }
     },
 

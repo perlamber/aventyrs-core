@@ -722,7 +722,7 @@ public enum DevotoFeat implements Feat {
 
     /** A heal from a Magia or a Habilidade — what Tocado por Undine e Haloi's two healing rungs name. */
     private static boolean isMagiaOrHabilidade(final HealingSource source) {
-        return source != null && (source.spell() != null || source.titleAbility() != null);
+        return source != null && source.isMagiaOrTituloAbility();
     }
 
     /** Whether Impacto Ymiriano's 2PD window is open on holder, and its Fiel rung reached. */

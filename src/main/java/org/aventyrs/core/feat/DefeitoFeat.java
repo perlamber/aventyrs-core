@@ -488,9 +488,9 @@ public enum DefeitoFeat implements Feat {
         }).orElse(false)).orElse(false);
     }
 
-    /** An odd Rodada of a Cena de Combate — Rodadas count from 1; 0 is "no one has acted yet". */
+    /** An odd Rodada of a Cena de Combate — see {@link SceneContext#isOddCombatRound()}. */
     static boolean isOddCombatRound(final SceneContext sceneContext) {
-        return sceneContext != null && sceneContext.isCombatScene() && sceneContext.getCurrentRound() % 2 == 1;
+        return sceneContext != null && sceneContext.isOddCombatRound();
     }
 
     /** Desatento's "Desvantagem nas rolagens de … Atenção", which Sem Foco and Preso a Imaginação repeat. */

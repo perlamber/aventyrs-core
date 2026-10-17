@@ -639,6 +639,15 @@ public enum ConditionType {
     }
 
     /**
+     * Whether holding this Condição harms its holder — every one but {@link #ESCONDIDO}, the client's status-panel
+     * split (table ruling, 2026-10-16). Broader than {@link #isMaleficio()}: Rendido and Petrificado are no
+     * Malefícios, yet both weigh on whoever holds them.
+     */
+    public boolean isHarmful() {
+        return this != ESCONDIDO;
+    }
+
+    /**
      * Whether this is an Estado de Personagem — a building block Condições confer — rather than a
      * Condição. Estados are binary: conferred twice, they apply once.
      */

@@ -143,8 +143,8 @@ public class SpellHealingEffect extends AbstractEffect implements HealingEffect 
         int recovered = damageBefore - target.getDamageTaken();
         if (healing.restoresAllPools()) {
             RestType rest = restFor();
-            target.recoverMagicPoints(restService.getRecoveredMagicPoints(target.getCharacter(), rest));
-            target.recoverDeterminationPoints(restService.getRecoveredDeterminationPoints(target.getCharacter(), rest));
+            target.recoverMagicPoints(restService.getRecoveredMagicPoints(target.getCharacter(), rest, org.aventyrs.core.rest.RecoveryOrigin.EQUIVALENTE));
+            target.recoverDeterminationPoints(restService.getRecoveredDeterminationPoints(target.getCharacter(), rest, org.aventyrs.core.rest.RecoveryOrigin.EQUIVALENTE));
         }
         if (healing.oncePerLongRest()) {
             target.markAffectedUntilRest(onceKey, RestType.LONGO);
@@ -170,7 +170,7 @@ public class SpellHealingEffect extends AbstractEffect implements HealingEffect 
         if (healing.fullRecovery()) {
             return damageTaken;
         }
-        int offered = Math.max(0, restService.getRecoveredHitPoints(target.getCharacter(), restFor()) + healingBonus);
+        int offered = Math.max(0, restService.getRecoveredHitPoints(target.getCharacter(), restFor(), org.aventyrs.core.rest.RecoveryOrigin.EQUIVALENTE) + healingBonus);
         return hostileTarget && healing.halvedForHostiles() ? offered / 2 : offered;
     }
 }

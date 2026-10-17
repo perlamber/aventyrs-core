@@ -59,5 +59,11 @@ public enum DamageContributionSource {
      * The attacker's worn Armaduras and Escudos — their Aprimoramentos' Danos columns, which reach every attack
      * ({@code item.DefensiveEnhancements}, core 0.1.6.11).
      */
-    DEFENSIVE_ENHANCEMENT
+    DEFENSIVE_ENHANCEMENT,
+
+    /**
+     * A held Habilidade de Atributo's {@code AttributeAbility#resolveDamageRollBonus} — {@code
+     * StrengthAbility#SUBJUGAR}'s Vantagem against a Caído or Desprevenido target (core 0.1.7.12).
+     */
+    ATTRIBUTE_ABILITY
 }

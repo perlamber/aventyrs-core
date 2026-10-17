@@ -181,8 +181,10 @@ public class EsquivaEApararInteraction extends AbstractSkillInteraction {
             if (item.getType() != ItemType.DEFENSIVE) {
                 continue;
             }
-            if (item.getEffectiveWeightClass().ordinal() > heaviest.ordinal()) {
-                heaviest = item.getEffectiveWeightClass();
+            // Besta de Carga: the burden is the weight as carried, one class lighter.
+            ItemWeightClass carried = character.carriedWeightClassOf(item.getEffectiveWeightClass());
+            if (carried.ordinal() > heaviest.ordinal()) {
+                heaviest = carried;
             }
         }
         return heaviest;

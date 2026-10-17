@@ -735,4 +735,13 @@ public class TranslatableMessages {
 
     /** Atacar Objetos / Desarmar: the item named is not one the target has equipped. */
     public static final String ITEM_NOT_EQUIPPED = "ITEM_NOT_EQUIPPED";
+
+    /**
+     * Paranoia Saudável's Rodada 0.0 (core 0.1.7.15): not a combat at its very start (Rodada 0, before the first
+     * Turn), the combatant holds no such Habilidade, already took it this combat, or cannot pay its PD.
+     */
+    public static final String PRE_INITIATIVE_ACTION_UNAVAILABLE = "PRE_INITIATIVE_ACTION_UNAVAILABLE";
+
+    /** Paranoia Saudável's Rodada 0.0: not this combatant's pre-Initiative action, already taken, or over 2PA. */
+    public static final String PRE_INITIATIVE_ACTION_NOT_PERMITTED = "PRE_INITIATIVE_ACTION_NOT_PERMITTED";
 }

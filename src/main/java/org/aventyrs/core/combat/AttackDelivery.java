@@ -320,6 +320,10 @@ public class AttackDelivery {
                     .mapToInt(feat -> feat.resolveLockedSelfDamageOnHit(attack.getAttackSkill(),
                             attack.getAttackSource(), attack.getAttacker(), attackRoll))
                     .sum());
+            // Estilhaçador: 2 to the target's Escudo, else Armadura — applied by the target's owner (ShieldBreak).
+            result.defensiveEquipmentDamage(attack.getAttacker().getCharacter().getAttributeAbilities().stream()
+                    .mapToInt(ability -> ability.resolveDefensiveEquipmentDamageOnHit(attack.getAttackSkill()))
+                    .sum());
         }
 
         return result.attackResult(attackResult)
@@ -516,7 +520,7 @@ public class AttackDelivery {
             stages.add(new org.aventyrs.core.effect.RouboDeVida(attack.getAttacker(), lifeSteal));
         }
         // The weapon's Roubo de Mana and de Determinação (Benção Elduriana, Ladra do AEther), on every hit.
-        int manaSteal = org.aventyrs.core.item.WeaponEnhancements.manaSteal(attack.getAttackSource());
+        int manaSteal = manaStealOf(attack);
         if (manaSteal > 0) {
             stages.add(new org.aventyrs.core.effect.RouboDeMana(attack.getAttacker(), manaSteal));
         }
@@ -577,6 +581,21 @@ public class AttackDelivery {
         return defender instanceof org.aventyrs.core.monster.MonsterSheet foe
                 ? foe.getDefense(type)
                 : new org.aventyrs.core.character.services.DefenseServiceImpl().getTotalDefense(defender, type);
+    }
+
+    /**
+     * The attack's Roubo de Mana: its weapon's (Benção Elduriana), amplified once by the attacker's
+     * Habilidades de Atributo (Canalizador de Mana's "+1 (não cumulativo)") — only when there is one to
+     * amplify, never granted from nothing.
+     */
+    private static int manaStealOf(final DeliveredAttack attack) {
+        int base = org.aventyrs.core.item.WeaponEnhancements.manaSteal(attack.getAttackSource());
+        if (base <= 0 || attack.getAttacker() == null) {
+            return base;
+        }
+        return base + attack.getAttacker().getCharacter().getAttributeAbilities().stream()
+                .mapToInt(org.aventyrs.core.ability.AttributeAbility::resolveManaStealBonus)
+                .sum();
     }
 
     /**

@@ -42,7 +42,7 @@ public class OferendaMaldita extends AbstractCriticalEffect {
         }
         int stolen = Math.min(roll(pick(2, 1)), dealt);
         int before = attacker.getDamageTaken();
-        attacker.heal(stolen);
+        attacker.healFromLifeSteal(stolen);
         return InteractionResult.builder()
                 .resourceGainValue(before - attacker.getDamageTaken())
                 .resourceGainType(ResourceType.HIT_POINTS);

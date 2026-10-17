@@ -184,6 +184,12 @@ public class Scene {
 
     private int currentIndex = -1;
     private int currentRound = 0;
+
+    /** Whose Rodada 0.0 action it is — see {@link #beginPreInitiativeTurn}; {@code null} outside one. */
+    private CombatantSheet preInitiativeActor;
+
+    /** Whether {@link #preInitiativeActor} has spent their one action yet. */
+    private boolean preInitiativeActionTaken;
     private TerrainType terrainType;
     private boolean combatScene;
     private ItemStore itemStore;
@@ -781,6 +787,8 @@ public class Scene {
         if (activeEntries.isEmpty()) {
             throw new IllegalOperationException(NO_PARTICIPANTS_IN_SCENE);
         }
+        // Rodada 0.0 ends with the first real Turn: whoever held it had their one action or let it go.
+        endPreInitiativeTurn();
         if (currentIndex >= 0) {
             CombatantSheet finishing = activeEntries.get(currentIndex).getCombatantSheet();
             finishing.finishTurn();
@@ -815,6 +823,76 @@ public class Scene {
     }
 
     /**
+     * Paranoia Saudável's Rodada 0.0 (core 0.1.7.15): "fazer uma ação com Tempo de até 2PA, Ação Livre ou Reação
+     * no início da cena … antes da ação do primeiro personagem, ignorando as Iniciativas". actor takes that one
+     * action now — only in a Cena de Combate before anyone's first Turn (Rodada 0, cursor before the first
+     * participant). Several takers go one after another, each through this call (the server owns their order); no
+     * Turn starts, nothing ticks and the Rodada does not move, so Rodada 0 itself is untouched. Paying for it
+     * (2PD, once per combat) is {@code character.services.PreInitiativeService}'s.
+     *
+     * @throws IllegalOperationException ({@code PRE_INITIATIVE_ACTION_UNAVAILABLE}) outside that window, or for a
+     *                                    sheet not in this Scene
+     */
+    public void beginPreInitiativeTurn(@lombok.NonNull final CombatantSheet actor) {
+        if (!isAtCombatStart() || allEntries().noneMatch(entry -> entry.getCombatantSheet() == actor)) {
+            throw new IllegalOperationException(org.aventyrs.core.util.TranslatableMessages.PRE_INITIATIVE_ACTION_UNAVAILABLE);
+        }
+        preInitiativeActor = actor;
+        preInitiativeActionTaken = false;
+    }
+
+    /** Whether this is a Cena de Combate at its very start — Rodada 0, before the first Turn: Rodada 0.0's window. */
+    public boolean isAtCombatStart() {
+        return combatScene && currentRound == 0 && currentIndex < 0;
+    }
+
+    /** Whose Rodada 0.0 action it is right now, or {@code null}. */
+    public CombatantSheet getPreInitiativeActor() {
+        return preInitiativeActor;
+    }
+
+    /** Whether a Rodada 0.0 action is being taken. */
+    public boolean isInPreInitiativePhase() {
+        return preInitiativeActor != null;
+    }
+
+    /**
+     * Whether sheet may take an action costing cost as its Rodada 0.0 action: it is the actor, has not acted yet,
+     * and the action is "Tempo de até 2PA, Ação Livre ou Reação".
+     */
+    public boolean permitsPreInitiativeAction(final CombatantSheet sheet, final org.aventyrs.core.sheet.ActionCost cost) {
+        if (sheet == null || sheet != preInitiativeActor || preInitiativeActionTaken || cost == null) {
+            return false;
+        }
+        return switch (cost.kind()) {
+            case FREE_ACTION, REACTION -> true;
+            case FIXED -> cost.spentActionPoints() <= PRE_INITIATIVE_ACTION_POINTS;
+            default -> false;
+        };
+    }
+
+    /**
+     * Spends the actor's Rodada 0.0 action — after {@link #permitsPreInitiativeAction} said yes.
+     *
+     * @throws IllegalOperationException ({@code PRE_INITIATIVE_ACTION_NOT_PERMITTED}) when it does not
+     */
+    public void takePreInitiativeAction(final CombatantSheet sheet, final org.aventyrs.core.sheet.ActionCost cost) {
+        if (!permitsPreInitiativeAction(sheet, cost)) {
+            throw new IllegalOperationException(org.aventyrs.core.util.TranslatableMessages.PRE_INITIATIVE_ACTION_NOT_PERMITTED);
+        }
+        preInitiativeActionTaken = true;
+    }
+
+    /** Ends the current Rodada 0.0 action, taken or not — the next taker's, or the first real Turn, follows. */
+    public void endPreInitiativeTurn() {
+        preInitiativeActor = null;
+        preInitiativeActionTaken = false;
+    }
+
+    /** Paranoia Saudável's "Tempo de até 2PA". */
+    public static final int PRE_INITIATIVE_ACTION_POINTS = 2;
+
+    /**
      * Combat ends in this Scene — the mirror of {@link #startCombat()}, and the GM's "encerrar
      * combate". Turns {@link #isCombatScene()} off, puts {@link #getCurrentRound()} back to 0 (a
      * later combat counts its Rodadas afresh, the same way a Scene that never fought stays on 0),
@@ -833,6 +911,7 @@ public class Scene {
         }
         combatScene = false;
         currentRound = 0;
+        endPreInitiativeTurn();
         // "Quando a Cena de Combate termina … os mortos invocados são destruídos" (Cuspidor de Pragas, core 0.1.6.25).
         new ArrayList<>(summonSpawners).stream().filter(SummonSpawner::isEndsWithCombat).forEach(this::endSpawner);
         java.util.Map<CombatantSheet, java.util.List<org.aventyrs.core.item.RecoveredProjectiles>> recovered =

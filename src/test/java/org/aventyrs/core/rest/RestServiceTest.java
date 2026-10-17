@@ -179,6 +179,31 @@ class RestServiceTest {
         assertEquals(15, restService.getRecoveredDeterminationPoints(character, RestType.TOTAL));
     }
 
+    // A recovery "como se passasse por um Descanso" (a Magia de cura, Beijo de Boros, an
+    // Autocontrole spend, Medicina) is not one: Descanso bonuses stay home (table ruling, 2026-10-16).
+
+    @Test
+    void aRestEquivalentPaysNoDescansoHitPointOrManaBonus() {
+        Character character = exampleCharacter().toBuilder()
+                .attributeAbility(VigorAbility.METABOLISMO_RAPIDO)
+                .attributeAbility(FocusAbility.CANALIZADOR_DE_MANA)
+                .build();
+
+        assertEquals(6, restService.getRecoveredHitPoints(character, RestType.LONGO, RecoveryOrigin.EQUIVALENTE));
+        assertEquals(2, restService.getRecoveredMagicPoints(character, RestType.LONGO, RecoveryOrigin.EQUIVALENTE));
+        assertEquals(9, restService.getRecoveredHitPoints(character, RestType.LONGO, RecoveryOrigin.DESCANSO));
+    }
+
+    @Test
+    void supermotivadoPaysItsAnyEffectPointOnARestEquivalentButNotTheLongoTwo() {
+        Character character = exampleCharacter().toBuilder()
+                .attributeAbility(InstinctAbility.SUPERMOTIVADO)
+                .build();
+
+        assertEquals(9, restService.getRecoveredDeterminationPoints(character, RestType.LONGO, RecoveryOrigin.EQUIVALENTE));
+        assertEquals(11, restService.getRecoveredDeterminationPoints(character, RestType.LONGO));
+    }
+
     // Both must spend first: a recovery restores previously-spent points, so against a full pool
     // it is a no-op and either assertion would pass for the wrong reason.
 
